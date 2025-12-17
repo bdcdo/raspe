@@ -87,10 +87,71 @@ class ScraperNYT(BaseScraper):
         self._api_method = 'GET'
 
         # Rate limit do NYT: 5 req/min = 12 segundos entre requisições
+        # Este valor é conservador para evitar erros 429 da API oficial
         self.sleep_time = 12
 
         # API do NYT usa página 0 como primeira página
         self.query_page_increment = -1
+
+        # Valida a API key fazendo uma requisição de teste
+        self._validar_api_key()
+
+    def _validar_api_key(self) -> None:
+        """Valida a API key fazendo uma requisição de teste.
+
+        Faz uma busca mínima para verificar se a API key é válida.
+        Isso permite falhar rapidamente na inicialização ao invés de
+        descobrir o erro apenas durante a raspagem.
+
+        Raises:
+            APIKeyError: Se a API key for inválida ou expirada.
+            APIError: Se ocorrer outro erro na validação.
+        """
+        self.logger.debug("Validando API key com requisição de teste...")
+
+        test_params = {
+            "api-key": self._api_key,
+            "q": "test",
+            "page": 0,
+        }
+
+        try:
+            r = self.session.get(self.API_BASE, params=test_params, timeout=self.timeout)
+
+            if r.status_code == 401:
+                raise APIKeyError(
+                    "API key inválida ou expirada. Verifique sua chave em:\n"
+                    "https://developer.nytimes.com/my-apps"
+                )
+
+            if r.status_code == 429:
+                # Rate limit na validação - a key provavelmente é válida
+                self.logger.warning(
+                    "Rate limit durante validação da API key. "
+                    "A chave será validada na primeira busca."
+                )
+                return
+
+            if r.status_code >= 400:
+                raise APIError(
+                    f"Erro ao validar API key: {r.status_code}",
+                    status_code=r.status_code,
+                    response_text=r.text
+                )
+
+            # Verifica se a resposta é válida
+            data = r.json()
+            if data.get('status') != 'OK':
+                error_msg = data.get('message', str(data))
+                raise APIError(f"Resposta inválida da API: {error_msg}")
+
+            self.logger.debug("API key validada com sucesso")
+
+        except (APIKeyError, APIError):
+            raise
+        except Exception as e:
+            self.logger.warning(f"Não foi possível validar API key: {e}")
+            # Não falha aqui - permite continuar e falhar na primeira busca real
 
     @property
     def api_base(self) -> str:

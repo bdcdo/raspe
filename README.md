@@ -202,6 +202,21 @@ dados.to_excel("artigos_nyt.xlsx", index=False)
 
 ---
 
+## 🛡️ Robustez e Validações
+
+### Retry Automático
+
+O RasPe tenta novamente automaticamente quando encontra problemas temporários de conexão ou quando o servidor está sobrecarregado. Você não precisa fazer nada - é tudo automático.
+
+### Formatos de Data Aceitos
+
+Quando usar datas (como `data_inicio` e `data_fim`), você pode usar qualquer um destes formatos:
+- `2024-01-15` (ano-mês-dia)
+- `15/01/2024` (dia/mês/ano)
+- `20240115` (sem separadores)
+
+---
+
 ## ❓ Perguntas Frequentes
 
 ### "Não sei programar em Python. Consigo usar?"
