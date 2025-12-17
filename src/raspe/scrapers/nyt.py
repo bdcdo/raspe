@@ -1,8 +1,10 @@
+import os
+
 from ..base_scraper import BaseScraper
+from ..exceptions import APIKeyError, APIError
 from typing import Any, Literal
 import pandas as pd
 import json
-import time
 
 
 class ScraperNYT(BaseScraper):
@@ -43,22 +45,42 @@ class ScraperNYT(BaseScraper):
     RESULTS_PER_PAGE = 10
     MAX_PAGES = 100
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str | None = None):
         """Inicializa o scraper do NYT.
 
         Args:
             api_key: Chave de API do NYT Developer Portal.
+                     Pode ser passada diretamente ou via variável de ambiente NYT_API_KEY.
                      Obtenha em: https://developer.nytimes.com/get-started
         """
         super().__init__("NYT")
 
-        if not api_key:
-            raise ValueError(
-                "API key obrigatória. Obtenha uma em: "
-                "https://developer.nytimes.com/get-started"
+        # Tenta obter API key do parâmetro ou variável de ambiente
+        resolved_api_key = api_key or os.environ.get('NYT_API_KEY')
+
+        if not resolved_api_key:
+            raise APIKeyError(
+                "\n"
+                "╔══════════════════════════════════════════════════════════════════╗\n"
+                "║  API KEY DO NEW YORK TIMES NECESSÁRIA                            ║\n"
+                "╠══════════════════════════════════════════════════════════════════╣\n"
+                "║                                                                  ║\n"
+                "║  O raspador do NYT requer uma chave de API gratuita.             ║\n"
+                "║                                                                  ║\n"
+                "║  Como obter sua API key:                                         ║\n"
+                "║  1. Acesse: https://developer.nytimes.com/get-started            ║\n"
+                "║  2. Crie uma conta gratuita                                      ║\n"
+                "║  3. Crie um novo 'App' e ative a 'Article Search API'            ║\n"
+                "║  4. Copie sua API key                                            ║\n"
+                "║                                                                  ║\n"
+                "║  Como usar:                                                      ║\n"
+                "║  • Opção 1: raspe.nyt(api_key='sua-chave-aqui')                  ║\n"
+                "║  • Opção 2: export NYT_API_KEY='sua-chave-aqui'                  ║\n"
+                "║                                                                  ║\n"
+                "╚══════════════════════════════════════════════════════════════════╝"
             )
 
-        self._api_key = api_key
+        self._api_key = resolved_api_key
         self._api_base = self.API_BASE
         self._type = 'JSON'
         self._query_page_name = 'page'
@@ -92,13 +114,16 @@ class ScraperNYT(BaseScraper):
         Args:
             texto: Termo de busca
             ano: Ano para filtrar (usa ano inteiro)
-            data_inicio: Data inicial no formato YYYY-MM-DD
-            data_fim: Data final no formato YYYY-MM-DD
+            data_inicio: Data inicial (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD)
+            data_fim: Data final (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD)
             sort: Ordenação ('best', 'newest', 'oldest', 'relevance')
             filtro: Filtro adicional em sintaxe Lucene (fq)
 
         Returns:
             dict: Parâmetros da query
+
+        Note:
+            As datas são validadas automaticamente pelo BaseScraper._validar_parametros()
         """
         texto = kwargs.get('texto', '')
         ano = kwargs.get('ano')
@@ -119,7 +144,8 @@ class ScraperNYT(BaseScraper):
             "sort": sort,
         }
 
-        # Formatar datas para YYYYMMDD
+        # Formatar datas para YYYYMMDD (formato exigido pela API do NYT)
+        # Datas já foram validadas e normalizadas para YYYY-MM-DD pelo BaseScraper
         if data_inicio:
             params["begin_date"] = data_inicio.replace("-", "")
         if data_fim:
@@ -132,23 +158,35 @@ class ScraperNYT(BaseScraper):
         return params
 
     def _find_n_pags(self, r0) -> int:
-        """Extrai o número total de páginas."""
+        """Extrai o número total de páginas.
+
+        Note:
+            Erros 429 (rate limit) e 5xx são tratados automaticamente pelo
+            BaseScraper._request_with_retry() antes de chegar aqui.
+
+        Raises:
+            APIKeyError: Se a API key for inválida ou expirada (401).
+            APIError: Se ocorrer outro erro de API.
+        """
         if r0.status_code == 401:
-            self.logger.error("API key inválida ou expirada")
-            return 0
-        if r0.status_code == 429:
-            self.logger.error("Rate limit excedido. Aguarde antes de tentar novamente.")
-            return 0
+            raise APIKeyError(
+                "API key inválida ou expirada. Verifique sua chave em:\n"
+                "https://developer.nytimes.com/my-apps"
+            )
+
         if r0.status_code >= 400:
-            self.logger.warning(f"Erro {r0.status_code}: {r0.text[:200]}")
-            return 0
+            raise APIError(
+                f"Erro na API do NYT: {r0.status_code}",
+                status_code=r0.status_code,
+                response_text=r0.text
+            )
 
         try:
             data = r0.json()
 
             if data.get('status') != 'OK':
-                self.logger.error(f"Resposta inválida: {data}")
-                return 0
+                error_msg = data.get('message', str(data))
+                raise APIError(f"Resposta inválida da API: {error_msg}")
 
             meta = data.get('response', {}).get('meta', {})
             total_hits = meta.get('hits', 0)
@@ -161,6 +199,8 @@ class ScraperNYT(BaseScraper):
             self.logger.info(f"Total de resultados: {total_hits}, páginas: {n_pags}")
             return n_pags
 
+        except (APIKeyError, APIError):
+            raise
         except Exception as e:
             self.logger.error(f"Erro ao extrair n_pags: {e}")
             return 0
@@ -183,16 +223,22 @@ class ScraperNYT(BaseScraper):
 
             articles = []
             for doc in docs:
-                # Extrair imagem (thumbnail ou default)
+                # Extrair imagem da lista multimedia
+                # A API retorna objetos com 'url', 'type', 'subtype', etc.
                 imagem_url = ''
                 multimedia = doc.get('multimedia', [])
-                if multimedia:
+                if multimedia and isinstance(multimedia, list):
                     for media in multimedia:
-                        if media.get('default'):
-                            imagem_url = media['default'].get('url', '')
+                        # Prioriza imagens maiores (xlarge > large > thumbnail)
+                        subtype = media.get('subtype', '')
+                        if subtype in ('xlarge', 'superJumbo', 'articleLarge'):
+                            imagem_url = f"https://www.nytimes.com/{media.get('url', '')}"
                             break
-                        elif media.get('thumbnail'):
-                            imagem_url = media['thumbnail'].get('url', '')
+                    # Fallback para qualquer imagem disponível
+                    if not imagem_url and multimedia:
+                        first_media = multimedia[0]
+                        if first_media.get('url'):
+                            imagem_url = f"https://www.nytimes.com/{first_media['url']}"
 
                 # Extrair autor
                 byline = doc.get('byline', {})

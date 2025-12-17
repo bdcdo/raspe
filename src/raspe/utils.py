@@ -6,6 +6,8 @@ import requests
 from bs4 import BeautifulSoup as bs
 import time
 
+from raspe.exceptions import ValidationError
+
 def expand(expression: str) -> list[str]:
     """
     Transforms a complex search expression with logical operators into a list
@@ -171,7 +173,7 @@ def extract(df, col):
 
 def check(df):
     df_count = df.copy()
-    
+
     set_of_words = set(' '.join(df_count.termo_busca.unique()).split())
 
     for word in set_of_words:
@@ -181,3 +183,97 @@ def check(df):
         df_count[word] = df_count.apply(lambda row: len(re.findall(pattern, row['link_content'].lower())), axis=1)
 
     return df_count
+
+
+def validar_data(data: str | None, nome_param: str = "data") -> str | None:
+    """Valida e normaliza uma string de data.
+
+    Aceita datas nos formatos:
+    - YYYY-MM-DD (ISO 8601)
+    - DD/MM/YYYY (brasileiro)
+    - YYYYMMDD (compacto)
+
+    Args:
+        data: String de data a ser validada, ou None.
+        nome_param: Nome do parâmetro para mensagens de erro.
+
+    Returns:
+        Data normalizada no formato YYYY-MM-DD, ou None se input for None.
+
+    Raises:
+        ValidationError: Se a data estiver em formato inválido ou for uma data impossível.
+
+    Examples:
+        >>> validar_data("2024-01-15")
+        '2024-01-15'
+        >>> validar_data("15/01/2024")
+        '2024-01-15'
+        >>> validar_data("20240115")
+        '2024-01-15'
+        >>> validar_data(None)
+        None
+    """
+    if data is None:
+        return None
+
+    data = str(data).strip()
+
+    if not data:
+        return None
+
+    formatos = [
+        ("%Y-%m-%d", r"^\d{4}-\d{2}-\d{2}$"),      # ISO 8601
+        ("%d/%m/%Y", r"^\d{2}/\d{2}/\d{4}$"),      # Brasileiro
+        ("%Y%m%d", r"^\d{8}$"),                     # Compacto
+    ]
+
+    for formato, regex in formatos:
+        if re.match(regex, data):
+            try:
+                parsed = datetime.strptime(data, formato)
+                return parsed.strftime("%Y-%m-%d")
+            except ValueError:
+                raise ValidationError(
+                    f"'{nome_param}' contém uma data impossível: '{data}'. "
+                    f"Verifique se dia/mês/ano estão corretos."
+                )
+
+    raise ValidationError(
+        f"'{nome_param}' está em formato inválido: '{data}'. "
+        f"Use um dos formatos: YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD."
+    )
+
+
+def validar_intervalo_datas(
+    data_inicio: str | None,
+    data_fim: str | None,
+    nome_inicio: str = "data_inicio",
+    nome_fim: str = "data_fim"
+) -> tuple[str | None, str | None]:
+    """Valida um intervalo de datas.
+
+    Verifica se as datas estão em formato válido e se data_inicio <= data_fim.
+
+    Args:
+        data_inicio: Data de início do intervalo.
+        data_fim: Data de fim do intervalo.
+        nome_inicio: Nome do parâmetro de início para mensagens de erro.
+        nome_fim: Nome do parâmetro de fim para mensagens de erro.
+
+    Returns:
+        Tupla com (data_inicio, data_fim) normalizadas no formato YYYY-MM-DD.
+
+    Raises:
+        ValidationError: Se alguma data for inválida ou data_inicio > data_fim.
+    """
+    inicio_norm = validar_data(data_inicio, nome_inicio)
+    fim_norm = validar_data(data_fim, nome_fim)
+
+    if inicio_norm and fim_norm:
+        if inicio_norm > fim_norm:
+            raise ValidationError(
+                f"'{nome_inicio}' ({inicio_norm}) não pode ser posterior a "
+                f"'{nome_fim}' ({fim_norm})."
+            )
+
+    return inicio_norm, fim_norm
