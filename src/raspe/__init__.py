@@ -80,14 +80,19 @@ def cfm(**kwargs):
     """
     return ScraperCFM(**kwargs)
 
-def nyt(**kwargs):
+def nyt(api_key: str, **kwargs):
     """
-    Cria um raspador para o buscador do New York Times.
+    Cria um raspador para o New York Times (requer API key).
+
+    Obtenha uma API key gratuita em: https://developer.nytimes.com/get-started
+
+    Args:
+        api_key: Chave de API do NYT Developer Portal.
 
     Returns:
         ScraperNYT: Instância configurada do raspador.
     """
-    return ScraperNYT(**kwargs)
+    return ScraperNYT(api_key=api_key, **kwargs)
 
 __all__ = [
     "presidencia",
