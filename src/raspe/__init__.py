@@ -21,6 +21,7 @@ from .scrapers.presidencia import ScraperPresidencia
 from .scrapers.comunicaCNJ import comunicaCNJ_Scraper
 from .scrapers.ipea import IpeaScraper
 from .scrapers.cfm import ScraperCFM
+from .scrapers.nyt import ScraperNYT
 from .utils import expand, remove_duplicates, extract, check
 
 __version__ = version("raspe")
@@ -79,6 +80,15 @@ def cfm(**kwargs):
     """
     return ScraperCFM(**kwargs)
 
+def nyt(**kwargs):
+    """
+    Cria um raspador para o buscador do New York Times.
+
+    Returns:
+        ScraperNYT: Instância configurada do raspador.
+    """
+    return ScraperNYT(**kwargs)
+
 __all__ = [
     "presidencia",
     "cnj",
@@ -86,6 +96,7 @@ __all__ = [
     "senado",
     "camara",
     "cfm",
+    "nyt",
     "expand",
     "remove_duplicates",
     "extract",
