@@ -1,7 +1,73 @@
-.venv
-/dev
-/.claude
-/.pytest_cache
-/__pycache__
-/.windsurf
-/htmlcov
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Desenvolvimento local
+/dev/
+
+# IDEs e editores
+/.claude/
+/.windsurf/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Testes
+/.pytest_cache/
+.pytest_cache/
+/htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+.nox/
+
+# Distribuição / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+.eggs/
+*.manifest
+*.spec
+pip-wheel-metadata/
+share/python-wheels/
+MANIFEST
+
+# Instalação
+*.whl
+
+# Logs
+*.log
+
+# Arquivos de ambiente
+.env
+.env.*
+
+# MyPy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# UV
+uv.lock
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
