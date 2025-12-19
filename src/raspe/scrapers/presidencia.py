@@ -7,10 +7,17 @@ import tempfile
 import requests
 import re
 import time
+import urllib3
 
 class ScraperPresidencia(BaseScraper, HTMLScraper):
     def __init__(self):
         super().__init__("PRESIDENCIA")
+
+        # Workaround: O servidor da Presidência tem cadeia de certificados SSL incompleta.
+        # Desabilita verificação SSL para evitar SSLError.
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        self.session.verify = False
+
         self.query_page_multiplier = 10
         self.query_page_increment = -10
         self.session.headers.update({
