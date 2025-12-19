@@ -1,4 +1,4 @@
-# Diretrizes para o Projeto RasPe
+# Diretrizes para o Projeto raspe
 
 ## Idioma
 
