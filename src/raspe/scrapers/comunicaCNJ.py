@@ -1,20 +1,21 @@
-from typing import Any
+from typing import Any, Literal
 import json
 
 import pandas as pd
 
 from ..base_scraper import BaseScraper
 
+
 class comunicaCNJ_Scraper(BaseScraper):
     """Raspador para o site de Comunicações Processuais do Conselho Nacional de Justiça."""
 
-    def __init__(self, download_path = None):
+    def __init__(self):
         super().__init__("CNJ")
-        self.api_base = 'https://comunicaapi.pje.jus.br/api/v1/comunicacao'
-        self.type = 'json'
-        self.query_page_name = 'pagina'
-        self._set_download_path(download_path)
-        self.api_method = 'GET'
+
+        self._api_base = 'https://comunicaapi.pje.jus.br/api/v1/comunicacao'
+        self._type = 'JSON'
+        self._query_page_name = 'pagina'
+        self._api_method = 'GET'
 
         self.session.headers.update({
             "Accept": "application/json, text/plain, */*",
@@ -28,14 +29,28 @@ class comunicaCNJ_Scraper(BaseScraper):
             "Sec-Fetch-Site": "same-site",
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0"
         })
-    
+
+    @property
+    def api_base(self) -> str:
+        return self._api_base
+
+    @property
+    def type(self) -> Literal['JSON', 'HTML']:
+        return self._type
+
+    @property
+    def query_page_name(self) -> str:
+        return self._query_page_name
+
+    @property
+    def api_method(self) -> Literal['GET', 'POST']:
+        return self._api_method
+
     def _set_query_base(self, **kwargs):
         pesquisa = kwargs.get('pesquisa')
         data_inicio = kwargs.get('data_inicio')
-        data_fim = kwargs.get('data_fim')        
+        data_fim = kwargs.get('data_fim')
 
-        self._config()
-        
         query_inicial = {
                 'itensPorPagina': 5,
                 'texto': pesquisa,
@@ -50,10 +65,7 @@ class comunicaCNJ_Scraper(BaseScraper):
         return query_inicial
         
     def _find_n_pags(self, r0):
-        if r0.status_code >= 500:
-            self.logger.error(f"Erro do servidor {r0.status_code}, tentando novamente em {wait_time}s")
-            time.sleep(wait_time)
-        
+        # Erros 429 e 5xx são tratados automaticamente pelo BaseScraper._request_with_retry()
         r0.raise_for_status()
         try:
             data = r0.json()

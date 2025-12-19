@@ -73,10 +73,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         return query_inicial
 
     def _find_n_pags(self, r0) -> int:
-        if r0.status_code >= 500:
-            self.logger.warning(f"Server error {r0.status_code} for URL {r0.url}, returning 0 pages")
-            return 0
-        
+        # Erros 429 e 5xx são tratados automaticamente pelo BaseScraper._request_with_retry()
         r0.raise_for_status()
 
         r0s = self.soup_it(r0.content)

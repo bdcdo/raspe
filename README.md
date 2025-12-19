@@ -21,6 +21,7 @@ O RasPe automatiza a coleta de dados de fontes oficiais brasileiras:
 - 📜 **Senado Federal** - Projetos de lei e atividade legislativa
 - ⚖️ **CNJ (Conselho Nacional de Justiça)** - Comunicados e normas
 - 📊 **IPEA** - Estudos e pesquisas econômicas aplicadas
+- 🗽 **New York Times** - Artigos do jornal americano (requer API key gratuita)
 
 **O resultado:** Todos os dados organizados em tabelas prontas para análise no Excel, Python, R ou qualquer ferramenta de sua preferência.
 
@@ -149,6 +150,70 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 | Senado | `raspe.senado()` | Projetos de lei e atividades do Senado |
 | CNJ | `raspe.cnj()` | Comunicados e normas do CNJ |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
+| NYT | `raspe.nyt(api_key="...")` | Artigos do New York Times (requer API key) |
+
+---
+
+## 🗽 New York Times (NYT)
+
+O raspador do New York Times utiliza a **API oficial** do jornal, que requer uma chave de acesso gratuita.
+
+### Obtendo sua API Key
+
+1. Acesse [developer.nytimes.com/get-started](https://developer.nytimes.com/get-started)
+2. Crie uma conta gratuita
+3. Crie um novo "App" e ative a "Article Search API"
+4. Copie sua API key
+
+### Exemplo de uso
+
+```python
+import raspe
+
+# Criar raspador com sua API key
+nyt = raspe.nyt(api_key="sua-api-key-aqui")
+
+# Busca simples
+dados = nyt.raspar(texto="climate change", ano=2024)
+
+# Busca com intervalo de datas
+dados = nyt.raspar(
+    texto="Brazil",
+    data_inicio="2024-01-01",
+    data_fim="2024-06-30"
+)
+
+# Busca com filtros avançados (seção específica)
+dados = nyt.raspar(
+    texto="election",
+    ano=2024,
+    filtro='section.name:"Politics"'
+)
+
+# Salvar resultados
+dados.to_excel("artigos_nyt.xlsx", index=False)
+```
+
+### Limites da API
+
+- **10 resultados por página**, máximo de **1000 resultados** por busca
+- **Rate limit**: 5 requisições por minuto, 500 por dia
+- Se precisar de mais resultados, divida sua busca por intervalos de datas
+
+---
+
+## 🛡️ Robustez e Validações
+
+### Retry Automático
+
+O RasPe tenta novamente automaticamente quando encontra problemas temporários de conexão ou quando o servidor está sobrecarregado. Você não precisa fazer nada - é tudo automático.
+
+### Formatos de Data Aceitos
+
+Quando usar datas (como `data_inicio` e `data_fim`), você pode usar qualquer um destes formatos:
+- `2024-01-15` (ano-mês-dia)
+- `15/01/2024` (dia/mês/ano)
+- `20240115` (sem separadores)
 
 ---
 

@@ -21,7 +21,15 @@ from .scrapers.presidencia import ScraperPresidencia
 from .scrapers.comunicaCNJ import comunicaCNJ_Scraper
 from .scrapers.ipea import IpeaScraper
 from .scrapers.cfm import ScraperCFM
-from .utils import expand, remove_duplicates, extract, check
+from .scrapers.nyt import ScraperNYT
+from .utils import expand, remove_duplicates, extract, check, validar_data, validar_intervalo_datas
+from .exceptions import (
+    ScraperError,
+    APIKeyError,
+    RateLimitError,
+    APIError,
+    ValidationError,
+)
 
 __version__ = version("raspe")
 
@@ -79,15 +87,44 @@ def cfm(**kwargs):
     """
     return ScraperCFM(**kwargs)
 
+def nyt(api_key: str | None = None, **kwargs):
+    """
+    Cria um raspador para o New York Times (requer API key).
+
+    Obtenha uma API key gratuita em: https://developer.nytimes.com/get-started
+
+    Args:
+        api_key: Chave de API do NYT Developer Portal.
+                 Também pode ser configurada via variável de ambiente NYT_API_KEY.
+
+    Returns:
+        ScraperNYT: Instância configurada do raspador.
+
+    Raises:
+        APIKeyError: Se nenhuma API key for fornecida ou encontrada.
+    """
+    return ScraperNYT(api_key=api_key, **kwargs)
+
 __all__ = [
+    # Scrapers
     "presidencia",
     "cnj",
     "ipea",
     "senado",
     "camara",
     "cfm",
+    "nyt",
+    # Utilitários
     "expand",
     "remove_duplicates",
     "extract",
-    "check"
+    "check",
+    "validar_data",
+    "validar_intervalo_datas",
+    # Exceções
+    "ScraperError",
+    "APIKeyError",
+    "RateLimitError",
+    "APIError",
+    "ValidationError",
 ]

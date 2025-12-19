@@ -108,16 +108,15 @@ class ScraperCFM(BaseScraper, HTMLScraper):
     def _find_n_pags(self, r0) -> int:
         """Extrai o número total de páginas da resposta inicial.
 
+        Note:
+            Erros 429 e 5xx são tratados automaticamente pelo BaseScraper._request_with_retry()
+
         Args:
             r0: Response da requisição inicial
 
         Returns:
             int: Número total de páginas
         """
-        if r0.status_code >= 500:
-            self.logger.warning(f"Server error {r0.status_code} for URL {r0.url}, returning 0 pages")
-            return 0
-
         r0.raise_for_status()
 
         soup = self.soup_it(r0.content)

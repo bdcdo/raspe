@@ -27,7 +27,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Literal
 from datetime import datetime
 from tqdm import tqdm
-from raspe.utils import start_session
+from raspe.utils import start_session, validar_intervalo_datas
+from raspe.exceptions import RateLimitError, APIError, ValidationError
 import pandas as pd
 import requests
 import os
@@ -116,9 +117,54 @@ class BaseScraper(ABC):
         self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
 
+    def _validar_parametros(self, **kwargs) -> dict[str, Any]:
+        """Valida e normaliza parâmetros de busca antes da raspagem.
+
+        Este método valida parâmetros comuns como datas. Subclasses podem
+        sobrescrever para adicionar validações específicas, mas devem chamar
+        super()._validar_parametros(**kwargs) para manter as validações base.
+
+        Args:
+            **kwargs: Parâmetros de busca a serem validados.
+
+        Returns:
+            dict: Parâmetros validados e normalizados.
+
+        Raises:
+            ValidationError: Se algum parâmetro for inválido.
+        """
+        params = dict(kwargs)
+
+        # Valida parâmetros de data comuns
+        # Detecta automaticamente parâmetros que parecem ser datas
+        data_params = [
+            ('data_inicio', 'data_fim'),
+            ('data_inicial', 'data_final'),
+            ('inicio', 'fim'),
+            ('begin_date', 'end_date'),
+        ]
+
+        for inicio_key, fim_key in data_params:
+            if inicio_key in params or fim_key in params:
+                data_inicio = params.get(inicio_key)
+                data_fim = params.get(fim_key)
+
+                inicio_norm, fim_norm = validar_intervalo_datas(
+                    data_inicio, data_fim,
+                    nome_inicio=inicio_key,
+                    nome_fim=fim_key
+                )
+
+                if inicio_norm:
+                    params[inicio_key] = inicio_norm
+                if fim_norm:
+                    params[fim_key] = fim_norm
+
+        return params
+
     def raspar(self, **kwargs) -> pd.DataFrame:
         """Método principal para executar o processo de raspagem de dados.
-        
+
         Args:
             **kwargs: Parâmetros de busca para o raspador. Se algum parâmetro for
                 uma lista/tupla, o raspador processará cada valor na sequência.
@@ -127,12 +173,15 @@ class BaseScraper(ABC):
 
         Returns:
             pd.DataFrame: DataFrame combinado com todos os dados raspados.
-            
+
         Raises:
             ValueError: Se múltiplos parâmetros forem fornecidos como listas/tuplas.
+            ValidationError: Se algum parâmetro for inválido.
         """
 
-        # TODO: Revisar a lógica
+        # Valida parâmetros antes de iniciar
+        kwargs = self._validar_parametros(**kwargs)
+
         self.logger.info(f"Iniciando raspagem com parâmetros {kwargs}")
         # Suporte a lista de valores de busca
         list_keys = [k for k, v in kwargs.items() if isinstance(v, (list, tuple)) and k != "paginas"]
@@ -238,44 +287,34 @@ class BaseScraper(ABC):
 
     def _get_n_pags(self, query_inicial):
         """
-        Tenta obter o número total de páginas para uma consulta.
+        Obtém o número total de páginas para uma consulta.
 
-        Faz uma requisição para a URL com a query_inicial e extrai o número
-        total de páginas do conteúdo da resposta. Se ocorrer um erro de servidor
-        (status code 500 ou maior), registra e tenta novamente em 2, 4, 8, ...
-        segundos até atingir o limite de tentativas.
+        Usa _request_with_retry() para fazer a requisição inicial com retry
+        automático para erros de rate limit (429) e erros de servidor (5xx).
 
         Args:
             query_inicial: Dicionário com a query a ser enviada para a API.
 
         Returns:
             int: Número total de páginas encontradas para a consulta.
+                 Retorna 0 em caso de erro.
         """
-        # Inicializa a variável de retorno com None para que possa ser detectado
-        # um erro de servidor e não um erro de extração de conteúdo
-        contagem = None
-        
-        for attempt in range(self.max_retries):
-            self.logger.debug(f"Enviando r0 (tentativa {attempt + 1}/{self.max_retries})")
-            
-            r0 = self._set_r(query_inicial)
-            self.logger.debug(r0)
+        self.logger.debug("Enviando requisição inicial com retry automático")
 
-            if r0.status_code < 500:
-                break
-            
-            if attempt < self.max_retries - 1:
-                wait_time = 2 ** attempt
-                self.logger.warning(f"Erro do servidor {r0.status_code}, tentando novamente em {wait_time}s")
-                time.sleep(wait_time)
+        try:
+            r0 = self._request_with_retry(query_inicial)
+        except (RateLimitError, APIError) as e:
+            self.logger.error(f"Erro na requisição inicial: {e}")
+            return 0
 
-        self.logger.debug(f"Encontrando n_pags")
+        self.logger.debug(f"Encontrando n_pags (status: {r0.status_code})")
         contagem = self._find_n_pags(r0)
 
         if contagem is None:
-            self.logger.error(f"Erro ao extrair n_pags: {r0.text}")
-        
-        self.logger.debug(f"Encontradas {contagem} páginas para consulta {query_inicial}")
+            self.logger.error(f"Erro ao extrair n_pags: {r0.text[:200] if r0.text else 'sem conteúdo'}")
+            contagem = 0
+
+        self.logger.debug(f"Encontradas {contagem} páginas")
         return contagem
 
     def _set_paginas(self, paginas, n_pags):
@@ -305,19 +344,89 @@ class BaseScraper(ABC):
     def _set_r(self, query_atual):
         if self.api_method == 'POST':
             r = self.session.post(
-                self.api_base, 
+                self.api_base,
                 data=query_atual,
                 timeout=self.timeout
             )
         elif self.api_method == 'GET':
             r = self.session.get(
-                self.api_base, 
-                params=query_atual, 
+                self.api_base,
+                params=query_atual,
                 timeout=self.timeout
             )
         else:
             raise ValueError(f"Método de API inválido: {self.api_method}")
-        
+
+        return r
+
+    def _request_with_retry(self, query: dict, max_retries: int | None = None) -> requests.Response:
+        """Faz uma requisição com retry automático para rate limit e erros de servidor.
+
+        Implementa exponential backoff para erros 429 (rate limit) e 5xx (servidor).
+        Para 429, tenta usar o header Retry-After se disponível.
+
+        Args:
+            query: Parâmetros da requisição.
+            max_retries: Número máximo de tentativas. Se None, usa self.max_retries.
+
+        Returns:
+            requests.Response: Resposta da requisição.
+
+        Raises:
+            RateLimitError: Se o rate limit persistir após todas as tentativas.
+            APIError: Se ocorrer erro de servidor após todas as tentativas.
+        """
+        retries = max_retries if max_retries is not None else self.max_retries
+
+        for attempt in range(retries):
+            r = self._set_r(query)
+
+            # Sucesso ou erro de cliente (exceto 429)
+            if r.status_code < 400 or (400 <= r.status_code < 500 and r.status_code != 429):
+                return r
+
+            # Rate limit (429)
+            if r.status_code == 429:
+                retry_after = r.headers.get('Retry-After')
+                if retry_after:
+                    try:
+                        wait_time = int(retry_after)
+                    except ValueError:
+                        wait_time = 2 ** attempt
+                else:
+                    wait_time = 2 ** attempt
+
+                if attempt < retries - 1:
+                    self.logger.warning(
+                        f"Rate limit (429). Aguardando {wait_time}s antes de tentar novamente "
+                        f"(tentativa {attempt + 1}/{retries})"
+                    )
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    raise RateLimitError(
+                        f"Rate limit excedido após {retries} tentativas. "
+                        f"Aguarde alguns minutos antes de tentar novamente.",
+                        retry_after=int(retry_after) if retry_after else None
+                    )
+
+            # Erro de servidor (5xx)
+            if r.status_code >= 500:
+                wait_time = 2 ** attempt
+                if attempt < retries - 1:
+                    self.logger.warning(
+                        f"Erro de servidor ({r.status_code}). Aguardando {wait_time}s "
+                        f"(tentativa {attempt + 1}/{retries})"
+                    )
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    raise APIError(
+                        f"Erro de servidor após {retries} tentativas",
+                        status_code=r.status_code,
+                        response_text=r.text
+                    )
+
         return r
 
     @abstractmethod
