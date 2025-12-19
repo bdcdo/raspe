@@ -1,5 +1,5 @@
 """
-Exceções customizadas para o RasPe.
+Exceções customizadas para o raspe.
 
 Este módulo define exceções específicas para erros comuns durante
 operações de web scraping, permitindo tratamento de erros mais

@@ -1,5 +1,5 @@
 """
-RasPe - Raspadores para Pesquisas Acadêmicas
+raspe - Raspadores para Pesquisas Acadêmicas
 
 Biblioteca Python para coleta automatizada de dados de fontes brasileiras.
 Fornece acesso simplificado a dados legislativos, jurídicos e acadêmicos.
