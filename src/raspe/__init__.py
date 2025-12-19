@@ -22,6 +22,7 @@ from .scrapers.comunicaCNJ import comunicaCNJ_Scraper
 from .scrapers.ipea import IpeaScraper
 from .scrapers.cfm import ScraperCFM
 from .scrapers.nyt import ScraperNYT
+from .scrapers.folha import ScraperFolha
 from .utils import expand, remove_duplicates, extract, check, validar_data, validar_intervalo_datas
 from .exceptions import (
     ScraperError,
@@ -105,6 +106,21 @@ def nyt(api_key: str | None = None, **kwargs):
     """
     return ScraperNYT(api_key=api_key, **kwargs)
 
+def folha(**kwargs):
+    """
+    Cria um raspador para a Folha de São Paulo.
+
+    Args:
+        pesquisa: Termo de busca.
+        site: 'todos', 'online' ou 'jornal' (default: 'todos').
+        data_inicio: Data inicial no formato YYYY-MM-DD.
+        data_fim: Data final no formato YYYY-MM-DD.
+
+    Returns:
+        ScraperFolha: Instância configurada do raspador.
+    """
+    return ScraperFolha(**kwargs)
+
 __all__ = [
     # Scrapers
     "presidencia",
@@ -114,6 +130,7 @@ __all__ = [
     "camara",
     "cfm",
     "nyt",
+    "folha",
     # Utilitários
     "expand",
     "remove_duplicates",
