@@ -21,6 +21,7 @@ O RasPe automatiza a coleta de dados de fontes oficiais brasileiras:
 - 📜 **Senado Federal** - Projetos de lei e atividade legislativa
 - ⚖️ **CNJ (Conselho Nacional de Justiça)** - Comunicados e normas
 - 📊 **IPEA** - Estudos e pesquisas econômicas aplicadas
+- 📰 **Folha de São Paulo** - Notícias e artigos do jornal brasileiro
 - 🗽 **New York Times** - Artigos do jornal americano (requer API key gratuita)
 
 **O resultado:** Todos os dados organizados em tabelas prontas para análise no Excel, Python, R ou qualquer ferramenta de sua preferência.
@@ -150,7 +151,53 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 | Senado | `raspe.senado()` | Projetos de lei e atividades do Senado |
 | CNJ | `raspe.cnj()` | Comunicados e normas do CNJ |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
+| Folha | `raspe.folha()` | Notícias da Folha de São Paulo |
 | NYT | `raspe.nyt(api_key="...")` | Artigos do New York Times (requer API key) |
+
+---
+
+## 📰 Folha de São Paulo
+
+O raspador da Folha de São Paulo permite buscar notícias por termo de pesquisa, filtrar por tipo de conteúdo e período.
+
+### Exemplo de uso
+
+```python
+import raspe
+
+# Criar raspador
+folha = raspe.folha()
+
+# Busca simples
+dados = folha.raspar(pesquisa="educação")
+
+# Busca com filtros
+dados = folha.raspar(
+    pesquisa="reforma tributária",
+    site="online",  # 'todos', 'online' ou 'jornal'
+    data_inicio="2024-01-01",
+    data_fim="2024-12-31"
+)
+
+# Salvar resultados
+dados.to_excel("noticias_folha.xlsx", index=False)
+```
+
+### Parâmetros disponíveis
+
+| Parâmetro | Descrição | Valores |
+|-----------|-----------|---------|
+| `pesquisa` | Termo de busca | Texto livre |
+| `site` | Tipo de conteúdo | `'todos'` (padrão), `'online'`, `'jornal'` |
+| `data_inicio` | Data inicial | `YYYY-MM-DD`, `DD/MM/YYYY` ou `YYYYMMDD` |
+| `data_fim` | Data final | `YYYY-MM-DD`, `DD/MM/YYYY` ou `YYYYMMDD` |
+
+### Dados retornados
+
+- **link**: URL da notícia
+- **titulo**: Título da matéria
+- **resumo**: Resumo/lead da notícia
+- **data**: Data de publicação
 
 ---
 

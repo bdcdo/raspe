@@ -1,3 +1,5 @@
+"""Raspador para busca de artigos do New York Times."""
+
 import os
 
 from ..base_scraper import BaseScraper
@@ -8,7 +10,7 @@ import json
 
 
 class ScraperNYT(BaseScraper):
-    """Scraper para o New York Times via Article Search API oficial.
+    """Raspador para o New York Times via Article Search API oficial.
 
     Requer uma API key gratuita do NYT Developer Portal:
     https://developer.nytimes.com/get-started
@@ -46,7 +48,7 @@ class ScraperNYT(BaseScraper):
     MAX_PAGES = 100
 
     def __init__(self, api_key: str | None = None):
-        """Inicializa o scraper do NYT.
+        """Inicializa o raspador do NYT.
 
         Args:
             api_key: Chave de API do NYT Developer Portal.
@@ -93,66 +95,6 @@ class ScraperNYT(BaseScraper):
         # API do NYT usa página 0 como primeira página
         self.query_page_increment = -1
 
-        # Valida a API key fazendo uma requisição de teste
-        self._validar_api_key()
-
-    def _validar_api_key(self) -> None:
-        """Valida a API key fazendo uma requisição de teste.
-
-        Faz uma busca mínima para verificar se a API key é válida.
-        Isso permite falhar rapidamente na inicialização ao invés de
-        descobrir o erro apenas durante a raspagem.
-
-        Raises:
-            APIKeyError: Se a API key for inválida ou expirada.
-            APIError: Se ocorrer outro erro na validação.
-        """
-        self.logger.debug("Validando API key com requisição de teste...")
-
-        test_params = {
-            "api-key": self._api_key,
-            "q": "test",
-            "page": 0,
-        }
-
-        try:
-            r = self.session.get(self.API_BASE, params=test_params, timeout=self.timeout)
-
-            if r.status_code == 401:
-                raise APIKeyError(
-                    "API key inválida ou expirada. Verifique sua chave em:\n"
-                    "https://developer.nytimes.com/my-apps"
-                )
-
-            if r.status_code == 429:
-                # Rate limit na validação - a key provavelmente é válida
-                self.logger.warning(
-                    "Rate limit durante validação da API key. "
-                    "A chave será validada na primeira busca."
-                )
-                return
-
-            if r.status_code >= 400:
-                raise APIError(
-                    f"Erro ao validar API key: {r.status_code}",
-                    status_code=r.status_code,
-                    response_text=r.text
-                )
-
-            # Verifica se a resposta é válida
-            data = r.json()
-            if data.get('status') != 'OK':
-                error_msg = data.get('message', str(data))
-                raise APIError(f"Resposta inválida da API: {error_msg}")
-
-            self.logger.debug("API key validada com sucesso")
-
-        except (APIKeyError, APIError):
-            raise
-        except Exception as e:
-            self.logger.warning(f"Não foi possível validar API key: {e}")
-            # Não falha aqui - permite continuar e falhar na primeira busca real
-
     @property
     def api_base(self) -> str:
         return self._api_base
@@ -173,18 +115,18 @@ class ScraperNYT(BaseScraper):
         """Monta os parâmetros base da query.
 
         Args:
-            texto: Termo de busca
-            ano: Ano para filtrar (usa ano inteiro)
-            data_inicio: Data inicial (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD)
-            data_fim: Data final (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD)
-            sort: Ordenação ('best', 'newest', 'oldest', 'relevance')
-            filtro: Filtro adicional em sintaxe Lucene (fq)
+            texto: Termo de busca.
+            ano: Ano para filtrar (usa ano inteiro).
+            data_inicio: Data inicial (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD).
+            data_fim: Data final (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD).
+            sort: Ordenação ('best', 'newest', 'oldest', 'relevance').
+            filtro: Filtro adicional em sintaxe Lucene (fq).
 
         Returns:
-            dict: Parâmetros da query
+            Dicionário com os parâmetros da query.
 
         Note:
-            As datas são validadas automaticamente pelo BaseScraper._validar_parametros()
+            As datas são validadas automaticamente pelo BaseScraper._validar_parametros().
         """
         texto = kwargs.get('texto', '')
         ano = kwargs.get('ano')
@@ -219,15 +161,21 @@ class ScraperNYT(BaseScraper):
         return params
 
     def _find_n_pags(self, r0) -> int:
-        """Extrai o número total de páginas.
+        """Extrai o número total de páginas da resposta inicial.
 
-        Note:
-            Erros 429 (rate limit) e 5xx são tratados automaticamente pelo
-            BaseScraper._request_with_retry() antes de chegar aqui.
+        Args:
+            r0: Resposta da requisição inicial.
+
+        Returns:
+            Número total de páginas (máximo 100 devido a limite da API).
 
         Raises:
             APIKeyError: Se a API key for inválida ou expirada (401).
             APIError: Se ocorrer outro erro de API.
+
+        Note:
+            Erros 429 (rate limit) e 5xx são tratados automaticamente pelo
+            BaseScraper._request_with_retry() antes de chegar aqui.
         """
         if r0.status_code == 401:
             raise APIKeyError(
@@ -267,7 +215,15 @@ class ScraperNYT(BaseScraper):
             return 0
 
     def _parse_page(self, path: str) -> pd.DataFrame:
-        """Analisa uma página JSON e extrai os artigos."""
+        """Analisa uma página JSON e extrai os artigos.
+
+        Args:
+            path: Caminho do arquivo JSON salvo.
+
+        Returns:
+            DataFrame com as colunas: titulo, url, data_publicacao, secao,
+            desk, tipo, resumo, autor, palavras, imagem_url.
+        """
         columns = [
             'titulo', 'url', 'data_publicacao', 'secao', 'desk',
             'tipo', 'resumo', 'autor', 'palavras', 'imagem_url'

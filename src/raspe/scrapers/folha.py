@@ -1,7 +1,9 @@
-"""Scraper para busca de notícias da Folha de São Paulo."""
+"""Raspador para busca de notícias da Folha de São Paulo."""
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..utils import validar_data
+from ..exceptions import ValidationError
 from typing import Any, Literal
 import pandas as pd
 import re
@@ -23,10 +25,12 @@ class ScraperFolha(BaseScraper, HTMLScraper):
 
     Parâmetros de busca:
         pesquisa: Termo de busca (obrigatório)
-        site: 'todos', 'online' ou 'jornal' (default: 'todos')
+        site: 'todos', 'online' ou 'jornal' (padrão: 'todos')
         data_inicio: Data inicial no formato YYYY-MM-DD (opcional)
         data_fim: Data final no formato YYYY-MM-DD (opcional)
     """
+
+    SITES_VALIDOS = ('todos', 'online', 'jornal')
 
     def __init__(self):
         super().__init__("FOLHA")
@@ -72,23 +76,56 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     def api_method(self) -> Literal['GET', 'POST']:
         return self._api_method
 
-    def _format_date_to_br(self, date_str: str) -> str:
-        """Converte data de YYYY-MM-DD para DD/MM/YYYY."""
-        if not date_str:
+    def _formatar_data_br(self, data_iso: str) -> str:
+        """Converte data normalizada (YYYY-MM-DD) para formato brasileiro (DD/MM/YYYY).
+
+        Args:
+            data_iso: Data no formato ISO (YYYY-MM-DD), já validada por validar_data().
+
+        Returns:
+            Data no formato DD/MM/YYYY para a API da Folha.
+        """
+        if not data_iso:
             return ""
-        parts = date_str.split("-")
-        if len(parts) == 3:
-            return f"{parts[2]}/{parts[1]}/{parts[0]}"
-        return date_str
+        ano, mes, dia = data_iso.split("-")
+        return f"{dia}/{mes}/{ano}"
+
+    def _validar_parametros(self, **kwargs) -> dict[str, Any]:
+        """Valida e normaliza parâmetros de busca.
+
+        Sobrescreve o método base para adicionar validação do parâmetro 'site'.
+
+        Args:
+            **kwargs: Parâmetros de busca.
+
+        Returns:
+            Parâmetros validados e normalizados.
+
+        Raises:
+            ValidationError: Se 'site' não for um valor válido.
+        """
+        params = super()._validar_parametros(**kwargs)
+
+        site = params.get('site', 'todos')
+        if site not in self.SITES_VALIDOS:
+            raise ValidationError(
+                f"'site' deve ser um dos valores: {', '.join(self.SITES_VALIDOS)}. "
+                f"Valor recebido: '{site}'"
+            )
+
+        return params
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta a query base para busca na Folha.
 
         Args:
-            pesquisa: Termo de busca
-            site: 'todos', 'online' ou 'jornal'
-            data_inicio: Data inicial (YYYY-MM-DD)
-            data_fim: Data final (YYYY-MM-DD)
+            pesquisa: Termo de busca.
+            site: 'todos', 'online' ou 'jornal'.
+            data_inicio: Data inicial (aceita vários formatos, será normalizada).
+            data_fim: Data final (aceita vários formatos, será normalizada).
+
+        Returns:
+            Dicionário com os parâmetros da query.
         """
         pesquisa = kwargs.get('pesquisa', '')
         site = kwargs.get('site', 'todos')
@@ -100,16 +137,16 @@ class ScraperFolha(BaseScraper, HTMLScraper):
             'sr': 1
         }
 
-        # Se datas fornecidas, usar periodo='personalizado'
+        # Datas já foram validadas e normalizadas para YYYY-MM-DD pelo BaseScraper
         data_inicio = kwargs.get('data_inicio')
         data_fim = kwargs.get('data_fim')
 
         if data_inicio or data_fim:
             query['periodo'] = 'personalizado'
             if data_inicio:
-                query['sd'] = self._format_date_to_br(data_inicio)
+                query['sd'] = self._formatar_data_br(data_inicio)
             if data_fim:
-                query['ed'] = self._format_date_to_br(data_fim)
+                query['ed'] = self._formatar_data_br(data_fim)
 
         return query
 
@@ -152,7 +189,13 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     def _parse_page(self, path: str) -> pd.DataFrame:
         """Analisa uma página de resultados da Folha.
 
-        Extrai: link, título, resumo, data de cada notícia.
+        Extrai link, título, resumo e data de cada notícia.
+
+        Args:
+            path: Caminho do arquivo HTML salvo.
+
+        Returns:
+            DataFrame com as colunas: link, titulo, resumo, data.
         """
         columns = ['link', 'titulo', 'resumo', 'data']
 
@@ -162,8 +205,8 @@ class ScraperFolha(BaseScraper, HTMLScraper):
 
             soup = self.soup_it(html_content)
 
-            # Estrutura: ol > li (cada notícia)
-            lista_noticias = soup.find("ol")
+            # Estrutura: ol.u-list-unstyled.c-search > li (cada notícia)
+            lista_noticias = soup.find("ol", class_="u-list-unstyled c-search")
             if not lista_noticias:
                 self.logger.warning(f"Lista de notícias não encontrada em {path}")
                 return pd.DataFrame(columns=columns)
