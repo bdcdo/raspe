@@ -61,3 +61,25 @@ class ValidationError(ScraperError):
     como datas em formato incorreto ou valores fora do range permitido.
     """
     pass
+
+
+class SeleniumError(ScraperError):
+    """Exceção para erros relacionados ao Selenium.
+
+    Levantada quando:
+    - Elemento não é encontrado na página
+    - Timeout ao aguardar elemento
+    - Erro de navegação ou interação com o navegador
+    """
+    pass
+
+
+class DriverNotInstalledError(SeleniumError):
+    """Exceção quando Selenium ou ChromeDriver não estão instalados.
+
+    Levantada quando o usuário tenta usar um scraper baseado em Selenium
+    mas não tem as dependências instaladas. Para instalar:
+
+        pip install raspe[selenium]
+    """
+    pass

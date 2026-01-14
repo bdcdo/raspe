@@ -30,6 +30,8 @@ from .exceptions import (
     RateLimitError,
     APIError,
     ValidationError,
+    SeleniumError,
+    DriverNotInstalledError,
 )
 
 __version__ = version("raspe")
@@ -121,8 +123,35 @@ def folha(**kwargs):
     """
     return ScraperFolha(**kwargs)
 
+
+def saudelegis(**kwargs):
+    """
+    Cria um raspador para o portal SaudeLegis do Ministério da Saúde.
+
+    Este scraper usa Selenium para automação de navegador.
+    Requer instalação das dependências: pip install raspe[selenium]
+
+    Args:
+        assunto: Termo de busca no campo assunto.
+        headless: Se True, executa em modo headless (default: True).
+        debug: Se True, mantém arquivos baixados (default: True).
+
+    Returns:
+        ScraperSaudeLegis: Instância configurada do raspador.
+
+    Raises:
+        DriverNotInstalledError: Se Selenium não estiver instalado.
+
+    Exemplo:
+        >>> import raspe
+        >>> df = raspe.saudelegis().raspar(assunto="doença rara")
+    """
+    from .scrapers.saudelegis import ScraperSaudeLegis
+    return ScraperSaudeLegis(**kwargs)
+
+
 __all__ = [
-    # Scrapers
+    # Scrapers HTTP
     "presidencia",
     "cnj",
     "ipea",
@@ -131,6 +160,8 @@ __all__ = [
     "cfm",
     "nyt",
     "folha",
+    # Scrapers Selenium
+    "saudelegis",
     # Utilitários
     "expand",
     "remove_duplicates",
@@ -144,4 +175,6 @@ __all__ = [
     "RateLimitError",
     "APIError",
     "ValidationError",
+    "SeleniumError",
+    "DriverNotInstalledError",
 ]
