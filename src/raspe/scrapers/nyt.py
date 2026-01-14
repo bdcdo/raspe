@@ -197,7 +197,10 @@ class ScraperNYT(BaseScraper):
                 error_msg = data.get('message', str(data))
                 raise APIError(f"Resposta inválida da API: {error_msg}")
 
+            # API mudou de 'meta' para 'metadata' em 2024
             meta = data.get('response', {}).get('meta', {})
+            if not meta:
+                meta = data.get('response', {}).get('metadata', {})
             total_hits = meta.get('hits', 0)
 
             n_pags = (total_hits + self.RESULTS_PER_PAGE - 1) // self.RESULTS_PER_PAGE
