@@ -22,11 +22,18 @@ dependencies = [
     "tenacity>=8.2.3",
     "beautifulsoup4>=4.12.2",
     "tqdm>=4.66.1",
+    "openpyxl>=3.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ipykernel>=7.1.0",
+]
+selenium = [
+    "selenium>=4.15.0",
+]
+all = [
+    "raspe[dev,selenium]",
 ]
 
 [project.urls]

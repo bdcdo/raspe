@@ -1,4 +1,4 @@
-# RasPe - Raspadores para Pesquisas Acadêmicas 🔍📊
+# raspe - Raspadores para Pesquisas Acadêmicas 🔍📊
 
 **Coleta automática de dados de fontes oficiais brasileiras para pesquisa empírica**
 
@@ -6,15 +6,15 @@
 
 ## 📖 Para quem é esta ferramenta?
 
-O **RasPe** foi desenvolvido para **pesquisadores** que precisam coletar grandes volumes de dados de fontes oficiais brasileiras, mas têm pouco ou nenhum conhecimento de programação.
+O **raspe** foi desenvolvido para **pesquisadores** que precisam coletar grandes volumes de dados de fontes oficiais brasileiras, mas têm pouco ou nenhum conhecimento de programação.
 
-**Exemplo prático:** Imagine que você precisa analisar todas as publicações sobre "políticas públicas" dos últimos anos. Fazer isso manualmente levaria semanas. Com o RasPe, você consegue em minutos.
+**Exemplo prático:** Imagine que você precisa analisar todas as publicações sobre "políticas públicas" dos últimos anos. Fazer isso manualmente levaria semanas. Com o raspe, você consegue em minutos.
 
 ---
 
-## 🎯 O que o RasPe faz?
+## 🎯 O que o raspe faz?
 
-O RasPe automatiza a coleta de dados de fontes oficiais brasileiras:
+O raspe automatiza a coleta de dados de fontes oficiais brasileiras:
 
 - 🏛️ **Presidência da República** - Leis, decretos e legislação federal
 - 📋 **Câmara dos Deputados** - Proposições e projetos de lei
@@ -37,7 +37,7 @@ Você precisará ter o **Python** instalado no seu computador. Se ainda não tem
 1. **Windows/Mac:** Baixe em [python.org/downloads](https://www.python.org/downloads/) (versão 3.11 ou superior)
 2. **Linux:** Geralmente já vem instalado. Se não, use: `sudo apt install python3 python3-pip`
 
-### Instalando o RasPe
+### Instalando o raspe
 
 Abra o terminal (no Windows, procure por "Prompt de Comando" ou "PowerShell") e digite:
 
@@ -45,7 +45,7 @@ Abra o terminal (no Windows, procure por "Prompt de Comando" ou "PowerShell") e 
 pip install git+https://github.com/bdcdo/raspe.git
 ```
 
-**Pronto!** O RasPe está instalado e pronto para uso.
+**Pronto!** O raspe está instalado e pronto para uso.
 
 ---
 
@@ -253,7 +253,7 @@ dados.to_excel("artigos_nyt.xlsx", index=False)
 
 ### Retry Automático
 
-O RasPe tenta novamente automaticamente quando encontra problemas temporários de conexão ou quando o servidor está sobrecarregado. Você não precisa fazer nada - é tudo automático.
+O raspe tenta novamente automaticamente quando encontra problemas temporários de conexão ou quando o servidor está sobrecarregado. Você não precisa fazer nada - é tudo automático.
 
 ### Formatos de Data Aceitos
 
@@ -280,18 +280,24 @@ Em tabelas (DataFrames do Pandas), que você pode exportar para Excel, CSV, ou q
 
 ### "Preciso de internet durante a coleta?"
 
-Sim. O RasPe acessa os sites oficiais para coletar os dados em tempo real.
+Sim. O raspe acessa os sites oficiais para coletar os dados em tempo real.
 
 ### "É legal usar isso?"
 
-Sim! Todos os dados coletados são públicos e disponibilizados pelos próprios órgãos oficiais. O RasPe apenas automatiza o que você faria manualmente.
+Sim! Todos os dados coletados são públicos e disponibilizados pelos próprios órgãos oficiais. O raspe apenas automatiza o que você faria manualmente.
 
 ### "E se der erro?"
 
 Os erros mais comuns são:
-- **"ModuleNotFoundError"**: O RasPe não foi instalado corretamente. Reinstale com `pip install git+https://github.com/bdcdo/raspe.git`
+- **"ModuleNotFoundError"**: O raspe não foi instalado corretamente. Reinstale com `pip install git+https://github.com/bdcdo/raspe.git`
 - **"Timeout"**: O site demorou para responder. Tente novamente mais tarde.
 - **"No results found"**: Não há resultados para sua busca. Tente outros termos.
+
+---
+
+## ⚖️ Precisa raspar dados de Tribunais?
+
+O raspe não possui raspadores para tribunais estaduais e federais. Para isso, recomendamos o **[juscraper](https://github.com/jtrecenti/juscraper)**, um projeto Python mantido por [Julio Trecenti](https://github.com/jtrecenti) especializado em raspagem de dados do sistema judiciário brasileiro.
 
 ---
 
@@ -315,14 +321,14 @@ GitHub: [github.com/bdcdo/raspe](https://github.com/bdcdo/raspe)
 
 ---
 
-## 📖 Citando o RasPe em sua Pesquisa
+## 📖 Citando o raspe em sua Pesquisa
 
-Se você usar o RasPe em artigos, dissertações ou teses, considere citá-lo:
+Se você usar o raspe em artigos, dissertações ou teses, considere citá-lo:
 
 ```bibtex
 @software{raspe2025,
   author = {Oliveira, Bruno da Cunha de},
-  title = {RasPe: Raspadores para Pesquisas Acadêmicas},
+  title = {raspe: Raspadores para Pesquisas Acadêmicas},
   year = {2025},
   url = {https://github.com/bdcdo/raspe}
 }
@@ -330,6 +336,6 @@ Se você usar o RasPe em artigos, dissertações ou teses, considere citá-lo:
 
 **Formato ABNT:**
 ```
-OLIVEIRA, Bruno da Cunha de. RasPe: Raspadores para Pesquisas Acadêmicas. 2025.
+OLIVEIRA, Bruno da Cunha de. raspe: Raspadores para Pesquisas Acadêmicas. 2025.
 Disponível em: https://github.com/bdcdo/raspe. Acesso em: [data].
 ```

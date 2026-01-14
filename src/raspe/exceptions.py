@@ -1,5 +1,5 @@
 """
-Exceções customizadas para o RasPe.
+Exceções customizadas para o raspe.
 
 Este módulo define exceções específicas para erros comuns durante
 operações de web scraping, permitindo tratamento de erros mais
@@ -59,5 +59,27 @@ class ValidationError(ScraperError):
 
     Levantada quando parâmetros fornecidos pelo usuário são inválidos,
     como datas em formato incorreto ou valores fora do range permitido.
+    """
+    pass
+
+
+class SeleniumError(ScraperError):
+    """Exceção para erros relacionados ao Selenium.
+
+    Levantada quando:
+    - Elemento não é encontrado na página
+    - Timeout ao aguardar elemento
+    - Erro de navegação ou interação com o navegador
+    """
+    pass
+
+
+class DriverNotInstalledError(SeleniumError):
+    """Exceção quando Selenium ou ChromeDriver não estão instalados.
+
+    Levantada quando o usuário tenta usar um scraper baseado em Selenium
+    mas não tem as dependências instaladas. Para instalar:
+
+        pip install raspe[selenium]
     """
     pass
