@@ -34,7 +34,7 @@ O RasPe automatiza a coleta de dados de fontes oficiais brasileiras:
 
 Você precisará ter o **Python** instalado no seu computador. Se ainda não tem:
 
-1. **Windows/Mac:** Baixe em [python.org/downloads](https://www.python.org/downloads/) (versão 3.11 ou superior)
+1. **Windows/Mac:** Baixe em [python.org/downloads](https://www.python.org/downloads/) (versão 3.10 ou superior)
 2. **Linux:** Geralmente já vem instalado. Se não, use: `sudo apt install python3 python3-pip`
 
 ### Instalando o RasPe
@@ -46,6 +46,22 @@ pip install git+https://github.com/bdcdo/raspe.git
 ```
 
 **Pronto!** O RasPe está instalado e pronto para uso.
+
+### 🎯 Compatibilidade com Google Colab
+
+O RasPe é **totalmente compatível com Google Colab**! Você pode usar a ferramenta diretamente no navegador, sem precisar instalar Python no seu computador.
+
+Para usar no Google Colab:
+
+1. Acesse [colab.research.google.com](https://colab.research.google.com/)
+2. Crie um novo notebook
+3. Na primeira célula, instale o RasPe:
+   ```python
+   !pip install git+https://github.com/bdcdo/raspe.git
+   ```
+4. Execute a célula e comece a usar!
+
+O Google Colab já vem com Python 3.10 pré-instalado, que é perfeitamente compatível com o RasPe.
 
 ---
 
