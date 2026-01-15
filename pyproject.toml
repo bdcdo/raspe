@@ -29,11 +29,12 @@ dependencies = [
 dev = [
     "ipykernel>=7.1.0",
 ]
-selenium = [
-    "selenium>=4.15.0",
+browser = [
+    "playwright>=1.40.0",
+    "playwright-stealth>=1.0.6",
 ]
 all = [
-    "raspe[dev,selenium]",
+    "raspe[dev,browser]",
 ]
 
 [project.urls]

@@ -63,23 +63,29 @@ class ValidationError(ScraperError):
     pass
 
 
-class SeleniumError(ScraperError):
-    """Exceção para erros relacionados ao Selenium.
+class BrowserError(ScraperError):
+    """Exceção para erros relacionados à automação de navegador.
 
     Levantada quando:
     - Elemento não é encontrado na página
     - Timeout ao aguardar elemento
     - Erro de navegação ou interação com o navegador
+    - Falha no bypass do Cloudflare
     """
     pass
 
 
-class DriverNotInstalledError(SeleniumError):
-    """Exceção quando Selenium ou ChromeDriver não estão instalados.
+# Alias para compatibilidade com código existente
+SeleniumError = BrowserError
 
-    Levantada quando o usuário tenta usar um scraper baseado em Selenium
+
+class DriverNotInstalledError(BrowserError):
+    """Exceção quando Playwright não está instalado.
+
+    Levantada quando o usuário tenta usar um scraper baseado em navegador
     mas não tem as dependências instaladas. Para instalar:
 
-        pip install raspe[selenium]
+        pip install raspe[browser]
+        playwright install chromium
     """
     pass

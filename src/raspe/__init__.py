@@ -30,7 +30,8 @@ from .exceptions import (
     RateLimitError,
     APIError,
     ValidationError,
-    SeleniumError,
+    BrowserError,
+    SeleniumError,  # Alias para compatibilidade
     DriverNotInstalledError,
 )
 
@@ -128,8 +129,8 @@ def saudelegis(**kwargs):
     """
     Cria um raspador para o portal SaudeLegis do Ministério da Saúde.
 
-    Este scraper usa Selenium para automação de navegador.
-    Requer instalação das dependências: pip install raspe[selenium]
+    Este scraper usa Playwright para automação de navegador.
+    Requer instalação das dependências: pip install raspe[browser]
 
     Args:
         assunto: Termo de busca no campo assunto.
@@ -140,7 +141,7 @@ def saudelegis(**kwargs):
         ScraperSaudeLegis: Instância configurada do raspador.
 
     Raises:
-        DriverNotInstalledError: Se Selenium não estiver instalado.
+        DriverNotInstalledError: Se Playwright não estiver instalado.
 
     Exemplo:
         >>> import raspe
@@ -148,6 +149,58 @@ def saudelegis(**kwargs):
     """
     from .scrapers.saudelegis import ScraperSaudeLegis
     return ScraperSaudeLegis(**kwargs)
+
+
+def ans(**kwargs):
+    """
+    Cria um raspador para o portal ANSLegis da ANS.
+
+    Este scraper usa Playwright com stealth para bypass do Cloudflare.
+    Requer instalação das dependências: pip install raspe[browser]
+
+    Args:
+        termo: Termo de busca.
+        headless: Se True, executa em modo headless (default: True).
+        debug: Se True, mantém arquivos baixados (default: True).
+
+    Returns:
+        ScraperANS: Instância configurada do raspador.
+
+    Raises:
+        DriverNotInstalledError: Se Playwright não estiver instalado.
+
+    Exemplo:
+        >>> import raspe
+        >>> df = raspe.ans().raspar(termo="doença rara")
+    """
+    from .scrapers.ans import ScraperANS
+    return ScraperANS(**kwargs)
+
+
+def anvisa(**kwargs):
+    """
+    Cria um raspador para o portal ANVISALegis da ANVISA.
+
+    Este scraper usa Playwright com stealth para bypass do Cloudflare.
+    Requer instalação das dependências: pip install raspe[browser]
+
+    Args:
+        termo: Termo de busca.
+        headless: Se True, executa em modo headless (default: True).
+        debug: Se True, mantém arquivos baixados (default: True).
+
+    Returns:
+        ScraperANVISA: Instância configurada do raspador.
+
+    Raises:
+        DriverNotInstalledError: Se Playwright não estiver instalado.
+
+    Exemplo:
+        >>> import raspe
+        >>> df = raspe.anvisa().raspar(termo="doença rara")
+    """
+    from .scrapers.anvisa import ScraperANVISA
+    return ScraperANVISA(**kwargs)
 
 
 __all__ = [
@@ -160,8 +213,10 @@ __all__ = [
     "cfm",
     "nyt",
     "folha",
-    # Scrapers Selenium
+    # Scrapers Browser (Playwright)
     "saudelegis",
+    "ans",
+    "anvisa",
     # Utilitários
     "expand",
     "remove_duplicates",
@@ -175,6 +230,7 @@ __all__ = [
     "RateLimitError",
     "APIError",
     "ValidationError",
-    "SeleniumError",
+    "BrowserError",
+    "SeleniumError",  # Alias para compatibilidade
     "DriverNotInstalledError",
 ]

@@ -1,7 +1,7 @@
 """
 Scraper para o portal SaudeLegis do Ministério da Saúde.
 
-Este scraper usa Selenium para navegar no portal SaudeLegis,
+Este scraper usa Playwright para navegar no portal SaudeLegis,
 que requer JavaScript para funcionar corretamente.
 
 Exemplo:
@@ -10,12 +10,13 @@ Exemplo:
     >>> print(df.head())
 """
 
+import asyncio
 import pandas as pd
 
-from raspe.selenium_scraper import SeleniumScraper, PaginationStrategy
+from raspe.playwright_scraper import PlaywrightScraper, PaginationStrategy
 
 
-class ScraperSaudeLegis(SeleniumScraper):
+class ScraperSaudeLegis(PlaywrightScraper):
     """Scraper para o portal SaudeLegis do Ministério da Saúde.
 
     Coleta normas e legislação sanitária do portal SaudeLegis.
@@ -25,7 +26,7 @@ class ScraperSaudeLegis(SeleniumScraper):
         headless: Se True, executa em modo headless.
 
     Atributos:
-        Herda todos os atributos de SeleniumScraper.
+        Herda todos os atributos de PlaywrightScraper.
 
     Exemplo:
         >>> scraper = ScraperSaudeLegis()
@@ -40,7 +41,6 @@ class ScraperSaudeLegis(SeleniumScraper):
             nome_buscador="SAUDELEGIS",
             debug=debug,
             headless=headless,
-            anti_detection=True,
         )
 
         self._url_base = "https://saudelegis.saude.gov.br/saudelegis/secure/norma/listPublic.xhtml"
@@ -52,13 +52,12 @@ class ScraperSaudeLegis(SeleniumScraper):
         """URL do portal SaudeLegis."""
         return self._url_base
 
-    def _executar_busca(self, **kwargs) -> None:
+    async def _executar_busca(self, **kwargs) -> None:
         """Preenche o formulário de busca e executa a pesquisa.
 
         Args:
             **kwargs: Deve conter 'assunto' com o termo de busca.
         """
-        sel = self._ensure_selenium()
         assunto = kwargs.get('assunto', '')
 
         if not assunto:
@@ -66,49 +65,42 @@ class ScraperSaudeLegis(SeleniumScraper):
 
         # Aguarda o campo de formulário estar disponível
         self.logger.debug("Aguardando campo 'assunto'...")
-        campo_assunto = self._aguardar_elemento(
-            sel['By'].XPATH,
-            '//*[@id="form:assunto"]'
-        )
+        selector_assunto = '#form\\:assunto'
+        await self._aguardar_elemento(selector_assunto)
 
         # Preenche o campo de busca
-        campo_assunto.clear()
-        campo_assunto.send_keys(assunto)
+        await self._preencher_campo(selector_assunto, assunto)
         self.logger.debug(f"Termo de busca: '{assunto}'")
 
         # Aguarda um momento para garantir que o texto foi inserido
-        import time
-        time.sleep(1)
+        await asyncio.sleep(1)
 
         # Clica no botão de busca
         self.logger.debug("Clicando no botão de busca...")
-        self._clicar_elemento(
-            sel['By'].XPATH,
-            '/html/body/div[2]/div/div/div[2]/div/div/form/fieldset/div[7]/div/div/input[1]'
-        )
+        selector_botao = 'input[type="submit"][value="Buscar"], input.ui-button'
+        await self._clicar_elemento(selector_botao)
 
         self.logger.info("Busca executada")
 
-    def _encontrar_total_paginas(self) -> int:
+    async def _encontrar_total_paginas(self) -> int:
         """Determina o número total de páginas de resultados.
 
         Returns:
             int: Número de páginas encontradas.
         """
-        sel = self._ensure_selenium()
+        pw = self._ensure_playwright()
 
         try:
             # Procura links de paginação numérica
-            pagination_links = self._driver.find_elements(
-                sel['By'].XPATH,
-                "//a[contains(@id, 'form:') and string-length(text()) < 3]"
+            pagination_links = await self._page.query_selector_all(
+                "a[id*='form:'][id*='paginator']"
             )
 
             page_numbers = []
             for link in pagination_links:
-                text = link.text.strip()
-                if text.isdigit():
-                    page_numbers.append(int(text))
+                text = await link.text_content()
+                if text and text.strip().isdigit():
+                    page_numbers.append(int(text.strip()))
 
             if page_numbers:
                 total = max(page_numbers)
@@ -116,13 +108,10 @@ class ScraperSaudeLegis(SeleniumScraper):
                 return total
 
             # Se não houver paginação, verifica se há resultados
-            try:
-                table = self._driver.find_element(sel['By'].ID, "form:grid")
-                if table:
-                    self.logger.debug("Tabela encontrada, assumindo 1 página")
-                    return 1
-            except sel['NoSuchElementException']:
-                pass
+            table = await self._page.query_selector("#form\\:grid")
+            if table:
+                self.logger.debug("Tabela encontrada, assumindo 1 página")
+                return 1
 
             return 0
 
@@ -130,7 +119,7 @@ class ScraperSaudeLegis(SeleniumScraper):
             self.logger.warning(f"Erro ao determinar páginas: {e}")
             return 1
 
-    def _paginar_por_numero(self, numero: int) -> bool:
+    async def _paginar_por_numero(self, numero: int) -> bool:
         """Navega para página específica via link numerado.
 
         Sobrescreve o método base para usar seletor específico do SaudeLegis.
@@ -141,22 +130,18 @@ class ScraperSaudeLegis(SeleniumScraper):
         Returns:
             bool: True se navegou com sucesso.
         """
-        sel = self._ensure_selenium()
+        pw = self._ensure_playwright()
 
         try:
             # Seletor específico do SaudeLegis
-            xpath = f"//a[text()='{numero}' and contains(@id, 'form:')]"
-            link = sel['WebDriverWait'](self._driver, 5).until(
-                sel['EC'].element_to_be_clickable((sel['By'].XPATH, xpath))
-            )
+            selector = f"a[id*='form:']:text-is('{numero}')"
+            await self._page.wait_for_selector(selector, timeout=5000)
+            await self._page.click(selector)
 
-            self._driver.execute_script("arguments[0].click();", link)
-
-            import time
-            time.sleep(self.between_pages_wait)
+            await asyncio.sleep(self.between_pages_wait)
             return True
 
-        except sel['TimeoutException']:
+        except pw['PlaywrightTimeout']:
             self.logger.debug(f"Link página {numero} não encontrado")
             return False
 
