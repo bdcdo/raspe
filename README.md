@@ -151,8 +151,74 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 | Senado | `raspe.senado()` | Projetos de lei e atividades do Senado |
 | CNJ | `raspe.cnj()` | Comunicados e normas do CNJ |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
+| CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina |
 | Folha | `raspe.folha()` | Notícias da Folha de São Paulo |
 | NYT | `raspe.nyt(api_key="...")` | Artigos do New York Times (requer API key) |
+| **SaudeLegis** | `raspe.saudelegis()` | Normas do Ministério da Saúde (requer browser) |
+| **ANS** | `raspe.ans()` | Atos da Agência Nacional de Saúde (requer browser) |
+| **ANVISA** | `raspe.anvisa()` | Atos da Agência de Vigilância Sanitária (requer browser) |
+
+---
+
+## 🌐 Raspadores com Navegador (ANS, ANVISA, SaudeLegis)
+
+Algumas fontes possuem proteção anti-bot (Cloudflare) e requerem automação de navegador. Para usar esses raspadores, instale as dependências extras:
+
+### Instalação
+
+```bash
+# Instalar o raspe com suporte a navegador
+pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
+
+# Instalar o navegador Chromium (necessário apenas uma vez)
+python -m playwright install chromium
+```
+
+### Exemplo: ANS (Agência Nacional de Saúde Suplementar)
+
+```python
+import raspe
+
+# Buscar atos normativos sobre doenças raras
+df = raspe.ans().raspar(termo="doença rara")
+df.to_excel("atos_ans.xlsx", index=False)
+```
+
+### Exemplo: ANVISA (Agência de Vigilância Sanitária)
+
+```python
+import raspe
+
+# Buscar atos normativos sobre medicamentos
+df = raspe.anvisa().raspar(termo="medicamento órfão")
+df.to_excel("atos_anvisa.xlsx", index=False)
+```
+
+### Exemplo: SaudeLegis (Ministério da Saúde)
+
+```python
+import raspe
+
+# Buscar normas sanitárias
+df = raspe.saudelegis().raspar(assunto="doença rara")
+df.to_excel("normas_saude.xlsx", index=False)
+```
+
+### Dados retornados (ANS/ANVISA)
+
+- **url**: Link para o ato normativo
+- **titulo**: Tipo e número (ex: RDC nº 205/2017)
+- **descricao**: Ementa do ato
+- **situacao**: Status (vigente, revogado, etc.)
+
+### Modo visual (debug)
+
+Se precisar visualizar o navegador durante a coleta (útil para debug):
+
+```python
+# Executa com navegador visível
+df = raspe.ans(headless=False).raspar(termo="doença rara")
+```
 
 ---
 
