@@ -30,9 +30,8 @@ class ScraperANS(ScraperDatalegis):
     """
 
     _dominio = "anslegis.datalegis.net"
-    _cod_modulo = "575"
-    _cod_menu = "8325"
-    _usuario = "146838"
+    _cod_modulo = "583"  # LEGISLAÇÃO ESTRUTURANTE (público)
+    _cod_menu = "8431"
 
     # Tipos de atos normativos disponíveis na ANS
     _sgl_tipos = (

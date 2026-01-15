@@ -53,8 +53,9 @@ class ScraperDatalegis(PlaywrightScraper):
             headless=headless,
         )
 
-        self._pagination_strategy = PaginationStrategy.NUMBERED_LINKS
+        self._pagination_strategy = PaginationStrategy.SELECT_DROPDOWN
         self._max_pages = 100
+        self._pagination_selector = '#fieldPage, select[onchange*="openPage"]'
 
     @property
     def url_base(self) -> str:
@@ -108,29 +109,29 @@ class ScraperDatalegis(PlaywrightScraper):
     async def _encontrar_total_paginas(self) -> int:
         """Determina o número total de páginas de resultados.
 
+        O sistema Datalegis usa um combobox (select) para navegação entre páginas.
+        Cada option representa uma página disponível.
+
         Returns:
             int: Número de páginas encontradas.
         """
         try:
-            # Procura links de paginação numérica
-            # O sistema Datalegis usa links com classes de paginação
-            pagination_links = await self._page.query_selector_all(
-                '.pagination a, .paginacao a, a[onclick*="irParaPagina"]'
+            # Procura o combobox de paginação
+            # O sistema Datalegis usa um select#fieldPage com onchange="openPage()"
+            select_element = await self._page.query_selector(
+                '#fieldPage, select[onchange*="openPage"]'
             )
 
-            page_numbers = []
-            for link in pagination_links:
-                text = await link.text_content()
-                if text and text.strip().isdigit():
-                    page_numbers.append(int(text.strip()))
+            if select_element:
+                # Conta as options no select para determinar total de páginas
+                options = await select_element.query_selector_all('option')
+                if options:
+                    total = len(options)
+                    self.logger.debug(f"Páginas encontradas via combobox: {total}")
+                    return min(total, self._max_pages)
 
-            if page_numbers:
-                total = max(page_numbers)
-                self.logger.debug(f"Páginas encontradas: {total}")
-                return total
-
-            # Se não houver paginação, verifica se há resultados
-            atos = await self._page.query_selector_all('.ato')
+            # Fallback: verifica se há resultados sem paginação
+            atos = await self._page.query_selector_all('.ato, a[href*="abrirTextoAto"]')
             if atos:
                 self.logger.debug(f"Encontrados {len(atos)} atos, assumindo 1 página")
                 return 1
@@ -142,7 +143,10 @@ class ScraperDatalegis(PlaywrightScraper):
             return 1
 
     async def _paginar_por_numero(self, numero: int) -> bool:
-        """Navega para página específica via link numerado.
+        """Navega para página específica via combobox de paginação.
+
+        O sistema Datalegis usa um select com onchange para navegação.
+        Selecionar uma option dispara a navegação para a página correspondente.
 
         Args:
             numero: Número da página destino.
@@ -153,16 +157,41 @@ class ScraperDatalegis(PlaywrightScraper):
         pw = self._ensure_playwright()
 
         try:
-            # Seletor para links de paginação
-            selector = f"a:text-is('{numero}'), a[onclick*='irParaPagina({numero})']"
-            await self._page.wait_for_selector(selector, timeout=5000)
-            await self._page.click(selector)
+            # Seletor para o combobox de paginação
+            # O select de paginação usa id="fieldPage" e onchange="openPage()"
+            select_selector = '#fieldPage, select[onchange*="openPage"]'
+            select_element = await self._page.query_selector(select_selector)
 
+            if not select_element:
+                self.logger.debug("Combobox de paginação não encontrado com seletor #fieldPage")
+                # Tenta um seletor mais genérico baseado na estrutura da página
+                select_element = await self._page.query_selector(
+                    '.paginacao select, select.form-control'
+                )
+
+            if not select_element:
+                self.logger.debug("Combobox de paginação não encontrado")
+                return False
+
+            # Seleciona a página pelo label (texto visível) ao invés do value
+            # O label é o número da página como string
+            self.logger.debug(f"Selecionando página {numero} no combobox...")
+            await select_element.select_option(label=str(numero))
+
+            # Aguarda a página carregar
             await asyncio.sleep(self.between_pages_wait)
+
+            # Verifica se a navegação funcionou aguardando novos resultados
+            await self._page.wait_for_selector('.ato, a[href*="abrirTextoAto"]', timeout=10000)
+
+            self.logger.debug(f"Navegação para página {numero} concluída")
             return True
 
         except pw['PlaywrightTimeout']:
-            self.logger.debug(f"Link página {numero} não encontrado")
+            self.logger.debug(f"Timeout ao navegar para página {numero}")
+            return False
+        except Exception as e:
+            self.logger.debug(f"Erro ao navegar para página {numero}: {e}")
             return False
 
     def _extrair_atos_do_html(self, html: str) -> list[dict]:

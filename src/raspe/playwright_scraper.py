@@ -79,6 +79,7 @@ class PaginationStrategy(Enum):
     NEXT_BUTTON = "next_button"         # Clica em botão "Próximo"
     LOAD_MORE = "load_more"             # Clica em "Carregar mais"
     INFINITE_SCROLL = "infinite_scroll"  # Rola a página para carregar mais
+    SELECT_DROPDOWN = "select_dropdown"  # Seleciona página via dropdown/combobox
     NONE = "none"                        # Sem paginação
 
 
@@ -462,6 +463,9 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
         elif strategy == PaginationStrategy.INFINITE_SCROLL:
             return await self._paginar_por_scroll()
+
+        elif strategy == PaginationStrategy.SELECT_DROPDOWN:
+            return await self._paginar_por_numero(pagina_atual + 1)
 
         return False
 
