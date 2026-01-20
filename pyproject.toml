@@ -7,7 +7,7 @@ name = "raspe"
 version = "0.1.0"
 description = "Raspadores para Pesquisas Acadêmicas - ferramentas para coleta de dados de fontes brasileiras"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [
     { name = "Bruno da Cunha de Oliveira", email = "bruno.dcdo@gmail.com" },
 ]
@@ -27,6 +27,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "ipykernel>=7.1.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
 ]
 
 [project.urls]
