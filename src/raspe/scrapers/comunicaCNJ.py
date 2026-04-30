@@ -1,5 +1,5 @@
-from typing import Any, Literal
 import json
+from typing import Literal
 
 import pandas as pd
 
@@ -55,7 +55,7 @@ class comunicaCNJ_Scraper(BaseScraper):
                 'itensPorPagina': 5,
                 'texto': pesquisa,
             }
-        
+
         if data_inicio is not None:
             query_inicial['dataDisponibilizacaoInicio'] = data_inicio
 
@@ -63,7 +63,7 @@ class comunicaCNJ_Scraper(BaseScraper):
             query_inicial['dataDisponibilizacaoFim'] = data_fim
 
         return query_inicial
-        
+
     def _find_n_pags(self, r0):
         # Erros 429 e 5xx são tratados automaticamente pelo BaseScraper._request_with_retry()
         r0.raise_for_status()
@@ -76,14 +76,14 @@ class comunicaCNJ_Scraper(BaseScraper):
         except json.JSONDecodeError:
             self.logger.error(f"Failed to decode JSON response. Response text: {r0.text}")
             raise
-        except KeyError:
+        except KeyError as exc:
             self.logger.error("JSON response is missing 'count' or 'total' key")
-            raise ValueError("JSON response is missing the expected 'count' or 'total' key.")
-    
+            raise ValueError("JSON response is missing the expected 'count' or 'total' key.") from exc
+
     def _parse_page(self, path: str):
         with open(path, 'r', encoding='utf-8') as f:
             dados = json.load(f)
-        
+
         lista_infos = []
         infos_processos = dados.get('itens', [])
 

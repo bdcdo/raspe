@@ -12,7 +12,7 @@ import asyncio
 
 import pandas as pd
 
-from raspe.playwright_scraper import PlaywrightScraper, PaginationStrategy
+from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
 
 
 class ScraperDatalegis(PlaywrightScraper):

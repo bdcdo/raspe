@@ -21,3 +21,12 @@ Novos scrapers devem:
 2. Implementar as propriedades abstratas: `api_base`, `type`, `query_page_name`, `api_method`
 3. Implementar os métodos: `_set_query_base()`, `_find_n_pags()`, `_parse_page()`
 4. Validar parâmetros em `_validar_parametros()` (sobrescrevendo o método base)
+
+## Desenvolvimento
+
+- Python >= 3.11, gerenciador `uv`
+- Instalar deps de dev: `uv pip install -e ".[dev]"`
+- Ativar hooks: `pre-commit install`
+- Hooks rodam em cada commit: trailing whitespace, isort, pylint, flake8, mypy, pyright
+- Comprimento máximo de linha: 120
+- Para rodar todos os hooks manualmente: `pre-commit run --all-files`

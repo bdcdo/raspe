@@ -1,22 +1,27 @@
-from ..base_scraper import BaseScraper
-from ..html_scraper import HTMLScraper
-from typing import Any, Literal
-import pandas as pd
-from bs4 import BeautifulSoup as bs
-from bs4 import Tag
-from bs4.element import NavigableString
-import tempfile
-import requests
+import random
 import re
 import time
-import random
+from typing import Any, Literal
+
+import pandas as pd
+from bs4 import Tag
+
+from ..base_scraper import BaseScraper
+from ..html_scraper import HTMLScraper
+
 
 class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
     def __init__(self):
         super().__init__("CAMARA")
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'User-Agent': (
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ),
+            'Accept': (
+                'text/html,application/xhtml+xml,application/xml;q=0.9,'
+                'image/avif,image/webp,image/apng,*/*;q=0.8'
+            ),
             'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
@@ -49,7 +54,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
     @property
     def api_method(self) -> Literal['GET'] | Literal['POST']:
         return self._api_method
-    
+
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         pesquisa = kwargs.get('pesquisa')
         ano = kwargs.get('ano')
@@ -60,7 +65,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
                 "abrangencia": "Legislação Federal",
                 "pagina": 1,
             }
-        
+
         if tipo_materia:
             query_inicial['tipo'] = tipo_materia
 
@@ -69,7 +74,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
 
         if pesquisa:
             query_inicial['geral'] = pesquisa
-        
+
         return query_inicial
 
     def _find_n_pags(self, r0) -> int:
@@ -93,7 +98,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         num = int(num_text)
 
         self.logger.debug(f"Extracted number of results: {num}")
-        
+
         # Convert results to pages (assuming 10 results per page)
         pages = (num + 9) // 10  # Round up division
         self.logger.debug(f"Calculated pages: {pages}")
@@ -101,9 +106,9 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
 
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
-        
+
         columns = ['link', 'titulo', 'descricao', 'ementa']
-        
+
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
@@ -111,35 +116,33 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
             lista_infos = []
 
             soup = BeautifulSoup(html_content, 'html.parser')
-            
+
             resultado_busca = soup.find('div', class_='resultado-busca')
             if not resultado_busca or not isinstance(resultado_busca, Tag):
                 return pd.DataFrame(columns=columns)
-            
+
             ul_element = resultado_busca.find('ul')
             if not ul_element or not isinstance(ul_element, Tag):
                 return pd.DataFrame(columns=columns)
-                
+
             itens = ul_element.find_all('li')
 
             for item in itens:
-                if not isinstance(item, Tag):
-                    continue
                 try:
                     link_element = item.find('a')
                     if not link_element or not isinstance(link_element, Tag):
                         continue
-                    
+
                     link = link_element.get('href', '')
                     titulo = link_element.text or ''
-                    
+
                     div_element = item.find('div')
                     descricao = ''
                     if div_element and isinstance(div_element, Tag):
                         p_element = div_element.find('p')
                         if p_element and isinstance(p_element, Tag):
                             descricao = p_element.text.strip()
-                    
+
                     ementa_element = item.find('p', class_='busca-resultados__situacao')
                     ementa = ''
                     if ementa_element and isinstance(ementa_element, Tag):
@@ -151,21 +154,21 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
                     continue
 
             return pd.DataFrame(lista_infos, columns=columns)
-            
+
         except Exception as e:
             self.logger.error(f"Error parsing page {path}: {e}")
             return pd.DataFrame(columns=columns)
-        
+
     def _acessar_pagina_inicial(self):
         """Primeiro acessa a página inicial para estabelecer sessão"""
         try:
             print("Acessando página inicial...")
             response = self.session.get('https://www.camara.leg.br/')
             print(f"Status página inicial: {response.status_code}")
-            
+
             # Pequena pausa para simular comportamento humano
             time.sleep(random.uniform(1, 3))
-            
+
             return response.status_code == 200
         except Exception as e:
             print(f"Erro ao acessar página inicial: {e}")
@@ -176,22 +179,22 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         try:
             print("Acessando página de busca...")
             url_busca = 'https://www.camara.leg.br/legislacao/busca'
-            
+
             # Atualiza referer
             self.session.headers.update({
                 'Referer': 'https://www.camara.leg.br/',
             })
-            
+
             response = self.session.get(url_busca)
             print(f"Status página de busca: {response.status_code}")
-            
+
             time.sleep(random.uniform(1, 3))
-            
+
             return response.status_code == 200
         except Exception as e:
             print(f"Erro ao acessar página de busca: {e}")
             return False
-        
+
     def _prep_scrape(self, **kwargs) -> dict[str, Any]:
         self._acessar_pagina_inicial()
         self._acessar_legislacao_busca()
@@ -199,5 +202,5 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         self.session.headers.update({
                     'Referer': 'https://www.camara.leg.br/legislacao/busca',
                 })
-        
+
         return {}

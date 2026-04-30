@@ -1,34 +1,35 @@
 import re
-import os
+import time
 from datetime import datetime
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup as bs
-import time
 
 from raspe.exceptions import ValidationError
+
 
 def expand(expression: str) -> list[str]:
     """
     Transforms a complex search expression with logical operators into a list
-    of all possible combinations that, when searched together, are equivalent 
+    of all possible combinations that, when searched together, are equivalent
     to the original expression.
-    
+
     Handles nested parentheses, AND (E) and OR (OU) operators.
     Supports multi-line expressions and flexible spacing.
-    
+
     Args:
         expression: A search expression string with operators "E" (AND) and "OU" (OR)
                    and parentheses for grouping. Can include newlines and extra spaces.
-    
+
     Returns:
         List of strings representing all possible term combinations
-    
+
     Example:
         >>> expr = "(((doença OU doenças) E (rara OU raras)) OU ((medicamento) E (órfão)))"
         >>> expand(expr)
         ['doença rara', 'doença raras', 'doenças rara', 'doenças raras', 'medicamento órfão']
-        
+
         Multi-line example:
         >>> expr_multiline = '''
         ... (((doença OU síndrome) E (rara OU ultrarrara)) OU (medicamento E órfão))
@@ -38,16 +39,16 @@ def expand(expression: str) -> list[str]:
     """
     # Normaliza a expressão: remove quebras de linha e normaliza espaços
     expression = re.sub(r'\s+', ' ', expression)
-    
+
     # Valida parênteses
     if '()' in expression:
         raise ValueError("Parênteses vazios não permitidos")
     if expression.count('(') != expression.count(')'):
         raise ValueError("Parênteses desequilibrados na expressão")
-    
+
     # Normalize the expression: convert to standard symbols
     expr = expression.replace(" E ", " AND ").replace(" OU ", " OR ")
-    
+
     def tokenize(expression: str) -> list[str]:
         """Convert expression to a list of tokens (terms, operators, parentheses)"""
         # First, insert spaces around parentheses to make them separate tokens
@@ -55,7 +56,7 @@ def expand(expression: str) -> list[str]:
         # Split by whitespace and filter out empty strings
         tokens = [token for token in expr_with_spaces.split() if token]
         return tokens
-    
+
     def parse_expression(tokens: list[str]) -> list[str]:
         """Parse expression using a recursive descent parser"""
         def parse_or() -> list[str]:
@@ -65,7 +66,7 @@ def expand(expression: str) -> list[str]:
                 right = parse_and()
                 left = left + right  # Union of sets for OR operation
             return left
-        
+
         def parse_and() -> list[str]:
             left = parse_primary()
             while i[0] < len(tokens) and tokens[i[0]] == "AND":
@@ -73,16 +74,16 @@ def expand(expression: str) -> list[str]:
                 right = parse_primary()
                 # Cartesian product for AND operation
                 product_result = []
-                for l in left:
-                    for r in right:
-                        product_result.append(f"{l} {r}")
+                for left_term in left:
+                    for right_term in right:
+                        product_result.append(f"{left_term} {right_term}")
                 left = product_result
             return left
-        
+
         def parse_primary() -> list[str]:
             if i[0] >= len(tokens):
                 return []
-            
+
             if tokens[i[0]] == "(":
                 i[0] += 1  # Consume "("
                 result = parse_or()
@@ -94,19 +95,20 @@ def expand(expression: str) -> list[str]:
                 term = tokens[i[0]]
                 i[0] += 1
                 return [term]
-        
+
         # Use a mutable index
         i = [0]
         return parse_or()
-    
+
     # Clean up the tokens
     tokens = tokenize(expr)
-    
+
     # Parse the expression
     result = parse_expression(tokens)
-    
+
     # Remove duplicates and sort
     return sorted(list(set(result)))
+
 
 def remove_duplicates(df: pd.DataFrame):
     df_copy = df.copy()
@@ -130,6 +132,7 @@ def remove_duplicates(df: pd.DataFrame):
 
     return novo_df
 
+
 def start_session():
     session = requests.Session()
     session.headers.update({
@@ -143,9 +146,10 @@ def start_session():
 
     return session
 
+
 def extract(df, col):
     session = start_session()
-        
+
     lista_infos = []
     n_items = len(df)
     i = 1
@@ -159,7 +163,7 @@ def extract(df, col):
             else:
                 requisicao = session.get(url=link)
                 lista_infos.append(bs(requisicao.content).text.strip())
-            
+
             time.sleep(1)
             print(f'{i}/{n_items}')
             i += 1
@@ -171,6 +175,7 @@ def extract(df, col):
 
     return df
 
+
 def check(df):
     df_count = df.copy()
 
@@ -180,7 +185,10 @@ def check(df):
         # Regex melhorado para garantir que a palavra seja encontrada como palavra completa
         # Usa lookahead e lookbehind negativos para garantir que não há caracteres alfanuméricos antes ou depois
         pattern = r'(?<!\w)' + re.escape(word) + r'(?!\w)'
-        df_count[word] = df_count.apply(lambda row: len(re.findall(pattern, row['link_content'].lower())), axis=1)
+        df_count[word] = df_count.apply(
+            lambda row, _pattern=pattern: len(re.findall(_pattern, row['link_content'].lower())),
+            axis=1,
+        )
 
     return df_count
 
@@ -232,11 +240,11 @@ def validar_data(data: str | None, nome_param: str = "data") -> str | None:
             try:
                 parsed = datetime.strptime(data, formato)
                 return parsed.strftime("%Y-%m-%d")
-            except ValueError:
+            except ValueError as exc:
                 raise ValidationError(
                     f"'{nome_param}' contém uma data impossível: '{data}'. "
                     f"Verifique se dia/mês/ano estão corretos."
-                )
+                ) from exc
 
     raise ValidationError(
         f"'{nome_param}' está em formato inválido: '{data}'. "

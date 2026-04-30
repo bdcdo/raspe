@@ -11,9 +11,10 @@ Exemplo:
 """
 
 import asyncio
+
 import pandas as pd
 
-from raspe.playwright_scraper import PlaywrightScraper, PaginationStrategy
+from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
 
 
 class ScraperSaudeLegis(PlaywrightScraper):
@@ -88,7 +89,7 @@ class ScraperSaudeLegis(PlaywrightScraper):
         Returns:
             int: Número de páginas encontradas.
         """
-        pw = self._ensure_playwright()
+        self._ensure_playwright()
 
         try:
             # Procura links de paginação numérica

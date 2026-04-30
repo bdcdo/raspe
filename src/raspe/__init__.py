@@ -15,27 +15,29 @@ Exemplo de uso:
 """
 
 from importlib.metadata import version
-from .scrapers.camara import ScraperCamaraDeputados
-from .scrapers.senado import ScraperSenadoFederal
-from .scrapers.presidencia import ScraperPresidencia
-from .scrapers.comunicaCNJ import comunicaCNJ_Scraper
-from .scrapers.ipea import IpeaScraper
-from .scrapers.cfm import ScraperCFM
-from .scrapers.nyt import ScraperNYT
-from .scrapers.folha import ScraperFolha
-from .utils import expand, remove_duplicates, extract, check, validar_data, validar_intervalo_datas
+
+from .exceptions import SeleniumError  # Alias para compatibilidade
 from .exceptions import (
-    ScraperError,
-    APIKeyError,
-    RateLimitError,
     APIError,
-    ValidationError,
+    APIKeyError,
     BrowserError,
-    SeleniumError,  # Alias para compatibilidade
     DriverNotInstalledError,
+    RateLimitError,
+    ScraperError,
+    ValidationError,
 )
+from .scrapers.camara import ScraperCamaraDeputados
+from .scrapers.cfm import ScraperCFM
+from .scrapers.comunicaCNJ import comunicaCNJ_Scraper
+from .scrapers.folha import ScraperFolha
+from .scrapers.ipea import IpeaScraper
+from .scrapers.nyt import ScraperNYT
+from .scrapers.presidencia import ScraperPresidencia
+from .scrapers.senado import ScraperSenadoFederal
+from .utils import check, expand, extract, remove_duplicates, validar_data, validar_intervalo_datas
 
 __version__ = version("raspe")
+
 
 def presidencia(**kwargs):
     """
@@ -46,6 +48,7 @@ def presidencia(**kwargs):
     """
     return ScraperPresidencia(**kwargs)
 
+
 def cnj(**kwargs):
     """
     Cria um raspador para comunicados do CNJ (Conselho Nacional de Justiça).
@@ -54,6 +57,7 @@ def cnj(**kwargs):
         comunicaCNJ_Scraper: Instância configurada do raspador.
     """
     return comunicaCNJ_Scraper(**kwargs)
+
 
 def ipea(**kwargs):
     """
@@ -64,6 +68,7 @@ def ipea(**kwargs):
     """
     return IpeaScraper(**kwargs)
 
+
 def senado(**kwargs):
     """
     Cria um raspador para dados do Senado Federal.
@@ -72,6 +77,7 @@ def senado(**kwargs):
         ScraperSenadoFederal: Instância configurada do raspador.
     """
     return ScraperSenadoFederal(**kwargs)
+
 
 def camara(**kwargs):
     """
@@ -82,6 +88,7 @@ def camara(**kwargs):
     """
     return ScraperCamaraDeputados(**kwargs)
 
+
 def cfm(**kwargs):
     """
     Cria um raspador para normas do CFM (Conselho Federal de Medicina).
@@ -90,6 +97,7 @@ def cfm(**kwargs):
         ScraperCFM: Instância configurada do raspador.
     """
     return ScraperCFM(**kwargs)
+
 
 def nyt(api_key: str | None = None, **kwargs):
     """
@@ -108,6 +116,7 @@ def nyt(api_key: str | None = None, **kwargs):
         APIKeyError: Se nenhuma API key for fornecida ou encontrada.
     """
     return ScraperNYT(api_key=api_key, **kwargs)
+
 
 def folha(**kwargs):
     """

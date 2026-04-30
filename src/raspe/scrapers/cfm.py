@@ -1,9 +1,11 @@
-from ..base_scraper import BaseScraper
-from ..html_scraper import HTMLScraper
+import re
 from typing import Any, Literal
+
 import pandas as pd
 from bs4 import BeautifulSoup
-import re
+
+from ..base_scraper import BaseScraper
+from ..html_scraper import HTMLScraper
 
 
 class ScraperCFM(BaseScraper, HTMLScraper):

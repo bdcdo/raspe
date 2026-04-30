@@ -1,12 +1,13 @@
 """Raspador para busca de artigos do New York Times."""
 
+import json
 import os
+from typing import Any, Literal
+
+import pandas as pd
 
 from ..base_scraper import BaseScraper
-from ..exceptions import APIKeyError, APIError
-from typing import Any, Literal
-import pandas as pd
-import json
+from ..exceptions import APIError, APIKeyError
 
 
 class ScraperNYT(BaseScraper):
@@ -209,7 +210,7 @@ class ScraperNYT(BaseScraper):
             n_pags = min(n_pags, self.MAX_PAGES)
 
             self.logger.info(f"Total de resultados: {total_hits}, páginas: {n_pags}")
-            return n_pags
+            return int(n_pags)
 
         except (APIKeyError, APIError):
             raise

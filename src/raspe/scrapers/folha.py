@@ -1,12 +1,13 @@
 """Raspador para busca de notícias da Folha de São Paulo."""
 
-from ..base_scraper import BaseScraper
-from ..html_scraper import HTMLScraper
-from ..utils import validar_data
-from ..exceptions import ValidationError
-from typing import Any, Literal
-import pandas as pd
 import re
+from typing import Any, Literal
+
+import pandas as pd
+
+from ..base_scraper import BaseScraper
+from ..exceptions import ValidationError
+from ..html_scraper import HTMLScraper
 
 
 class ScraperFolha(BaseScraper, HTMLScraper):
@@ -188,9 +189,9 @@ class ScraperFolha(BaseScraper, HTMLScraper):
 
         if not result_div:
             # Fallback: procurar em qualquer elemento com o texto de resultados
-            result_div = soup.find(string=re.compile(r'\d+\s+resultado'))
-            if result_div:
-                match = re.search(r'(\d+)', result_div)
+            result_text = soup.find(string=re.compile(r'\d+\s+resultado'))
+            if result_text:
+                match = re.search(r'(\d+)', str(result_text))
                 if match:
                     num_results = int(match.group(1))
                     self._verificar_limite_resultados(num_results)

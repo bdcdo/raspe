@@ -24,17 +24,20 @@ Exemplo de uso:
             ...
 """
 
-from abc import abstractmethod
-from typing import Any, Literal
-from tqdm import tqdm
-from raspe.abstract_scraper import AbstractScraper
-from raspe.utils import start_session
-from raspe.exceptions import RateLimitError, APIError
-import pandas as pd
-import requests
+import json
 import shutil
 import time
-import json
+from abc import abstractmethod
+from typing import Any, Literal
+
+import pandas as pd
+import requests
+from tqdm import tqdm
+
+from raspe.abstract_scraper import AbstractScraper
+from raspe.exceptions import APIError, RateLimitError
+from raspe.utils import start_session
+
 
 class BaseScraper(AbstractScraper):
     """Classe base para scrapers baseados em requisições HTTP.
@@ -133,16 +136,16 @@ class BaseScraper(AbstractScraper):
                 loop_kwargs = {**static_kwargs, key: val}
                 path_result = self._download_data(**loop_kwargs)
                 df = self._parse_data(path_result)
-                
+
                 termo_busca_val = str(val)
                 df = df.assign(termo_busca=termo_busca_val)
                 self.logger.debug(f"Adicionada coluna termo_busca={termo_busca_val} aos resultados")
-                
+
                 dfs.append(df)
                 if self.debug is False:
                     shutil.rmtree(path_result)
             result = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-                
+
             return result
         # Fallback para busca única
         else:
@@ -159,31 +162,31 @@ class BaseScraper(AbstractScraper):
             self.logger.info(f"Raspagem finalizada, limpando diretório {path_result}")
             if self.debug is False:
                 shutil.rmtree(path_result)
-            
+
             return result
 
     def _download_data(self, **kwargs) -> str:
-        self.logger.debug(f"Definindo consulta")
+        self.logger.debug("Definindo consulta")
         query_base = self._set_query_base(**kwargs)
         self.logger.debug(query_base)
-        
-        self.logger.debug(f"Definindo n_pags")
+
+        self.logger.debug("Definindo n_pags")
         n_pags = self._get_n_pags(query_base)
 
-        self.logger.debug(f"Definindo paginas")
+        self.logger.debug("Definindo paginas")
         paginas = kwargs.get("paginas")
         paginas = self._set_paginas(paginas, n_pags)
 
         # Verificação de sanidade - certifique-se de que paginas é iterável
         if not hasattr(paginas, '__iter__'):
             self.logger.error(f"paginas não é iterável: {paginas}")
-            paginas = range(0) # range vazio como fallback
+            paginas = range(0)  # range vazio como fallback
 
-        download_dir = self._create_download_dir()      
+        download_dir = self._create_download_dir()
 
         # Força a conversão para lista para garantir que tqdm funcione corretamente
         total_pages = list(paginas)
-        
+
         for pag in tqdm(total_pages, desc="Baixando documentos"):
             time.sleep(self.sleep_time)
             self.logger.debug(f"Baixando página {pag}")
@@ -194,20 +197,20 @@ class BaseScraper(AbstractScraper):
             try:
                 r = self._set_r(query_atual)
                 self.logger.debug(f"Response status: {r.status_code}")
-                
+
                 # Se erro de servidor, registra e pula esta página
                 if r.status_code >= 500:
                     self.logger.warning(f"Server error {r.status_code} para URL {r.url}, ignorando página {pag}")
                     continue
 
                 file_name = f"{download_dir}/{self.nome_buscador}_{pag:05d}.{self.type.lower()}"
-                
+
                 with open(file_name, "w", encoding="utf-8") as f:
                     # Write response content: use text or JSON dump fallback
                     content = r.text if r.text and r.text.strip() else json.dumps(r.json(), ensure_ascii=False)
                     f.write(content)
                 self.logger.debug(f"Arquivo salvo: {file_name}")
-                
+
             except Exception as e:
                 self.logger.error(f"Erro ao baixar página {pag}: {e}")
                 continue
@@ -239,10 +242,6 @@ class BaseScraper(AbstractScraper):
         self.logger.debug(f"Encontrando n_pags (status: {r0.status_code})")
         contagem = self._find_n_pags(r0)
 
-        if contagem is None:
-            self.logger.error(f"Erro ao extrair n_pags: {r0.text[:200] if r0.text else 'sem conteúdo'}")
-            contagem = 0
-
         self.logger.debug(f"Encontradas {contagem} páginas")
         return contagem
 
@@ -251,7 +250,7 @@ class BaseScraper(AbstractScraper):
         if n_pags is None:
             self.logger.warning("n_pags é None, definindo como 0")
             n_pags = 0
-        
+
         # Se não especificado, pega todas as páginas
         if paginas is None:
             paginas = range(1, n_pags + 1)
@@ -260,17 +259,17 @@ class BaseScraper(AbstractScraper):
             paginas = range(start, stop, step)
         return paginas
 
-    def _set_query_atual(self, query_real, pag) -> dict[str, str]:
+    def _set_query_atual(self, query_real: dict[str, Any], pag: int) -> dict[str, Any]:
         query_atual = query_real
-        
+
         query_atual[self.query_page_name] = pag * self.query_page_multiplier + self.query_page_increment
-        
+
         if self.old_page_name is not None:
             query_atual[self.old_page_name] = query_atual[self.query_page_name] - 1
-        
+
         return query_atual
 
-    def _set_r(self, query_atual):
+    def _set_r(self, query_atual) -> requests.Response:
         if self.api_method == 'POST':
             r = self.session.post(
                 self.api_base,
@@ -332,12 +331,11 @@ class BaseScraper(AbstractScraper):
                     )
                     time.sleep(wait_time)
                     continue
-                else:
-                    raise RateLimitError(
-                        f"Rate limit excedido após {retries} tentativas. "
-                        f"Aguarde alguns minutos antes de tentar novamente.",
-                        retry_after=int(retry_after) if retry_after else None
-                    )
+                raise RateLimitError(
+                    f"Rate limit excedido após {retries} tentativas. "
+                    f"Aguarde alguns minutos antes de tentar novamente.",
+                    retry_after=int(retry_after) if retry_after else None
+                )
 
             # Erro de servidor (5xx)
             if r.status_code >= 500:
@@ -349,8 +347,7 @@ class BaseScraper(AbstractScraper):
                     )
                     time.sleep(wait_time)
                     continue
-                else:
-                    raise APIError(
+                raise APIError(
                         f"Erro de servidor após {retries} tentativas",
                         status_code=r.status_code,
                         response_text=r.text
@@ -361,14 +358,14 @@ class BaseScraper(AbstractScraper):
     @abstractmethod
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Cria os parâmetros base para a requisição à API.
-        
+
         Este método deve ser implementado pelas subclasses para definir como
         construir os parâmetros iniciais da consulta com base nos argumentos
         fornecidos.
-        
+
         Args:
             **kwargs: Parâmetros de busca passados para o método scrape().
-            
+
         Returns:
             dict: Parâmetros de consulta para a requisição inicial à API.
         """

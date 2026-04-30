@@ -9,7 +9,6 @@ granular e mensagens mais informativas.
 
 class ScraperError(Exception):
     """Exceção base para erros de scraping."""
-    pass
 
 
 class APIKeyError(ScraperError):
@@ -20,7 +19,6 @@ class APIKeyError(ScraperError):
     - API key é inválida ou expirada
     - API key não tem permissão para o recurso solicitado
     """
-    pass
 
 
 class RateLimitError(ScraperError):
@@ -60,7 +58,6 @@ class ValidationError(ScraperError):
     Levantada quando parâmetros fornecidos pelo usuário são inválidos,
     como datas em formato incorreto ou valores fora do range permitido.
     """
-    pass
 
 
 class BrowserError(ScraperError):
@@ -72,7 +69,6 @@ class BrowserError(ScraperError):
     - Erro de navegação ou interação com o navegador
     - Falha no bypass do Cloudflare
     """
-    pass
 
 
 # Alias para compatibilidade com código existente
@@ -88,4 +84,3 @@ class DriverNotInstalledError(BrowserError):
         pip install raspe[browser]
         playwright install chromium
     """
-    pass

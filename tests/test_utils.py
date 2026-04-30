@@ -1,12 +1,14 @@
-import re
 import os
-import pytest
+import re
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
+import pytest
 
 # Import functions from utils.py
 from raspe.utils import expand
+
 
 class TestExpand:
     """Testes para a função expand() que converte expressões de busca complexas."""
@@ -28,9 +30,9 @@ class TestExpand:
         expr = "(doença OU doenças) E (rara OU raras)"
         result = expand(expr)
         assert sorted(result) == sorted([
-            "doença rara", 
-            "doença raras", 
-            "doenças rara", 
+            "doença rara",
+            "doença raras",
+            "doenças rara",
             "doenças raras"
         ])
 
@@ -50,13 +52,13 @@ class TestExpand:
         result = expand(expr)
         expected = ['doença rara', 'doença raras', 'doenças rara', 'doenças raras', 'medicamento órfão']
         assert sorted(result) == sorted(expected)
-        
+
     def test_complex_multiline_expression(self):
         """Testa expressão complexa com múltiplas linhas e termos."""
         expr = """
         (
         ((doença OU síndrome OU patologia) E (rara OU ultrarrara)) OU
-        ((doenças OU síndromes OU patologias) E ((raras OU ultrarraras))) OU 
+        ((doenças OU síndromes OU patologias) E ((raras OU ultrarraras))) OU
         (medicamento E órfão) OU
         (medicamentos E órfãos) OU
         (terapia E órfã) OU
@@ -64,25 +66,25 @@ class TestExpand:
         )
         """
         result = expand(expr)
-        
+
         expected = [
             # Combinações de singular + singular
-            'doença rara', 'doença ultrarrara', 
-            'síndrome rara', 'síndrome ultrarrara', 
+            'doença rara', 'doença ultrarrara',
+            'síndrome rara', 'síndrome ultrarrara',
             'patologia rara', 'patologia ultrarrara',
-            
+
             # Combinações de plural + plural
             'doenças raras', 'doenças ultrarraras',
             'síndromes raras', 'síndromes ultrarraras',
             'patologias raras', 'patologias ultrarraras',
-            
+
             # Outras combinações
             'medicamento órfão',
             'medicamentos órfãos',
             'terapia órfã',
             'terapias órfãs'
         ]
-        
+
         assert sorted(result) == sorted(expected)
 
     def test_unbalanced_parentheses(self):

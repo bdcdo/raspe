@@ -33,19 +33,20 @@ Exemplo de uso:
             ...
 """
 
+import asyncio
+import os
+import time
 from abc import abstractmethod
-from typing import Literal
-from enum import Enum
 from contextlib import asynccontextmanager
 from datetime import datetime
-import asyncio
-import time
-import os
+from enum import Enum
+from typing import Literal
+
+import pandas as pd
 
 from raspe.abstract_scraper import AbstractScraper
-from raspe.html_scraper import HTMLScraper
 from raspe.exceptions import BrowserError, DriverNotInstalledError
-import pandas as pd
+from raspe.html_scraper import HTMLScraper
 
 
 def _import_playwright():
@@ -58,7 +59,8 @@ def _import_playwright():
         DriverNotInstalledError: Se Playwright não estiver instalado.
     """
     try:
-        from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
+        from playwright.async_api import TimeoutError as PlaywrightTimeout
+        from playwright.async_api import async_playwright
         from playwright_stealth import Stealth
         return {
             'async_playwright': async_playwright,
@@ -370,11 +372,11 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
                 state=state
             )
             return element
-        except pw['PlaywrightTimeout']:
+        except pw['PlaywrightTimeout'] as exc:
             raise BrowserError(
                 f"Timeout aguardando elemento: '{selector}' "
                 f"(estado: {state}, timeout: {timeout_ms}ms)"
-            )
+            ) from exc
 
     async def _clicar_elemento(
         self,

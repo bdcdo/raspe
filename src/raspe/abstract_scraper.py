@@ -6,17 +6,18 @@ e funcionalidades compartilhadas entre scrapers HTTP (BaseScraper) e
 scrapers baseados em Selenium (SeleniumScraper).
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Literal
-from datetime import datetime
-from tqdm import tqdm
-from raspe.utils import validar_intervalo_datas
-from raspe.exceptions import ValidationError
-import pandas as pd
-import os
 import glob
 import logging
+import os
 import tempfile
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Literal
+
+import pandas as pd
+from tqdm import tqdm
+
+from raspe.utils import validar_intervalo_datas
 
 
 class AbstractScraper(ABC):
