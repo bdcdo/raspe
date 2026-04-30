@@ -19,7 +19,6 @@ O raspe automatiza a coleta de dados de fontes oficiais brasileiras:
 - 🏛️ **Presidência da República** - Leis, decretos e legislação federal
 - 📋 **Câmara dos Deputados** - Proposições e projetos de lei
 - 📜 **Senado Federal** - Projetos de lei e atividade legislativa
-- ⚖️ **CNJ (Conselho Nacional de Justiça)** - Comunicados e normas
 - 📊 **IPEA** - Estudos e pesquisas econômicas aplicadas
 - 📰 **Folha de São Paulo** - Notícias e artigos do jornal brasileiro
 - 🗽 **New York Times** - Artigos do jornal americano (requer API key gratuita)
@@ -116,10 +115,10 @@ dados.to_excel("projetos_multiplos.xlsx", index=False)
 import raspe
 
 # Buscar apenas as primeiras 5 páginas (para testar rapidamente)
-cnj = raspe.cnj()
-dados = cnj.raspar(pesquisa="resolução", paginas=range(1, 6))
+senado = raspe.senado()
+dados = senado.raspar(pesquisa="reforma tributária", paginas=range(1, 6))
 
-dados.to_excel("cnj_teste.xlsx", index=False)
+dados.to_excel("senado_teste.xlsx", index=False)
 ```
 
 ---
@@ -165,7 +164,6 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 | Presidência | `raspe.presidencia()` | Leis, decretos e legislação federal |
 | Câmara | `raspe.camara()` | Proposições e projetos de lei da Câmara |
 | Senado | `raspe.senado()` | Projetos de lei e atividades do Senado |
-| CNJ | `raspe.cnj()` | Comunicados e normas do CNJ |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
 | CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina |
 | Folha | `raspe.folha()` | Notícias da Folha de São Paulo |
@@ -377,9 +375,9 @@ Os erros mais comuns são:
 
 ---
 
-## ⚖️ Precisa raspar dados de Tribunais?
+## ⚖️ Precisa raspar dados de Tribunais ou comunicados do CNJ?
 
-O raspe não possui raspadores para tribunais estaduais e federais. Para isso, recomendamos o **[juscraper](https://github.com/jtrecenti/juscraper)**, um projeto Python mantido por [Julio Trecenti](https://github.com/jtrecenti) especializado em raspagem de dados do sistema judiciário brasileiro.
+O raspe não possui raspadores para tribunais estaduais e federais nem para comunicações processuais do CNJ. Para isso, recomendamos o **[juscraper](https://github.com/jtrecenti/juscraper)**, um projeto Python mantido por [Julio Trecenti](https://github.com/jtrecenti) especializado em raspagem de dados do sistema judiciário brasileiro. As comunicações processuais do CNJ (antigo `raspe.cnj()`) agora vivem lá como o agregador `comunica_cnj`.
 
 ---
 
