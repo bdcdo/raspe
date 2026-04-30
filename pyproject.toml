@@ -30,6 +30,8 @@ dev = [
     "ipykernel>=7.1.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "responses>=0.25.0",
     "pylint>=3.0.0",
     "isort>=5.12.0",
     "flake8>=6.0.0",
@@ -54,7 +56,17 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
 python_classes = "Test*"
-addopts = "-v -s --cov=src/raspe --cov-report=html --cov-report=term-missing"
+addopts = "-v -ra --strict-markers --strict-config -m 'not integration' --cov=src/raspe --cov-report=html --cov-report=term-missing"
+markers = [
+    "slow: testes que levam mais de alguns segundos",
+    "integration: testes que tocam a rede ou serviços externos (excluídos por padrão)",
+]
+filterwarnings = [
+    "error",
+    # urllib3 InsecureRequestWarning é silenciado pelo ScraperPresidencia no construtor,
+    # mas pode escapar antes do silenciamento durante import. Mantemos como warning.
+    "default::urllib3.exceptions.InsecureRequestWarning",
+]
 
 [tool.pylint.main]
 load-plugins = ["pylint.extensions.docparams"]

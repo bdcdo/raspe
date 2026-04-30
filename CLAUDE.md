@@ -50,3 +50,61 @@ Novos scrapers devem:
 - Hooks rodam em cada commit: trailing whitespace, isort, pylint, flake8, mypy, pyright
 - Comprimento máximo de linha: 120
 - Para rodar todos os hooks manualmente: `pre-commit run --all-files`
+
+## Testes
+
+A suíte usa `pytest` + `responses` + `pytest-mock` para contratos offline,
+sem tocar a rede. Convenção:
+
+- Por scraper: `tests/<scraper>/test_<método>_contract.py`.
+- Samples reais commitados em `tests/<scraper>/samples/<endpoint>/<cenario>.<ext>`.
+- Helpers: `tests/_helpers.py` expõe `load_sample()` e `load_sample_bytes()`.
+- Captura de samples: `tests/fixtures/capture/<scraper>.py` (script ad-hoc).
+
+Comandos úteis:
+
+```bash
+pytest -m "not integration"           # padrão, exclui integração
+pytest tests/<scraper>/ -v            # só um scraper
+pytest --cov=src/raspe                # com cobertura
+```
+
+Markers disponíveis: `slow`, `integration`. `filterwarnings = ["error"]`
+está ativo — qualquer warning não capturado vira erro de teste.
+
+### Checklist obrigatória ao adicionar um novo scraper
+
+Todo scraper novo em `src/raspe/scrapers/<xx>.py` deve entrar acompanhado
+de **pelo menos um teste de contrato** por método público (`raspar` e
+qualquer método adicional). O PR fica bloqueado sem isso.
+
+1. **Script de captura** em `tests/fixtures/capture/<xx>.py` que exercita
+   o scraper real e salva as respostas cruas em
+   `tests/<xx>/samples/<endpoint>/<cenario>.<ext>`. Mínimo 3 cenários por
+   endpoint: typical (paginação), single_page, no_results.
+2. **Samples commitados** em `tests/<xx>/samples/<endpoint>/`.
+   Convenção: `page_01.html`, `page_02.html`, `single_page.html`,
+   `no_results.html` (ou extensão apropriada — `.json`, etc.).
+3. **Teste de contrato** em `tests/<xx>/test_raspar_contract.py`:
+   - `@responses.activate` decorator.
+   - `mocker.patch("time.sleep")` em toda função com paginação.
+   - `responses.add(..., body=load_sample_bytes("<xx>", "raspar/<cenario>.<ext>"))`
+     para cada request esperado.
+   - Matcher de payload sempre que possível:
+     - `urlencoded_params_matcher(..., strict_match=False)` para POST form.
+     - `json_params_matcher(...)` para POST JSON.
+     - `query_param_matcher(...)` para GET.
+   - Schema validado por **subset**: `{"col_a", "col_b"} <= set(df.columns)`.
+     Nunca igualdade.
+   - Pelo menos 3 casos: typical, single_page, no_results.
+4. **Sem `@pytest.mark.integration`** no contrato.
+5. **Sem dependência de rede, relógio ou TLS real**. Adapter custom
+   (ex.: SSL desabilitado): testar só configuração (`isinstance`).
+6. **Fluxos multi-step com ordem obrigatória** usam
+   `responses.registries.OrderedRegistry`.
+7. **Captchas, tokens dinâmicos, lazy imports** (ex.: `txtcaptcha`,
+   `browser_cookie3`) são **mockados** via `mocker.patch.dict(sys.modules, ...)`,
+   nunca invocados de verdade.
+8. **CHANGELOG**: a adição de novo scraper já é uma entrada `Adicionado`;
+   adicionar testes para scraper existente é mudança interna e não
+   precisa de entrada (ver "Versionamento e CHANGELOG" acima).
