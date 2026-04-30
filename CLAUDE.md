@@ -22,6 +22,26 @@ Novos scrapers devem:
 3. Implementar os métodos: `_set_query_base()`, `_find_n_pags()`, `_parse_page()`
 4. Validar parâmetros em `_validar_parametros()` (sobrescrevendo o método base)
 
+## Versionamento e CHANGELOG
+
+- Projeto segue [Versionamento Semântico](https://semver.org/lang/pt-BR/): `MAJOR.MINOR.PATCH`. Versão atual em `pyproject.toml`.
+- `CHANGELOG.md` segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
+- **Toda mudança visível ao usuário** (novo scraper, novo parâmetro, mudança de comportamento, correção de bug, breaking change, mudança de dependência mínima) deve adicionar uma linha sob `## [Não lançado]`, na categoria adequada:
+  - **Adicionado** — novas funcionalidades
+  - **Modificado** — mudanças em funcionalidades existentes
+  - **Descontinuado** — funcionalidades que serão removidas em breve
+  - **Removido** — funcionalidades removidas
+  - **Corrigido** — correções de bugs
+  - **Segurança** — correções com impacto de segurança
+- Mudanças puramente internas (refatoração sem efeito observável, reorganização de testes, ajuste de hooks de lint) **não** entram no CHANGELOG.
+- Ao lançar uma nova versão:
+  1. Renomear `## [Não lançado]` para `## [X.Y.Z] - YYYY-MM-DD`
+  2. Criar uma nova seção `## [Não lançado]` vazia logo acima
+  3. Atualizar `version` em `pyproject.toml`
+  4. Atualizar os links de comparação no rodapé do `CHANGELOG.md`
+  5. Criar a tag git `vX.Y.Z` apontando para o commit do release
+- Escrever em português brasileiro, frases curtas no particípio passado ("Adicionado scraper X", "Corrigido erro Y").
+
 ## Desenvolvimento
 
 - Python >= 3.11, gerenciador `uv`
