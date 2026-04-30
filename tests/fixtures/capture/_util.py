@@ -20,7 +20,7 @@ Uso típico em um script de captura:
 """
 
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 import requests
 
@@ -49,7 +49,7 @@ def attach_capture_hook(
     """Anexa um hook `response` à sessão que salva cada resposta automaticamente.
 
     Numera os arquivos sequencialmente: `<prefix>_01.<ext>`, `<prefix>_02.<ext>`,
-    etc. A extensão padrão é inferida do `Content-Type` (`html`, `json`, ou `bin`).
+    etc. A extensão padrão é inferida do `Content-Type` (`html`, `json`, `xml` ou `bin`).
 
     Args:
         session: Sessão `requests` a instrumentar.
@@ -63,7 +63,7 @@ def attach_capture_hook(
     samples_dir.mkdir(parents=True, exist_ok=True)
     counter = {"i": 0}
 
-    def _hook(resp: requests.Response, *args, **kwargs) -> requests.Response:
+    def _hook(resp: requests.Response, *args: Any, **kwargs: Any) -> requests.Response:
         counter["i"] += 1
         ext = extension or _guess_extension(resp)
         filename = f"{prefix}_{counter['i']:02d}.{ext}"
@@ -85,6 +85,8 @@ def _guess_extension(resp: requests.Response) -> str:
     content_type = resp.headers.get("Content-Type", "").lower()
     if "json" in content_type:
         return "json"
-    if "html" in content_type or "xml" in content_type:
+    if "xml" in content_type:
+        return "xml"
+    if "html" in content_type:
         return "html"
     return "bin"

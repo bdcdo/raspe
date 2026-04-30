@@ -64,7 +64,8 @@ sem tocar a rede. Convenção:
 Comandos úteis:
 
 ```bash
-pytest -m "not integration"           # padrão, exclui integração
+pytest                                # padrão (exclui integração via addopts)
+pytest -m integration                 # só testes de integração
 pytest tests/<scraper>/ -v            # só um scraper
 pytest --cov=src/raspe                # com cobertura
 ```
