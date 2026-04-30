@@ -28,7 +28,6 @@ from .exceptions import (
 )
 from .scrapers.camara import ScraperCamaraDeputados
 from .scrapers.cfm import ScraperCFM
-from .scrapers.comunicaCNJ import comunicaCNJ_Scraper
 from .scrapers.folha import ScraperFolha
 from .scrapers.ipea import IpeaScraper
 from .scrapers.nyt import ScraperNYT
@@ -47,16 +46,6 @@ def presidencia(**kwargs):
         ScraperPresidencia: Instância configurada do raspador.
     """
     return ScraperPresidencia(**kwargs)
-
-
-def cnj(**kwargs):
-    """
-    Cria um raspador para comunicados do CNJ (Conselho Nacional de Justiça).
-
-    Returns:
-        comunicaCNJ_Scraper: Instância configurada do raspador.
-    """
-    return comunicaCNJ_Scraper(**kwargs)
 
 
 def ipea(**kwargs):
@@ -215,7 +204,6 @@ def anvisa(**kwargs):
 __all__ = [
     # Scrapers HTTP
     "presidencia",
-    "cnj",
     "ipea",
     "senado",
     "camara",

@@ -7,6 +7,11 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Removido
+- Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`
+  como agregador `comunica_cnj`. Quem dependia de `raspe.cnj()` deve usar
+  `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
+
 ## [0.1.0] - 2025-05-15
 
 ### Adicionado
