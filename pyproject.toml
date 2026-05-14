@@ -68,6 +68,24 @@ filterwarnings = [
     "default::urllib3.exceptions.InsecureRequestWarning",
 ]
 
+[tool.coverage.run]
+source = ["src/raspe"]
+# playwright_scraper.py é base async para scrapers de navegador e não pode ser
+# testado offline sem mockar a API inteira do Playwright; excluímos do
+# denominador. Os scrapers concretos (datalegis, saudelegis, ans, anvisa)
+# permanecem no denominador e têm testes mínimos de configuração.
+omit = ["src/raspe/playwright_scraper.py"]
+branch = false
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+show_missing = true
+
 [tool.pylint.main]
 load-plugins = ["pylint.extensions.docparams"]
 
