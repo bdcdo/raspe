@@ -1,0 +1,32 @@
+{
+  "status": "OK",
+  "response": {
+    "docs": [
+      {
+        "headline": {"main": "Article 1"},
+        "web_url": "https://www.nytimes.com/article1.html",
+        "pub_date": "2024-01-01T10:00:00+0000",
+        "section_name": "World",
+        "desk": "Foreign",
+        "type_of_material": "News",
+        "snippet": "Summary 1",
+        "byline": {"original": "By A"},
+        "word_count": 500,
+        "multimedia": []
+      },
+      {
+        "headline": {"main": "Article 2"},
+        "web_url": "https://www.nytimes.com/article2.html",
+        "pub_date": "2024-01-02T10:00:00+0000",
+        "section_name": "U.S.",
+        "desk": "National",
+        "type_of_material": "News",
+        "snippet": "Summary 2",
+        "byline": {"original": "By B"},
+        "word_count": 600,
+        "multimedia": []
+      }
+    ],
+    "metadata": {"hits": 15, "offset": 0, "time": 50}
+  }
+}

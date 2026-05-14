@@ -1,0 +1,20 @@
+{
+  "status": "OK",
+  "response": {
+    "docs": [
+      {
+        "headline": {"main": "Article 3"},
+        "web_url": "https://www.nytimes.com/article3.html",
+        "pub_date": "2024-01-03T10:00:00+0000",
+        "section_name": "Opinion",
+        "desk": "Opinion",
+        "type_of_material": "Op-Ed",
+        "snippet": "Summary 3",
+        "byline": {"original": "By C"},
+        "word_count": 700,
+        "multimedia": []
+      }
+    ],
+    "metadata": {"hits": 15, "offset": 10, "time": 50}
+  }
+}
