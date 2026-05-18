@@ -447,6 +447,19 @@ class TestSetQueryAtual:
         assert query["page"] == 3
         assert query["page_anterior"] == 2
 
+    def test_nao_muta_query_base(self):
+        scraper = _DummyHTTPScraper()
+        base = {"q": "x"}
+        scraper._set_query_atual(base, pag=1)
+        assert base == {"q": "x"}
+
+    def test_old_page_name_nao_muta_query_base(self):
+        scraper = _DummyHTTPScraper()
+        scraper.old_page_name = "page_anterior"
+        base = {"q": "x"}
+        scraper._set_query_atual(base, pag=3)
+        assert base == {"q": "x"}
+
 
 class TestSetPaginas:
     def test_sem_paginas_pega_todas(self):
