@@ -23,8 +23,12 @@ class TestHTMLScraper:
         assert soup.find("p").text == "bytes"
 
     def test_soup_it_html_invalido_nao_levanta(self):
-        """BeautifulSoup com html.parser é permissivo; entrada inválida vira soup vazio."""
+        """BeautifulSoup é permissivo; entrada inválida vira soup com o texto cru.
+
+        Assertiva por substring para tolerar diferenças entre parsers
+        (``html.parser`` vs. ``lxml`` vs. ``html5lib`` quanto a whitespace).
+        """
         client = _DummyHTMLClient()
         soup = client.soup_it("texto sem tags")
         assert isinstance(soup, BeautifulSoup)
-        assert soup.get_text() == "texto sem tags"
+        assert "texto sem tags" in soup.get_text()

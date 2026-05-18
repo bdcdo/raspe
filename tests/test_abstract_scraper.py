@@ -106,17 +106,14 @@ class TestCreateDownloadDir:
 
     def test_chamadas_sequenciais_geram_paths_diferentes(self, mocker):
         """Mock datetime para garantir timestamps distintos."""
+        from datetime import datetime as real_datetime
+
         s = _DummyScraper("dl2")
-        fake_dates = iter(["20240101120000", "20240101120001"])
-
-        def fake_now():
-            class _F:
-                @staticmethod
-                def strftime(_fmt):
-                    return next(fake_dates)
-            return _F()
-
-        mocker.patch("raspe.abstract_scraper.datetime", **{"now": fake_now})
+        mock_dt = mocker.patch("raspe.abstract_scraper.datetime")
+        mock_dt.now.side_effect = [
+            real_datetime(2024, 1, 1, 12, 0, 0),
+            real_datetime(2024, 1, 1, 12, 0, 1),
+        ]
         p1 = s._create_download_dir()
         p2 = s._create_download_dir()
         assert p1 != p2

@@ -221,6 +221,40 @@ class TestRasparBuscaUnica:
         df = scraper.raspar(termo="x")
         assert df.empty
 
+    @responses.activate
+    def test_debug_true_preserva_download_dir(self, mocker):
+        """Com debug=True, o diretório de download não é removido após raspar()."""
+        import os
+
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, "http://example.com/api",
+            body="<total>1</total>", status=200,
+            content_type="text/html; charset=utf-8",
+        )
+        responses.add(
+            responses.GET, "http://example.com/api",
+            body="<r>x</r>", status=200,
+            content_type="text/html; charset=utf-8",
+        )
+
+        # Captura o path retornado por _download_data para verificar depois
+        captured: dict[str, str] = {}
+        scraper = _DummyHTTPScraper(debug=True)
+        original_download = scraper._download_data
+
+        def capture_path(**kwargs):
+            path = original_download(**kwargs)
+            captured["path"] = path
+            return path
+
+        mocker.patch.object(scraper, "_download_data", side_effect=capture_path)
+
+        scraper.raspar(termo="x")
+        assert "path" in captured
+        # Com debug=True, o diretório deve continuar existindo
+        assert os.path.isdir(captured["path"])
+
 
 class TestRasparListaTermos:
     @responses.activate
@@ -374,6 +408,23 @@ class TestRequestWithRetry:
         # Nenhum sleep deve ter sido chamado para 4xx
         sleep_mock.assert_not_called()
 
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_max_retries_override(self, mocker):
+        """O parâmetro max_retries sobrescreve self.max_retries."""
+        mocker.patch("time.sleep")
+        # 2 tentativas, ambas 503 → deve levantar após a segunda
+        for _ in range(2):
+            responses.add(
+                responses.GET, "http://example.com/api",
+                status=503, body="indisponivel",
+            )
+
+        scraper = _DummyHTTPScraper()
+        # self.max_retries=3, mas o override fixa em 2
+        with pytest.raises(APIError) as exc_info:
+            scraper._request_with_retry({"q": "x"}, max_retries=2)
+        assert exc_info.value.status_code == 503
+
 
 # ---------------------------------------------------------------------------
 # Helpers internos: _set_query_atual, _set_paginas, _set_r
@@ -414,6 +465,13 @@ class TestSetPaginas:
         result = scraper._set_paginas(None, None)
         assert list(result) == []
 
+    def test_paginas_com_step_custom(self):
+        """``range`` com step != 1 preserva o step ao clipar em n_pags."""
+        scraper = _DummyHTTPScraper()
+        result = scraper._set_paginas(range(1, 10, 2), 8)
+        # start=1, stop=min(10, 9)=9, step=2 → [1, 3, 5, 7]
+        assert list(result) == [1, 3, 5, 7]
+
 
 class TestSetR:
     @responses.activate
@@ -453,12 +511,25 @@ class TestSetR:
 class TestGetNPags:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_erro_persistente_retorna_zero(self, mocker):
-        """Quando _request_with_retry levanta, _get_n_pags devolve 0."""
+        """Quando _request_with_retry levanta APIError, _get_n_pags devolve 0."""
         mocker.patch("time.sleep")
         for _ in range(3):
             responses.add(
                 responses.GET, "http://example.com/api",
                 status=500, body="erro",
+            )
+
+        scraper = _DummyHTTPScraper()
+        assert scraper._get_n_pags({"q": "x"}) == 0
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_rate_limit_persistente_retorna_zero(self, mocker):
+        """Rate limit que esgota retries também é absorvido por _get_n_pags."""
+        mocker.patch("time.sleep")
+        for _ in range(3):
+            responses.add(
+                responses.GET, "http://example.com/api",
+                status=429, headers={"Retry-After": "1"}, body="",
             )
 
         scraper = _DummyHTTPScraper()

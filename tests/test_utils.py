@@ -12,7 +12,6 @@ Cobre as funções públicas exportadas em ``raspe.utils``:
 """
 
 import re
-import warnings
 
 import pandas as pd
 import pytest
@@ -182,13 +181,25 @@ class TestStartSession:
         assert s1 is not s2
 
 
+@pytest.mark.filterwarnings("ignore::bs4.MarkupResemblesLocatorWarning")
+@pytest.mark.filterwarnings("ignore::bs4.GuessedAtParserWarning")
 class TestExtract:
-    """Testes para extract() que coleta conteúdo HTML de uma coluna de URLs."""
+    """Testes para extract() que coleta conteúdo HTML de uma coluna de URLs.
+
+    Markers ``filterwarnings`` silenciam dois warnings do BeautifulSoup que
+    aparecem nesses cenários e seriam transformados em erro pelo
+    ``filterwarnings = ["error"]`` global:
+
+    * ``MarkupResemblesLocatorWarning`` — corpo curto em alguns testes.
+    * ``GuessedAtParserWarning`` — ``raspe.utils.extract`` chama
+      ``BeautifulSoup`` sem ``features=...`` explícito. Suprimimos só os dois
+      warnings concretos, sem afrouxar a regra global.
+    """
 
     @responses.activate
     def test_extract_baixa_e_extrai_texto(self, mocker):
         """extract() faz GET em cada link e adiciona coluna {col}_content."""
-        mocker.patch("raspe.utils.time.sleep")
+        mocker.patch("time.sleep")
 
         responses.add(
             responses.GET,
@@ -206,11 +217,7 @@ class TestExtract:
         )
 
         df = pd.DataFrame({"link": ["http://example.com/a", "http://example.com/b"]})
-
-        with warnings.catch_warnings():
-            # BeautifulSoup pode emitir MarkupResemblesLocatorWarning em corpos pequenos
-            warnings.simplefilter("ignore")
-            result = extract(df, "link")
+        result = extract(df, "link")
 
         assert "link_content" in result.columns
         assert "Conteúdo A" in result["link_content"].iloc[0]
@@ -218,30 +225,22 @@ class TestExtract:
 
     def test_extract_file_url_eh_pulado(self, mocker):
         """Links file:// são pulados e geram string vazia (sem requisição)."""
-        mocker.patch("raspe.utils.time.sleep")
+        mocker.patch("time.sleep")
         df = pd.DataFrame({"link": ["file:///tmp/local.html"]})
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            result = extract(df, "link")
-
+        result = extract(df, "link")
         assert result["link_content"].iloc[0] == ""
 
     @responses.activate
     def test_extract_erro_de_requisicao_resulta_em_string_vazia(self, mocker):
         """Quando GET falha, a linha recebe string vazia ao invés de propagar."""
-        mocker.patch("raspe.utils.time.sleep")
+        mocker.patch("time.sleep")
         responses.add(
             responses.GET,
             "http://example.com/broken",
             body=ConnectionError("falha de rede"),
         )
         df = pd.DataFrame({"link": ["http://example.com/broken"]})
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            result = extract(df, "link")
-
+        result = extract(df, "link")
         assert result["link_content"].iloc[0] == ""
 
 
