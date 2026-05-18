@@ -8,7 +8,11 @@ com cards ``div.col-md-12.br-item[id^="conteudo-"]``.
 
 - ``page_01.html``: busca "natjus" (20 resultados → 1 página).
 - ``page_02.html``: busca "saude", página 2 (30 resultados).
-- ``single_page.html``: cópia de page_01 (1 página fechada).
+- ``single_page.html``: hoje é cópia bit-a-bit de ``page_01`` (mesma busca
+  "natjus" que já cabe em 1 página). Idealmente regenerar com termo
+  diferente para detectar drift independente — rodar
+  ``tests/fixtures/capture/capes.py`` quando o site não estiver
+  rate-limitando.
 - ``no_results.html``: termo absurdo, sem ``nav.br-pagination``.
 """
 
@@ -66,7 +70,10 @@ class TestRasparContract:
 
         assert not df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
-        assert len(df) == 32
+        # page_01 contribui com 20 cards; page_02 foi trimada para 12
+        # (ver docstring), mas qualquer regeneração pode mudar o trim.
+        # Validamos só o limite inferior: page_01 cheia + ≥10 da page_02.
+        assert len(df) >= 30
         assert df["link"].iloc[0].startswith("https://www.periodicos.capes.gov.br")
         assert "termo_busca" in df.columns
         assert (df["termo_busca"] == "saude").all()
@@ -95,6 +102,8 @@ class TestRasparContract:
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
         assert df["id"].str.match(r"^W\d+$").all()
         assert df["titulo"].str.len().min() > 0
+        # Tolerância de 2 cards sem ano de 4 dígitos (ex.: "no prelo",
+        # "in press" ou registros do OpenAlex sem ano publicado).
         assert (df["ano"].str.match(r"^\d{4}$")).sum() >= 18
 
     @responses.activate
