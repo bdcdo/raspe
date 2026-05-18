@@ -13,10 +13,12 @@ Exemplo:
 
 import re
 from typing import Any, Literal
+from urllib.parse import urljoin
 
 import pandas as pd
 
 from ..base_scraper import BaseScraper
+from ..exceptions import ValidationError
 from ..html_scraper import HTMLScraper
 
 _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
@@ -38,6 +40,13 @@ class ScraperCapes(BaseScraper, HTMLScraper):
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Accept-Language": "pt-BR,en-US;q=0.7,en;q=0.3",
             "Connection": "keep-alive",
+            "DNT": "1",
+            "Priority": "u=0, i",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Sec-GPC": "1",
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0",
         })
@@ -60,6 +69,11 @@ class ScraperCapes(BaseScraper, HTMLScraper):
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         pesquisa = kwargs.get('pesquisa', '')
+        if not pesquisa or not str(pesquisa).strip():
+            raise ValidationError(
+                "Parâmetro 'pesquisa' é obrigatório e não pode ser vazio."
+            )
+
         return {
             'q': f'all:contains({pesquisa})',
             'mode': 'advanced',
@@ -74,8 +88,12 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         if not nav:
             return 0
 
-        total_attr = str(nav.get('data-total', '0') or '0')
-        total = int(total_attr.replace('.', '').replace(',', '') or 0)
+        total_attr = str(nav.get('data-total', '') or '')
+        total_digits = total_attr.replace('.', '').replace(',', '')
+        if not total_digits:
+            return 0
+
+        total = int(total_digits)
         if total == 0:
             return 0
 
@@ -115,11 +133,14 @@ class ScraperCapes(BaseScraper, HTMLScraper):
 
         tipo_span = next(
             (s for s in card.find_all('span', class_='fw-semibold')
-             if s.get('class') == ['fw-semibold']),
+             if len(s.get('class', [])) == 1),
             None,
         )
         out['tipo'] = tipo_span.get_text(strip=True) if tipo_span else ''
 
+        # Grafia "open-acess" (1 c, 2 s) é typo upstream da CAPES no HTML real.
+        # Se o portal corrigir para "open-access", o booleano vira False
+        # silenciosamente — regenerar samples e atualizar o regex.
         out['acesso_aberto'] = card.find(id=re.compile(r'^open-acess-item-')) is not None
         out['producao_nacional'] = card.find(id=re.compile(r'^national-production-item-')) is not None
         out['revisado_por_pares'] = card.find(id=re.compile(r'^peer-reviewed-item-')) is not None
@@ -127,12 +148,10 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         titulo_a = card.select_one('a.titulo-busca')
         out['titulo'] = titulo_a.get_text(strip=True) if titulo_a else ''
 
-        link = titulo_a.get('href', '') if titulo_a else ''
-        if link.startswith('/'):
-            link = _BASE_DOMAIN + link
-        out['link'] = link
+        raw_link = titulo_a.get('href', '') if titulo_a else ''
+        out['link'] = urljoin(_BASE_DOMAIN, raw_link) if raw_link else ''
 
-        m_id = re.search(r'[?&]id=([A-Za-z0-9_-]+)', link)
+        m_id = re.search(r'[?&]id=([A-Za-z0-9_-]+)', out['link'])
         out['id'] = m_id.group(1) if m_id else ''
 
         autores = card.select('a.view-autor')
@@ -174,7 +193,7 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         if ver_editor:
             link_editor = ver_editor.get('href', '')
             out['link_editor'] = link_editor
-            m_doi = re.search(r'doi\.org/(.+)$', link_editor)
+            m_doi = re.search(r'doi\.org/([^?#]+)', link_editor)
             if m_doi:
                 out['doi'] = m_doi.group(1).strip()
 

@@ -7,13 +7,6 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
-### Mudado
-- **Breaking**: classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando
-  ao padrão `Scraper{Fonte}` adotado pelos demais raspadores. A factory
-  `raspe.ipea()` continua funcionando inalterada — só código que importa
-  diretamente `from raspe.scrapers.ipea import IpeaScraper` precisa ser
-  atualizado para `import ScraperIpea`.
-
 ### Adicionado
 - Scraper para o Portal de Periódicos da CAPES (`raspe.capes()`).
   Coleta metadados de artigos, livros e capítulos a partir do
@@ -22,15 +15,17 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   ano, revista, instituição, tópicos, resumo, DOI, link editor e
   flags de acesso aberto / produção nacional / revisado por pares).
   Acompanha contratos offline em `tests/capes/` com samples
-  capturados do site real (`natjus`, `saude`, busca sem resultados).
-- Cobertura de testes ≥80% em todos os módulos não-Playwright, com
-  contratos offline (`responses` + samples versionados) para os 11
-  scrapers e testes unitários para `base_scraper`, `abstract_scraper`,
-  `utils`, `exceptions` e `scraper_manager`. Gate
-  `[tool.coverage.report] fail_under = 80` ativo: a suíte agora falha se
-  a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
-  do denominador (testá-lo offline exigiria mockar a API async inteira
-  do Playwright).
+  capturados do site real (`natjus`, `saude`, busca sem resultados) e
+  script de captura em `tests/fixtures/capture/capes.py`.
+
+### Modificado
+- Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
+  `Scraper{Fonte}` adotado pelos demais raspadores. Alias
+  `IpeaScraper = ScraperIpea` mantido em `raspe.scrapers.ipea` por
+  retrocompatibilidade — código existente continua funcionando sem
+  alteração. Factory `raspe.ipea()` segue inalterada.
+- Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
+  permitindo `scraper("CAPES")` além de `raspe.capes()`.
 
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`
