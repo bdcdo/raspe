@@ -12,6 +12,12 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   como agregador `comunica_cnj`. Quem dependia de `raspe.cnj()` deve usar
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
 
+### Corrigido
+- `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
+  de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
+  de `_download_data`), mas vira armadilha em refactors futuros
+  (paralelização, cache, uso de `old_page_name`).
+
 ## [0.1.0] - 2025-05-15
 
 ### Adicionado
