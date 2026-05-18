@@ -7,6 +7,16 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Adicionado
+- Cobertura de testes ≥80% em todos os módulos não-Playwright, com
+  contratos offline (`responses` + samples versionados) para os 11
+  scrapers e testes unitários para `base_scraper`, `abstract_scraper`,
+  `utils`, `exceptions` e `scraper_manager`. Gate
+  `[tool.coverage.report] fail_under = 80` ativo: a suíte agora falha se
+  a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
+  do denominador (testá-lo offline exigiria mockar a API async inteira
+  do Playwright).
+
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`
   como agregador `comunica_cnj`. Quem dependia de `raspe.cnj()` deve usar

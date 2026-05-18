@@ -1,0 +1,53 @@
+{
+  "status": "OK",
+  "copyright": "Copyright (c) 2024 The New York Times Company. All Rights Reserved.",
+  "response": {
+    "docs": [
+      {
+        "headline": {"main": "Supreme Court Ruling on Climate Policy"},
+        "web_url": "https://www.nytimes.com/2024/01/15/climate-ruling.html",
+        "pub_date": "2024-01-15T14:00:00+0000",
+        "section_name": "U.S.",
+        "desk": "National",
+        "type_of_material": "News",
+        "snippet": "The court ruled 6-3 in favor of new climate regulations.",
+        "byline": {"original": "By Jane Doe"},
+        "word_count": 1200,
+        "multimedia": [
+          {"url": "images/2024/01/15/climate.jpg", "subtype": "xlarge", "type": "image"}
+        ]
+      },
+      {
+        "headline": {"main": "Election Year Begins With Surprises"},
+        "web_url": "https://www.nytimes.com/2024/01/16/election.html",
+        "pub_date": "2024-01-16T09:30:00+0000",
+        "section_name": "U.S.",
+        "desk": "Politics",
+        "type_of_material": "News Analysis",
+        "snippet": "Polls show unexpected shifts in voter preferences.",
+        "byline": {"original": "By John Smith"},
+        "word_count": 950,
+        "multimedia": []
+      },
+      {
+        "headline": {"main": "Tech Earnings Beat Expectations"},
+        "web_url": "https://www.nytimes.com/2024/01/17/tech.html",
+        "pub_date": "2024-01-17T18:45:00+0000",
+        "section_name": "Business",
+        "desk": "Business",
+        "type_of_material": "News",
+        "snippet": "Major tech companies reported strong Q4 results.",
+        "byline": {},
+        "word_count": 800,
+        "multimedia": [
+          {"url": "images/2024/01/17/tech-thumb.jpg", "subtype": "thumbnail", "type": "image"}
+        ]
+      }
+    ],
+    "meta": {
+      "hits": 3,
+      "offset": 0,
+      "time": 50
+    }
+  }
+}
