@@ -21,6 +21,7 @@ O raspe automatiza a coleta de dados de fontes oficiais brasileiras:
 - 📜 **Senado Federal** - Projetos de lei e atividade legislativa
 - 📊 **IPEA** - Estudos e pesquisas econômicas aplicadas
 - 📰 **Folha de São Paulo** - Notícias e artigos do jornal brasileiro
+- 🎓 **CAPES** - Metadados acadêmicos do Portal de Periódicos
 - 🗽 **New York Times** - Artigos do jornal americano (requer API key gratuita)
 
 **O resultado:** Todos os dados organizados em tabelas prontas para análise no Excel, Python, R ou qualquer ferramenta de sua preferência.
@@ -167,6 +168,7 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
 | CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina |
 | Folha | `raspe.folha()` | Notícias da Folha de São Paulo |
+| CAPES | `raspe.capes()` | Metadados de artigos do Portal de Periódicos da CAPES |
 | NYT | `raspe.nyt(api_key="...")` | Artigos do New York Times (requer API key) |
 | **SaudeLegis** | `raspe.saudelegis()` | Normas do Ministério da Saúde (requer browser) |
 | **ANS** | `raspe.ans()` | Atos da Agência Nacional de Saúde (requer browser) |

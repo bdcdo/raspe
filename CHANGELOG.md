@@ -8,6 +8,17 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 ### Adicionado
+- Scraper para o Portal de Periódicos da CAPES (`raspe.capes()`).
+  Coleta metadados de artigos, livros e capítulos a partir do
+  buscador público (`www.periodicos.capes.gov.br/index.php/acervo/buscador.html`),
+  com 15 colunas por registro (id OpenAlex, tipo, título, autores,
+  ano, revista, instituição, tópicos, resumo, DOI, link editor e
+  flags de acesso aberto / produção nacional / revisado por pares).
+  Acompanha contratos offline em `tests/capes/` com samples
+  capturados do site real (`natjus`, `saude`, busca sem resultados) e
+  script de captura em `tests/fixtures/capture/capes.py`.
+- Notebook exemplificativo `notebooks/05_capes.ipynb` para o scraper
+  da CAPES, seguindo o padrão dos demais notebooks de demonstração.
 - Cobertura de testes ≥80% em todos os módulos não-Playwright, com
   contratos offline (`responses` + samples versionados) para os 11
   scrapers e testes unitários para `base_scraper`, `abstract_scraper`,
@@ -16,6 +27,15 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
   do denominador (testá-lo offline exigiria mockar a API async inteira
   do Playwright).
+
+### Modificado
+- Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
+  `Scraper{Fonte}` adotado pelos demais raspadores. Alias
+  `IpeaScraper = ScraperIpea` mantido em `raspe.scrapers.ipea` por
+  retrocompatibilidade — código existente continua funcionando sem
+  alteração. Factory `raspe.ipea()` segue inalterada.
+- Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
+  permitindo `scraper("CAPES")` além de `raspe.capes()`.
 
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`

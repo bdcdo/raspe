@@ -2,7 +2,8 @@ from typing import Type
 
 from .base_scraper import BaseScraper
 from .scrapers.camara import ScraperCamaraDeputados
-from .scrapers.ipea import IpeaScraper
+from .scrapers.capes import ScraperCapes
+from .scrapers.ipea import ScraperIpea
 from .scrapers.presidencia import ScraperPresidencia
 from .scrapers.senado import ScraperSenadoFederal
 
@@ -13,9 +14,10 @@ def scraper(nome_buscador: str, **kwargs) -> BaseScraper:
     nome = nome_buscador.upper()
     mapping: dict[str, Type[BaseScraper]] = {
         "PRESIDENCIA": ScraperPresidencia,
-        "IPEA": IpeaScraper,
+        "IPEA": ScraperIpea,
         "SENADO": ScraperSenadoFederal,
-        "CAMARA": ScraperCamaraDeputados
+        "CAMARA": ScraperCamaraDeputados,
+        "CAPES": ScraperCapes,
     }
 
     try:

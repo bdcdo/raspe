@@ -6,7 +6,7 @@ from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
 
 
-class IpeaScraper(BaseScraper, HTMLScraper):
+class ScraperIpea(BaseScraper, HTMLScraper):
     def __init__(self, download_path=None):
         super().__init__("IPEA")
 
@@ -145,3 +145,9 @@ class IpeaScraper(BaseScraper, HTMLScraper):
             self.logger.error(f"Error parsing page {path}: {e}")
             # Return empty pandas DataFrame
             return pd.DataFrame(columns=columns)
+
+
+# Alias mantido por retrocompatibilidade: a classe foi renomeada de
+# IpeaScraper para ScraperIpea, mas código existente que importa o nome
+# antigo (`from raspe.scrapers.ipea import IpeaScraper`) continua funcionando.
+IpeaScraper = ScraperIpea

@@ -1,0 +1,992 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="theme-color" content="#00a300" />
+    <meta property="og:image" content="https://www-periodicos-capes-gov-br.ez336.periodicos.capes.gov.br/templates/periodicos_gov/images/icon-periodicos.png" />
+    <meta property="og:site_name" content="Portal de Periódicos da CAPES" />
+
+    <base href="https://www-periodicos-capes-gov-br.ez336.periodicos.capes.gov.br/index.php/acervo/buscador.html" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="generator" content="Joomla! - Open Source Content Management" />
+	<title>Buscar assunto</title>
+	<link href="/templates/periodicos_gov/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
+	<link href="https://www-periodicos-capes-gov-br.ez336.periodicos.capes.gov.br/components/com_pbuscador/assets/css/main.css" rel="stylesheet" type="text/css" />
+	<link href="https://www-periodicos-capes-gov-br.ez336.periodicos.capes.gov.br/templates/periodicos_gov/css/high-contrast.css" rel="stylesheet" type="text/css" />
+	<script type="application/json" class="joomla-script-options new">{"csrf.token":"5bc254c8b38f24d5624356fafab510a4","system.paths":{"root":"","base":""}}</script>
+	<script src="/media/system/js/mootools-core.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script src="/media/system/js/core.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script src="https://www-periodicos-capes-gov-br.ez336.periodicos.capes.gov.br/components/com_pbuscador/assets/js/recording.js" type="text/javascript"></script>
+	<script src="/media/jui/js/jquery.min.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script src="/media/jui/js/jquery-noconflict.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script src="/media/jui/js/jquery-migrate.min.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script src="/media/jui/js/bootstrap.min.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script src="/templates/periodicos_gov/lib/clipboard/clipboard.min.js?b018c5b8b37068f4a34f080b6ed52ec6" type="text/javascript"></script>
+	<script type="text/javascript">
+function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    var subdomain = ".periodicos";
+    var domain = ".capes";
+    var tld = ".gov.br";
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; domain=" + subdomain + domain + tld;
+}
+
+var hash = window.location.hash;
+
+if (hash) {
+    var queryString = hash.substring(1);
+
+    var searchParams = new URLSearchParams(queryString);
+
+    var accessToken = searchParams.get('access_token');
+
+    if (accessToken) {
+        setCookie('access_token', accessToken, 1);
+        window.location.href = window.location.origin + window.location.pathname;
+    }
+}
+    document.addEventListener('DOMContentLoaded', function() {
+        let contraste = sessionStorage.getItem('altoContraste') === 'true';
+        if (contraste) {
+            setContraste(true);
+        }
+    });
+
+    function altoContraste() {
+        let contrasteAtivo = document.body.classList.contains('highContrast');
+        sessionStorage.setItem('altoContraste', !contrasteAtivo);
+        setContraste(!contrasteAtivo);
+    }
+
+    function setContraste(ativar) {
+        document.body.classList.toggle('highContrast', ativar);
+    }
+
+	</script>
+
+
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel='stylesheet' href='/templates/periodicos_gov/lib/fullcalendar/lib/main.css'>
+    <!-- Fonte Rawline-->
+    <link rel="stylesheet" href="https://cdngovbr-ds.estaleiro.serpro.gov.br/design-system/fonts/rawline/css/rawline.css" />
+
+    <!-- Fonte Raleway-->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway:300,400,500,600,700,800,900&amp;display=swap" />
+
+    <!-- Design System de Governo-->
+    <link rel="stylesheet" href="/templates/periodicos_gov/css/main.css" />
+
+    <link rel="stylesheet" href="/templates/periodicos_gov/css/template.css" />
+
+    <!-- Fontawesome-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
+
+    <!-- Buscar nesse site -->
+    <link rel="search" href="/" title="Buscar neste site" />
+
+    <script src="/templates/periodicos_gov/js/jquery-3.6.0.min.js"></script>
+    <script src="/templates/periodicos_gov/lib/select2/4.1.0/js/select2.min.js"></script>
+</head>
+
+<body>
+
+    <div>
+        <nav class="br-skiplink" role="menubar">
+            <a class="br-item" href="#main-content" role="menuitem" accesskey="1">
+                Ir para o conteúdo <span aria-hidden="true">(1/4)</span> <span aria-hidden="true" class="br-tag text ml-1">1</span>
+            </a>
+            <a class="br-item" href="#header-navigation" role="menuitem" accesskey="2">
+                Ir para o menu <span aria-hidden="true">(2/4)</span> <span aria-hidden="true" class="br-tag text ml-1">2</span>
+            </a>
+            <a class="br-item" href="#main-searchbox" role="menuitem" accesskey="3">
+                Ir para a busca <span aria-hidden="true">(3/4)</span> <span aria-hidden="true" class="br-tag text ml-1">3</span>
+            </a>
+            <a class="br-item" href="#footer" role="menuitem" accesskey="4">
+                Ir para o rodapé <span aria-hidden="true">(4/4)</span> <span aria-hidden="true" class="br-tag text ml-1">4</span>
+            </a>
+        </nav>
+        <header class="br-header" id="header" data-sticky="data-sticky">
+            <div class="container-lg">
+                <div class="header-top">
+    <div class="header-logo">
+        <a class="background-none" href="https://www.gov.br/" target="_blank">
+            <img src="/images/govbr-logo-large.png" alt="Logo do Governo Federal" />
+        </a>
+        <span class="br-divider vertical"></span>
+        <a class="background-none" href="https://www.gov.br/capes/pt-br" target="_blank">
+            <img class="img-fluid" src="/images/logocapes2.png" alt="CAPES">
+        </a>
+    </div>
+    <div class="header-actions">
+        <div class="header-links dropdown">
+            <button class="br-button circle small" type="button" data-toggle="dropdown" aria-label="Abrir Acesso Rápido"><i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+            </button>
+            <div class="br-list">
+                <div class="header">
+                    <div class="title">Acesso Rápido</div>
+                </div>
+                                    <a class="br-item" href="https://www.gov.br/pt-br/orgaos-do-governo" target="_blank">Órgãos do Governo</a>
+                                    <a class="br-item" href="https://www.gov.br/acessoainformacao/pt-br" target="_blank">Acesso à Informação</a>
+                                    <a class="br-item" href="http://www4.planalto.gov.br/legislacao" target="_blank">Legislação</a>
+                                    <a class="br-item" href="https://www.gov.br/governodigital/pt-br/acessibilidade-digital" target="_blank">Acessibilidade</a>
+                            </div>
+        </div><span class="br-divider vertical mx-half mx-sm-1"></span>
+        <div class="header-functions dropdown">
+            <button class="br-button circle small" type="button" data-toggle="dropdown" aria-label="Abrir Funcionalidades do Sistema"><i class="fas fa-th" aria-hidden="true"></i>
+            </button>
+            <div class="br-list">
+                <div class="header">
+                    <div class="title">Funcionalidades do Sistema</div>
+                </div>
+                <div class="br-item">
+                    <button class="br-button circle small" onclick="altoContraste()" type="button" aria-label="Alto Contraste"><i class="fas fa-adjust" aria-hidden="true"></i><span class="text">Alto Contraste</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="header-login">
+            <div class="header-sign-in">
+                <script>
+    jQuery( document ).ready(function() {
+        jQuery('#entrar').click(function(){
+        var partesUrl = ["https:\/\/www","periodicos","capes","gov","br"];
+        location.href='https://sso.capes.gov.br/sso/oauth?client_id=periodicos&response_type=token&state=capes_oauth&redirect_uri='+partesUrl.join('.');
+    });
+});
+</script>
+
+    <button class="br-sign-in primary small" id="entrar" type="button">
+        <i class="fas fa-user" aria-hidden="true"></i>Entrar
+    </button>
+            </div>
+            <div class="header-avatar"></div>
+        </div>
+    </div>
+</div>
+                <div class="header-bottom">
+                    <div class="header-menu">
+                        <div class="header-menu-trigger" id="header-navigation">
+                            <button class="br-button circle" type="button" aria-label="Menu" data-toggle="menu" data-target="#main-navigation" id="navigation">
+                                <i class="fas fa-bars fa-lg" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="header-info col">
+                            <div class="header-title mb-2">
+                                <h1 class="site-name fs-3">
+                                    <a href="/" alt="Página inicial">
+                                        Portal de Periódicos da CAPES
+                                    </a>
+                                </h1>
+                            </div>
+                            <div class="header-subtitle">
+                                                                    <!-- Acesso CAFe -->
+                                    <div class="col-10 col-md-11">
+    <p class="small mb-0" tabindex="0">
+                    <strong> Você está acessando esse portal por:</strong> INSPER            </p>
+    <div class="dropdown">
+        <a href="#" class="dropdown-toggle" role="button" id="dropdownCafe" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Acesso CAFe</a>
+        <div class="dropdown-menu p-4 text-muted w-25" id="dropdownCafeDescricao" aria-labelledby="dropdownCafe">
+                            <p class="small">Você está acessando o conteúdo pago do Portal. O conteúdo assinado está disponível para a <strong>INSPER INSTITUTO DE ENSINO E PESQUISA</strong>.</p>
+
+            <a href="/index.php/acesso-cafe.html" class="br-button secondary p-2 w-100">
+                <i class="fas fa-coffee"></i> Acesso CAFe            </a>
+        </div>
+    </div>
+</div>
+                                                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="container-lg">
+
+
+<nav class="br-breadcrumb" aria-label="Breadcrumbs">
+	<ol class="crumb-list" role="list">
+					<li class="crumb home">
+				<a class="br-button circle" href="https://www-periodicos-capes-gov-br.ez336.periodicos.capes.gov.br/">
+					<span class="sr-only">Página inicial</span><i class="fas fa-home"></i>
+				</a>
+			</li>
+
+						<li class="crumb">
+											<i class="icon fas fa-chevron-right"></i>
+						<span tabindex="0">Acervo</span>
+										<meta itemprop="position" content="1">
+				</li>
+									<li class="crumb" data-active="active">
+						<i class="icon fas fa-chevron-right"></i>
+						<span tabindex="0" aria-current="page">Buscar assunto</span>
+						<meta itemprop="position" content="2">
+					</li>
+				</ol>
+</nav>
+<span class="br-divider"></span>
+        </div>
+        <div class="container-lg">
+            <script>
+document.addEventListener("DOMContentLoaded", async function () {
+	function sleep(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+	await sleep(15000);
+	const messages = document.querySelectorAll('.br-message-g');
+	messages.forEach(message => message.remove());
+});
+</script>
+
+        </div>
+        <main class="d-flex flex-fill mb-5 min-vh-100" id="main">
+            <div class="container-lg">
+                <div class="row">
+                    <div class="br-menu large push" id="main-navigation">
+                        <div class="menu-container">
+                            <div class="menu-panel">
+                                <div class="menu-header" data-visible="false">
+                                    <div class="menu-title">
+                                        <img src="/images/govbr-logo-large.png" alt="Logo do Governo Federal" />
+                                        <span>Portal de Periódicos da CAPES</span>
+                                    </div>
+                                    <div class="menu-close">
+                                        <button class="br-button circle" type="button" aria-label="Fechar o menu" data-dismiss="menu">
+                                            <i class="fas fa-times" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <nav class="menu-body" role="tree">
+
+	<ul>
+
+<li class="item-646 menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Sobre</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-722"><a href="/index.php/acessoaberto.html" class=" menu-item divider ">Acesso Aberto</a><li class="item-647"><a href="/index.php/sobre/quem-somos.html" class=" menu-item divider ">Quem somos</a><li class="item-652"><a href="/index.php/sobre/missao-e-objetivos.html" class=" menu-item divider ">Missão e objetivos</a><li class="item-653"><a href="/index.php/sobre/nossa-historia.html" class=" menu-item divider ">Nossa história</a><li class="item-654"><a href="/index.php/sobre/instituicoes-participantes.html" class=" menu-item divider ">Instituições participantes</a><li class="item-655"><a href="/index.php/sobre/parceiros.html" class=" menu-item divider ">Parceiros</a><li class="item-656"><a href="/index.php/sobre/documentacao.html" class=" menu-item divider ">Documentação</a><li class="item-657"><a href="/index.php/sobre/conteudo-contratado.html" class=" menu-item divider ">Contratos</a></li></ul></li><li class="item-648 active menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Acervo</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-699 current active"><a href="/index.php/acervo/buscador.html" class=" menu-item divider active">Buscar assunto</a><li class="item-700"><a href="/index.php/acervo/lista-a-z-bases.html" class=" menu-item divider ">Lista de bases e coleções</a><li class="item-701"><a href="/index.php/acervo/lista-a-z-livros.html" class=" menu-item divider ">Lista de livros</a><li class="item-702"><a href="/index.php/acervo/lista-a-z-periodicos.html" class=" menu-item divider ">Lista de periódicos</a></li></ul></li><li class="item-649 menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Treinamentos</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-658"><a href="/index.php/treinamentos/calendario.html" class=" menu-item divider ">Calendário</a><li class="item-659"><a href="/index.php/treinamentos/material-didatico.html" class=" menu-item divider ">Materiais de apoio</a></li></ul></li><li class="item-650"><a href="/index.php/informativos.html" class=" menu-item divider ">Informativos</a><li class="item-651 menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Ajuda</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-660"><a href="/index.php/ajuda/perguntas-frequentes.html" class=" menu-item divider ">Perguntas frequentes</a><li class="item-661"><a href="/index.php/ajuda/suporte-regional.html" class=" menu-item divider ">Suporte regional</a><li class="item-662"><a href="/index.php/ajuda/fale-conosco.html" class=" menu-item divider ">Fale conosco</a></li></ul></li>
+	</ul>
+
+                                </nav>
+                                <div class="menu-footer" data-visible="false">
+                                    <div class="menu-logos">
+                                        <img src="/images/Capes.png" alt="CAPES" />
+                                        <img src="/templates/periodicos_gov/images/logo_periodicos-simples2.jpg" alt="Portal de Periódicos da CAPES" />
+                                    </div>
+                                    <div class="social-network">
+                                        <div class="social-network-title">Redes Sociais</div>
+                                        <div class="d-flex">
+                                                                                            <a class="br-button circle small" href="https://www.facebook.com/CAPESOficial" aria-label="Facebook da CAPES">
+                                                    <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                                </a>
+                                                                                                                                        <a class="br-button circle small" href="https://www.twitter.com/CAPES_Oficial" aria-label="Twitter da CAPES">
+                                                    <i class="fab fa-x-twitter" aria-hidden="true"></i>
+                                                </a>
+                                                                                                                                                                                    <a class="br-button circle small" href="https://www.youtube.com/CAPES_Oficial" aria-label="Youtube da CAPES">
+                                                    <i class="fab fa-youtube" aria-hidden="true"></i>
+                                                </a>
+                                                                                                                                        <a class="br-button circle small" href="https://www.flickr.com/CAPES_Oficial" aria-label="Flickr da CAPES">
+                                                    <i class="fab fa-flickr" aria-hidden="true"></i>
+                                                </a>
+                                                                                                                                        <a class="br-button circle small" href="https://www.instagram.com/CAPES_Oficial" aria-label="Instagram da CAPES">
+                                                    <i class="fab fa-instagram" aria-hidden="true"></i>
+                                                </a>
+                                                                                    </div>
+                                    </div>
+                                    <div class="menu-info">
+                                        <div class="text-center text-down-01">© 2024. Todos os direitos reservados.&nbsp;<strong><a href="/index.php/termo-uso.html">Termos de Uso</a>.</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="menu-scrim" data-dismiss="menu" tabindex="0"></div>
+                        </div>
+                    </div>
+                    <div class="col mb-5">
+
+                        <div class="main-content pl-sm-3" id="main-content">
+
+
+
+
+
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <script src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script>
+<script type="text/javascript" src="//cdn.plu.mx/widget-popup.js"></script>
+<section id="result-busca" class="has-inner-drawer mt-5">
+    <!-- Busca -->
+    <div id="loading-voice-record" class="row justify-content-md-center mb-2" style="display:none">
+    <div class="col-md-1 loading-voice-record">
+        <i class="fas fa-microphone"></i>
+        <div class="loading-voice-record-text"></div>
+    </div>
+</div>
+<div class="row justify-content-md-center mb-2 border p-3 shadow-sm bg-gray-2">
+    <div class="col-md-12 col-sm-12">
+        <form action="" method="GET" id="busca" class="busca-watson">
+            <div class="col-sm-12 col-lg-12 mb-3 search-default">
+                <div class="br-input large input-button">
+                    <label class="text-up-03" for="input-busca">Olá.</label>
+                    <input id="input-busca" name="q" type="search" placeholder="Digite os termos de busca"
+                    value="zqxyzqxyz1234567890naoexistemesmo" minlength="4" required />
+                    <button class="br-button" type="submit" aria-label="Buscar" value="Submit"><i class="fas fa-search" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <br>
+            </div>
+            <!-- <div class="search-default">
+                <div class="input-group-prepend">
+                    <span class="input-text-busca">Olá.</span>
+                </div>
+                <button type="submit" class="btn" id="btn-busca-defaul" value="Submit"><i class="fas fa-search"></i></button>
+                <button type="button" class="btn" id="recordButton" data-toggle="tooltip" data-placement="bottom" title="Busca por voz"><i class="fas fa-microphone"></i></button>
+                <input name="q" type="search" id="input-busca" class="form-control" placeholder="Digite os termos de busca" value="zqxyzqxyz1234567890naoexistemesmo" minlength="4" required>
+            </div> -->
+        </form>
+        <form action="" method="GET" id="busca-avancada" class="busca-watson">
+            <div class="busca-avancada">
+    <div class="row">
+        <div class="col-12">
+            <div class="row mb-2">
+                <div class="col-sm-12">
+                    <div class="row">
+                        <label for="ecopo-busca" class="col-sm-2 col-form-label">Escopo da Busca: </label>
+                        <div class="col-sm-3">
+                            <select class="form-select form-select-md" id="escopo-busca" name="source">
+                                <option value="all" selected>Buscar tudo</option>
+                                <option value="Base" >Bases</option>
+                                <option value="Periodico" >Periódicos</option>
+                                <option value="Livro" >Livros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <span class="br-divider my-3"></span>
+                </div>
+            </div>
+            <div class="row">
+                <div id="fields" class="col-sm-9">
+                    <label for="filter-advanced">Filtros de busca</label>
+                    <div class="row mb-3" id="filter-advanced">
+                        <div class="col-sm-3">
+                            <div class="form-group custom-select-sm">
+                                <select class="form-select form-select-md campo" name="campos">
+                                    <option value="all">Qualquer campo</option>
+                                    <option value="title">Título</option>
+                                    <option value="authors">Autor</option>
+                                    <option value="topics">Assunto</option>
+                                    <option value="publisher">Editor</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="form-group custom-select-sm">
+                                <select class="form-select form-select-md" name="tipo_match">
+                                    <option value="contains">Contém</option>
+                                    <option value="exact">é (exato)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-7">
+                           <input class="form-control w-100" type="text" name="q"
+                            placeholder="Digite os termos de busca">
+                        </div>
+                        <div class="col-sm-12">
+                            <span class="br-divider my-3"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3 border-start">
+                    <div class="form-group custom-select-sm">
+                        <label for="type">Tipo de Material</label>
+                        <select class="form-select form-select-md" id="type">
+                            <option value="all">Todos os tipos</option>
+                            <option value="Artigo" >Artigo</option>
+                            <option value="Capítulo de livro" >Capítulo de livro</option>
+                            <option value="Paratexto" >Paratexto</option>
+                            <option value="Revisão" >Revisão</option>
+                            <option value="Pré-print" >Pré-print</option>
+                            <option value="Livro" >Livro</option>
+                            <option value="Dissertação" >Dissertação</option>
+                            <option value="Conjunto de dados" >Conjunto de dados</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <button type="button" id="add-field" class="br-button small"><i class="fas fa-plus"></i> Adicionar outro campo</button>
+                    <a type="button" href="/index.php/acervo/buscador.html" class="br-button small limpar-busca"><i class="fas fa-redo"></i> Limpar</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="br-button primary float-end btn-busca-avancada" value="Submit"><i class="fas fa-search"></i> BUSCAR</button>
+        </div>
+    </div>
+</div>        </form>
+    </div>
+</div>
+<div class="row mb-5">
+    <div>
+        <a type="button" class="text-up-01 text-weight-semi-bold float-end text-decoration-none" id="btn-busca-avancada">Busca Avançada</a>
+    </div>
+</div>
+
+    <div class="row justify-content-md-center mt-5">
+    <div class="col-xl-12">
+                    <div class="alert alert-light" role="alert">
+                <h4 class="alert-heading">Nenhum registro encontrado</h4>
+                <p>Não há resultados que correspondam à sua pesquisa "zqxyzqxyz1234567890naoexistemesmo".</p>
+                <span class="br-divider my-3"></span>
+                <p class="mb-0">
+                    <ul>
+                        <li>Certifique-se de que todas as palavras estão digitadas corretamente.</li>
+                        <li>Tente usar um escopo de pesquisa diferente. Tente usar palavras-chave diferentes.</li>
+                        <li>Tente usar palavras-chave mais genéricas. Tente usar menos palavras-chave.</li>
+                    </ul>
+                </p>
+            </div>
+            </div>
+</div>
+    <div id="loading-busca" class='container-loading d-none'>
+  <div class='loader'>
+    <div class='loader--dot'></div>
+    <div class='loader--dot'></div>
+    <div class='loader--dot'></div>
+    <div class='loader--dot'></div>
+    <div class='loader--dot'></div>
+    <div class='loader--dot'></div>
+    <div class='loader--text'></div>
+  </div>
+</div>
+    </section>
+<form id="faceta-submit" action="" method="post">
+    <input type="hidden" name="q" value="zqxyzqxyz1234567890naoexistemesmo">
+    <input type="submit" class="d-none" value="filtrar">
+</form>
+<script>
+jQuery( document ).ready(function() {
+
+    const params = new URLSearchParams(window.location.search);
+    const sourceUrl = params.get('source');
+
+    function loading(){
+        jQuery("#loading-busca").removeClass("d-none");
+    }
+
+    jQuery("#busca").submit(function(event){
+        loading();
+    });
+
+    function buscaAvancada(){
+        if (getParameterByName('mode') === 'advanced') {
+
+            let source = jQuery("#escopo-busca").val();
+            let type = jQuery("#type").val();
+
+            jQuery("#faceta").append('<input type="hidden" name="mode" value="advanced">');
+            if (sourceUrl === "expanded") {
+                jQuery('#faceta > input[name="source"]').remove();
+                jQuery("#faceta").append(`<input type="hidden" name="source" value="${sourceUrl}">`);
+            }else{
+                jQuery('#faceta > input[name="source"]').remove();
+                jQuery("#faceta").append(`<input type="hidden" name="source" value="${source}">`);
+            }
+
+            if(type != 'all'){
+                jQuery("#faceta").append(`<input type="hidden" name="type[]" value="type==${type}">`);
+            }
+            jQuery('#faceta input[name="q"]').val(`all:contains(zqxyzqxyz1234567890naoexistemesmo)`);
+        }
+    }
+
+    jQuery("#busca-avancada").submit(function(event){
+        event.preventDefault();
+        const campos = jQuery(this).serializeArray();
+        let expression = '';
+        let index = 0;
+        let lastLogicalOp = null;
+        let isValid = true;
+
+        campos.forEach((item, i) => {
+            if (item.name === 'op_logico') {
+                lastLogicalOp = item.value;
+            } else {
+                if (item.name === 'campos') {
+                    if (index > 0 && lastLogicalOp) {
+                        expression += ` ${lastLogicalOp} `;
+                    }
+                    expression += `${item.value}:`;
+                } else if (item.name === 'tipo_match') {
+                    expression += `${item.value}(`;
+                } else if (item.name === 'q') {
+                    if(item.value == ''){
+                        isValid = false;
+                    }
+                    expression += `${item.value})`;
+                    index++;
+                }
+            }
+        });
+
+        let source = jQuery("#escopo-busca").val();
+        let type = jQuery("#type").val();
+
+        jQuery("#busca").append('<input type="hidden" name="mode" value="advanced">');
+        jQuery("#busca").append(`<input type="hidden" name="source" value="${source}">`);
+
+        if(type != 'all'){
+            jQuery("#busca").append(`<input type="hidden" name="type[]" value="type==${type}">`);
+        }
+        jQuery('#input-busca').val(expression)
+
+        if (!isValid) {
+            event.preventDefault();
+            jQuery("input[name='q']").addClass("is-invalid");
+            return;
+        }
+
+        jQuery('#busca').submit()
+    });
+
+    jQuery('#add-field').click(function() {
+        const newField = `
+            <div class="row mb-3 field-row">
+                <div class="col-sm-1" style="padding-right: 0;">
+                    <div class="form-group custom-select-sm">
+                        <select class="form-select form-select-md op-logico" name="op_logico">
+                            <option value="AND">E</option>
+                            <option value="OR">Ou</option>
+                            <option value="NOT">Não</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group custom-select-sm">
+                        <select class="form-select form-select-md campo" name="campos">
+                            <option value="all">Qualquer campo</option>
+                            <option value="title">Título</option>
+                            <option value="authors">Autor</option>
+                            <option value="topics">Assunto</option>
+                            <option value="publisher">Editor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-2">
+                    <div class="form-group custom-select-sm">
+                        <select class="form-select form-select-md" name="tipo_match">
+                            <option value="contains">Contém</option>
+                            <option value="exact">é (exato)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                    <input class="form-control w-100" type="text" name="q"
+                    placeholder="Digite os termos de busca" >
+                </div>
+                <div class="col-sm-1 d-flex align-items-center justify-content-center">
+                    <button type="button" class="br-button circle remove-field"><i class="fas fa-times"></i></button>
+                </div>
+            </div>`;
+
+        jQuery('#fields').append(newField);
+        checkAddFieldButton();
+    });
+
+    function createFieldsFromExpression(expression) {
+        const fieldsContainer = jQuery('#fields');
+        fieldsContainer.empty();
+
+        const regex = /(?:\s*(AND|OR|NOT)\s*)?(\w+):(\w+)\(([^)]+)\)/g;
+        let match;
+        let index = 0;
+
+        while ((match = regex.exec(expression)) !== null) {
+            const [_, logicalOp, field, matchType, value] = match;
+
+            let fieldRowHtml = '<div class="row mb-3 field-row">';
+
+            if (index > 0 && logicalOp) {
+                fieldRowHtml += `
+                    <div class="col-sm-1" style="padding-right: 0;">
+                        <div class="form-group custom-select-sm">
+                            <select class="form-select form-select-md op-logico" name="op_logico">
+                                <option value="AND" ${logicalOp === 'AND' ? 'selected' : ''}>E</option>
+                                <option value="OR" ${logicalOp === 'OR' ? 'selected' : ''}>Ou</option>
+                                <option value="NOT" ${logicalOp === 'NOT' ? 'selected' : ''}>Não</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else if (index > 0) {
+                fieldRowHtml += `
+                    <div class="col-sm-1"></div>
+                `;
+            }
+
+            fieldRowHtml += `
+                <div class="col-sm-3">
+                    <div class="form-group custom-select-sm">
+                        <select class="form-select form-select-md campo" name="campos">
+                            <option value="all" ${field === 'all' ? 'selected' : ''}>Qualquer campo</option>
+                            <option value="title" ${field === 'title' ? 'selected' : ''}>Título</option>
+                            <option value="authors" ${field === 'authors' ? 'selected' : ''}>Autor</option>
+                            <option value="topics" ${field === 'topics' ? 'selected' : ''}>Assunto</option>
+                            <option value="publisher" ${field === 'publisher' ? 'selected' : ''}>Editor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-2">
+                    <div class="form-group custom-select-sm">
+                        <select class="form-select form-select-md" name="tipo_match">
+                            <option value="contains" ${matchType === 'contains' ? 'selected' : ''}>Contém</option>
+                            <option value="exact" ${matchType === 'exact' ? 'selected' : ''}>é (exato)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                    <input class="form-control w-100" type="text" name="q" value="${value}" placeholder="Digite os termos de busca" >
+                </div>`;
+
+            if(index > 0){
+                fieldRowHtml += `<div class="col-sm-1 d-flex align-items-center justify-content-center">
+                    <button type="button" class="br-button circle remove-field"><i class="fas fa-times"></i></button>
+                </div>`;
+            }
+
+            if(index <= 0){
+                fieldRowHtml += `<div class="col-sm-12"><span class="br-divider my-3"></span></div>`
+            }
+            fieldRowHtml += `</div>`
+
+            fieldsContainer.append(fieldRowHtml);
+
+            index++;
+        }
+
+        checkAddFieldButton();
+    }
+
+
+    jQuery('#fields').on('click', '.remove-field', function() {
+        jQuery(this).closest('.field-row').remove();
+        checkAddFieldButton();
+    });
+
+    function checkAddFieldButton() {
+        const addButton = jQuery('#add-field');
+        const fieldCount = jQuery('#fields .row').length;
+        addButton.prop('disabled', fieldCount >= 5);
+    }
+
+    function getParameterByName(name) {
+        const url = window.location.href;
+        const nameRegex = name.replace(/[[\]]/g, '\\$&');
+        const regex = new RegExp(`[?&]${nameRegex}(=([^&#]*)|&|#|$)`);
+        const results = regex.exec(url);
+        return results ? decodeURIComponent(results[2].replace(/\+/g, ' ')) : null;
+    }
+
+    if (getParameterByName('mode') === 'advanced') {
+        jQuery(".busca-avancada").slideToggle();
+        jQuery(".search-default").toggle();
+        var buttonText = jQuery("#btn-busca-avancada").text() === "Busca Avançada" ? "Busca Simples" : "Busca Avançada";
+        jQuery("#btn-busca-avancada").text(buttonText);
+        // jQuery("#expandir-resultados").prop('checked', true);
+        createFieldsFromExpression("all:contains(zqxyzqxyz1234567890naoexistemesmo)");
+        buscaAvancada();
+    }
+
+    jQuery("#faceta").submit(function(event){
+        loading();
+    });
+
+    jQuery("#btn-busca-avancada").click(function(){
+        jQuery(".busca-avancada").slideToggle();
+        jQuery(".search-default").toggle();
+        var buttonText = jQuery(this).text() === "Busca Avançada" ? "Busca Simples" : "Busca Avançada";
+        jQuery(this).text(buttonText);
+    });
+
+    jQuery(".btn-mais").click(function(){
+        var buttonText = jQuery(this).text() === "Mostrar mais" ? "Mostrar menos" : "Mostrar mais";
+        jQuery(this).text(buttonText);
+
+    });
+
+    jQuery(document).on("click", '.add-metrics', function() {
+        let work_id = jQuery(this).data('id');
+        let link = jQuery(this).attr('href');
+        $.ajax({
+            type: 'GET',
+            dataType: 'json',
+            url: `/index.php?option=com_pbuscador&task=addMetrics&work_id=${work_id}&link=${link}`
+        });
+
+    })
+
+    jQuery(document).on("click", '.favorito', function() {
+        let idItem = jQuery(this).data('item');
+        let objeto = this;
+        jQuery(`#result-busca-load-${idItem}`).removeClass("d-none");
+        jQuery(`#conteudo-${idItem}`).addClass("d-none");
+        let id = jQuery(this).data('id');
+        let action = jQuery(this).data('action');
+        let source = jQuery(this).data('source');
+        let vse = jQuery(this).data('vse');
+        $.ajax({
+            type: 'GET',
+            dataType: 'json',
+            url: `/index.php?option=com_pbuscador&task=favorite&vse=${vse}&id=${id}&action=${action}&source=${source}`,
+            success: function(data) {
+                jQuery(`#result-busca-load-${idItem}`).addClass("d-none");
+                jQuery(`#conteudo-${idItem}`).removeClass("d-none");
+                if(data.code != 'error'){
+                    jQuery(objeto).toggleClass('fa far');
+                }
+                renderMessages({
+                    message: data.response,
+                    type: data.code,
+                    title: 'Meus Favoritos'
+                });
+            },
+            error: function(data) {
+                jQuery(`#result-busca-load-${idItem}`).addClass("d-none");
+                jQuery(`#conteudo-${idItem}`).removeClass("d-none");
+                renderMessages({
+                    message: data.response,
+                    type: data.code,
+                    title: 'Meus Favoritos'
+                });
+            }
+        });
+
+
+    })
+
+    function renderMessages(data){
+        var backgroundColor = '';
+        if(data.type == 'error'){
+            backgroundColor = '#ff0000';
+        }
+        var toastHtml = `
+            <div style="position: fixed; top: 15px; right: 15px;">
+                <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="7000">
+                    <div class="toast-header" style="background-color:${backgroundColor}; border-bottom:${backgroundColor};">
+                        <strong class="mr-auto">${data.title}</strong>
+                        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        <p>${data.message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+        jQuery('.toast').toast('show');
+    }
+
+    function _html_metrics_watson(metric, title){
+        var html_metrics_watson = '';
+        if(metric){
+            html_metrics_watson = `
+                <div class="col border-right text-center">
+                    <h5 class="font-light">${metric}</h5>
+                    <h6 class="text-uppercase">${title}</h6>
+                </div>`
+            ;
+        }
+        return html_metrics_watson;
+    }
+
+    jQuery(document).on("change", '.ano', function() {
+        if(jQuery('#filtro-ano').hasClass('invisible')){
+            jQuery("#filtro-ano").removeClass('invisible');
+            jQuery("#filtro-ano").addClass('visible');
+        }
+    })
+
+    jQuery(document).on("click", '#filtro-ano', function() {
+        buscaAvancada();
+        jQuery( "#faceta" ).submit();
+    })
+
+    jQuery(document).on("click", '.page-buscador', function() {
+        var $this = jQuery(this);
+
+        if($this.attr("data-page") == 0){
+            jQuery( "#faceta" ).submit();
+        }
+
+        buscaAvancada();
+
+        jQuery( "#faceta" ).append('<input type="hidden" name="page" value="'+$this.attr("data-page")+'">');
+        jQuery( "#faceta" ).submit();
+    })
+
+    jQuery(document).on("click", '.box-faceta-active', function() {
+        var facetas = jQuery(this).attr("data-faceta").split(`\n`);
+        var tipo = jQuery(this).attr("data-type");
+        var mapeamento = {};
+        var includeFaceta = [];
+        facetas.forEach(function(item) {
+            var partes = item.split("==");
+            var chave = partes[0];
+            var valor = partes[1];
+
+            if (valor !== undefined &&  tipo !== chave && !includeFaceta.includes(item)) {
+                includeFaceta.push(item);
+                jQuery( "#faceta" ).append('<input type="hidden" name="'+chave+'[]" value="'+item+'">');
+            }
+        });
+        jQuery("#faceta input[type='checkbox'], #faceta input[type='radio']").prop("checked", false);
+        jQuery( "#faceta").submit();
+    })
+
+    jQuery(document).on("click", '.view-autor', function() {
+        loading();
+        let expression = `authors:"${jQuery(this).attr('data-autor')}"`
+        jQuery('#input-busca').val(expression)
+        jQuery( "#busca").submit();
+    })
+
+    jQuery(document).on("click", '.limpar-faceta-active', function() {
+        jQuery( "#busca").submit();
+    })
+
+    jQuery('#expandir-resultados').on('change', function () {
+        jQuery('#faceta > input[name="source"]').remove();
+
+        if (jQuery(this).is(':checked')) {
+            jQuery('<input>', {
+                type: 'hidden',
+                name: 'source',
+                value: 'expanded'
+            }).appendTo('#faceta');
+        }
+
+        jQuery('#faceta').submit();
+    });
+
+    jQuery(document).on("click", '.limpar-busca', function() {
+        loading();
+        location.reload();
+    })
+
+})
+</script>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+
+
+
+
+        <footer id="footer" class="br-footer">
+            <div class="container-lg">
+                <div class="logo">
+                    <a class="background-none" href="https://www.gov.br/" target="_blank">
+                        <img src="/templates/periodicos_gov/images/govbr.png" alt="Governo Federal" />
+                    </a>
+                    <a class="background-none" href="https://www.gov.br/capes/pt-br" target="_blank">
+                        <img class="ml-4 float-end" src="/templates/periodicos_gov/images/logo-capes.svg" alt="CAPES" />
+                    </a>
+                </div>
+                                    <div class="br-list horizontal br-menu-footer" data-toggle="data-toggle" data-sub="data-sub">
+
+	<ul>
+
+<li class="item-646 menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Sobre</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-722"><a href="/index.php/acessoaberto.html" class=" menu-item divider ">Acesso Aberto</a><li class="item-647"><a href="/index.php/sobre/quem-somos.html" class=" menu-item divider ">Quem somos</a><li class="item-652"><a href="/index.php/sobre/missao-e-objetivos.html" class=" menu-item divider ">Missão e objetivos</a><li class="item-653"><a href="/index.php/sobre/nossa-historia.html" class=" menu-item divider ">Nossa história</a><li class="item-654"><a href="/index.php/sobre/instituicoes-participantes.html" class=" menu-item divider ">Instituições participantes</a><li class="item-655"><a href="/index.php/sobre/parceiros.html" class=" menu-item divider ">Parceiros</a><li class="item-656"><a href="/index.php/sobre/documentacao.html" class=" menu-item divider ">Documentação</a><li class="item-657"><a href="/index.php/sobre/conteudo-contratado.html" class=" menu-item divider ">Contratos</a></li></ul></li><li class="item-648 active menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Acervo</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-699 current active"><a href="/index.php/acervo/buscador.html" class=" menu-item divider active">Buscar assunto</a><li class="item-700"><a href="/index.php/acervo/lista-a-z-bases.html" class=" menu-item divider ">Lista de bases e coleções</a><li class="item-701"><a href="/index.php/acervo/lista-a-z-livros.html" class=" menu-item divider ">Lista de livros</a><li class="item-702"><a href="/index.php/acervo/lista-a-z-periodicos.html" class=" menu-item divider ">Lista de periódicos</a></li></ul></li><li class="item-649 menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Treinamentos</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-658"><a href="/index.php/treinamentos/calendario.html" class=" menu-item divider ">Calendário</a><li class="item-659"><a href="/index.php/treinamentos/material-didatico.html" class=" menu-item divider ">Materiais de apoio</a></li></ul></li><li class="item-650"><a href="/index.php/informativos.html" class=" menu-item divider ">Informativos</a><li class="item-651 menu-folder drop-menu parent"><a href="#" class=" menu-item" role="treeitem"><span class="content">Ajuda</span></a><ul role="tree" class="nav-child unstyled small"><li class="item-660"><a href="/index.php/ajuda/perguntas-frequentes.html" class=" menu-item divider ">Perguntas frequentes</a><li class="item-661"><a href="/index.php/ajuda/suporte-regional.html" class=" menu-item divider ">Suporte regional</a><li class="item-662"><a href="/index.php/ajuda/fale-conosco.html" class=" menu-item divider ">Fale conosco</a></li></ul></li>
+	</ul>
+
+                    </div>
+                                <div class="d-none d-sm-block">
+                    <div class="row align-items-end justify-content-between py-5">
+                        <div class="col">
+                            <div class="social-network">
+                                <div class="social-network-title">Redes Sociais</div>
+                                <div class="d-flex">
+                                                                            <a class="br-button circle small" href="https://www.facebook.com/CAPESOficial" aria-label="Facebook da CAPES">
+                                            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                        </a>
+                                                                                                                <a class="br-button circle small" href="https://www.twitter.com/CAPES_Oficial" aria-label="Twitter da CAPES">
+                                            <i class="fab fa-x-twitter-b" aria-hidden="true"></i>
+                                        </a>
+                                                                                                                                                    <a class="br-button circle small" href="https://www.youtube.com/CAPES_Oficial" aria-label="Youtube da CAPES">
+                                            <i class="fab fa-youtube" aria-hidden="true"></i>
+                                        </a>
+                                                                                                                <a class="br-button circle small" href="https://www.flickr.com/CAPES_Oficial" aria-label="Flickr da CAPES">
+                                            <i class="fab fa-flickr" aria-hidden="true"></i>
+                                        </a>
+                                                                                                                <a class="br-button circle small" href="https://www.instagram.com/CAPES_Oficial" aria-label="Instagram da CAPES">
+                                            <i class="fab fa-instagram" aria-hidden="true"></i>
+                                        </a>
+                                                                    </div>
+                            </div>
+                        </div>
+                        <div class="col assigns text-right">
+                            <a class="background-none" href="https://www.gov.br/acessoainformacao/pt-br" target="_blank">
+                                <img class="ml-4 logo-acesso-a-informacao" src="/templates/periodicos_gov/images/logo-acesso-a-informacao.svg" alt="Acesse o portal sobre o acesso à informação" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div><span class="br-divider my-3"></span>
+            <div class="container-lg">
+                <div class="info">
+                    <div class="text-down-01 text-medium pb-3">
+                        © 2024. Todos os direitos reservados.&nbsp;<strong><a href="/index.php/termo-uso.html">Termos de Uso</a>.</strong>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <div class="br-button circle large primary back-top hide">
+            <i class="fa fa-chevron-up" aria-hidden="true"></i>
+        </div>
+        <div vw class="enabled">
+                <div vw-access-button class="active"></div>
+                <div vw-plugin-wrapper>
+                    <div class="vw-plugin-top-wrapper"></div>
+                </div>
+                <script type="text/javascript" src="https://vlibras.gov.br/app/vlibras-plugin.js?ver=1.0" id="vlibrasjs-js"></script>
+                <script>
+                    new window.VLibras.Widget("https://vlibras.gov.br/app");
+                </script>
+            </div>    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+<script src="/templates/periodicos_gov/js/main.js"></script>
+<script src="/templates/periodicos_gov/js/cookie-config.js"></script>
+<script src="/templates/periodicos_gov/js/template.js"></script>
+<!-- Google Analytics -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DSV7MH35Q7"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DSV7MH35Q7');
+</script>
+
+</html>
