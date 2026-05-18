@@ -27,9 +27,10 @@ from .exceptions import (
     ValidationError,
 )
 from .scrapers.camara import ScraperCamaraDeputados
+from .scrapers.capes import ScraperCapes
 from .scrapers.cfm import ScraperCFM
 from .scrapers.folha import ScraperFolha
-from .scrapers.ipea import IpeaScraper
+from .scrapers.ipea import ScraperIpea
 from .scrapers.nyt import ScraperNYT
 from .scrapers.presidencia import ScraperPresidencia
 from .scrapers.senado import ScraperSenadoFederal
@@ -53,9 +54,9 @@ def ipea(**kwargs):
     Cria um raspador para dados do IPEA (Instituto de Pesquisa Econômica Aplicada).
 
     Returns:
-        IpeaScraper: Instância configurada do raspador.
+        ScraperIpea: Instância configurada do raspador.
     """
-    return IpeaScraper(**kwargs)
+    return ScraperIpea(**kwargs)
 
 
 def senado(**kwargs):
@@ -121,6 +122,26 @@ def folha(**kwargs):
         ScraperFolha: Instância configurada do raspador.
     """
     return ScraperFolha(**kwargs)
+
+
+def capes(**kwargs):
+    """
+    Cria um raspador para o Portal de Periódicos da CAPES.
+
+    Coleta metadados (título, autores, ano, revista, DOI, etc.) da
+    base bibliográfica acadêmica indexada pela CAPES via OpenAlex.
+
+    Args:
+        pesquisa: Termo de busca.
+
+    Returns:
+        ScraperCapes: Instância configurada do raspador.
+
+    Exemplo:
+        >>> import raspe
+        >>> df = raspe.capes().raspar(pesquisa="natjus")
+    """
+    return ScraperCapes(**kwargs)
 
 
 def saudelegis(**kwargs):
@@ -210,6 +231,7 @@ __all__ = [
     "cfm",
     "nyt",
     "folha",
+    "capes",
     # Scrapers Browser (Playwright)
     "saudelegis",
     "ans",

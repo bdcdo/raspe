@@ -6,7 +6,7 @@ from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
 
 
-class IpeaScraper(BaseScraper, HTMLScraper):
+class ScraperIpea(BaseScraper, HTMLScraper):
     def __init__(self, download_path=None):
         super().__init__("IPEA")
 
