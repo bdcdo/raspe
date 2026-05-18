@@ -97,7 +97,12 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         if total == 0:
             return 0
 
-        per_page = 30
+        # O CAPES expõe o tamanho de página no próprio nav (data-per-page).
+        # Em 2026-05 o portal serve 20 itens/página, mas o atributo é a
+        # fonte de verdade — ler dinâmico evita perder páginas se o
+        # site mudar o valor. Fallback para 20 se o atributo sumir.
+        per_page_attr = str(nav.get('data-per-page', '') or '').strip()
+        per_page = int(per_page_attr) if per_page_attr.isdigit() and int(per_page_attr) > 0 else 20
         return (total + per_page - 1) // per_page
 
     def _parse_page(self, path: str) -> pd.DataFrame:
