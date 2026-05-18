@@ -6,6 +6,7 @@ de "Mostrando página X de Y" para descobrir total de páginas.
 
 import pytest
 import responses
+from responses import registries
 
 from raspe.scrapers.cfm import ScraperCFM
 from tests._helpers import load_sample_bytes
@@ -20,7 +21,7 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """20 registros, "Mostrando página 1 de 2" → 2 páginas."""
         mocker.patch("time.sleep")

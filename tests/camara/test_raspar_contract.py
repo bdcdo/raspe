@@ -8,6 +8,7 @@ não a inicialização da sessão.
 
 import pytest
 import responses
+from responses import registries
 
 from raspe.scrapers.camara import ScraperCamaraDeputados
 from tests._helpers import load_sample_bytes
@@ -28,7 +29,7 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """15 resultados → 2 páginas."""
         mocker.patch("time.sleep")
@@ -89,16 +90,16 @@ class TestConfiguracao:
         assert scraper.type == 'HTML'
         assert scraper.query_page_name == 'pagina'
 
+    @responses.activate
     def test_query_inclui_filtros_opcionais(self, scraper, mocker):
         mocker.patch("time.sleep")
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET, API_URL,
-                body=load_sample_bytes("camara", "raspar/no_results.html"),
-                status=200, content_type="text/html; charset=utf-8",
-            )
-            scraper.raspar(pesquisa="x", ano=2024, tipo_materia="PL")
-            url = rsps.calls[0].request.url
-            assert "ano=2024" in url
-            assert "tipo=PL" in url
-            assert "geral=x" in url
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("camara", "raspar/no_results.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        scraper.raspar(pesquisa="x", ano=2024, tipo_materia="PL")
+        url = responses.calls[0].request.url
+        assert "ano=2024" in url
+        assert "tipo=PL" in url
+        assert "geral=x" in url

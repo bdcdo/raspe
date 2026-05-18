@@ -2,6 +2,7 @@
 
 import pytest
 import responses
+from responses import registries
 
 from raspe.scrapers.senado import ScraperSenadoFederal
 from tests._helpers import load_sample_bytes
@@ -16,7 +17,7 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         mocker.patch("time.sleep")
         responses.add(

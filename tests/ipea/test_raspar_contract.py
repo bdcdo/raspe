@@ -9,7 +9,7 @@ Para regenerar a partir do site real, ver
 
 import pytest
 import responses
-from responses import matchers
+from responses import matchers, registries
 
 from raspe.scrapers.ipea import IpeaScraper
 from tests._helpers import load_sample_bytes
@@ -24,7 +24,7 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """15 resultados → 2 páginas: 1 request inicial + 2 de página."""
         mocker.patch("time.sleep")

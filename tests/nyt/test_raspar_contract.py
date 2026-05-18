@@ -7,7 +7,7 @@ a estrutura da Article Search API v2 do NYT
 
 import pytest
 import responses
-from responses import matchers
+from responses import matchers, registries
 
 from raspe.exceptions import APIError, APIKeyError
 from raspe.scrapers.nyt import ScraperNYT
@@ -26,7 +26,7 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """15 hits → 2 páginas (10 por página)."""
         mocker.patch("time.sleep")

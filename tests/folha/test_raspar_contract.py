@@ -8,6 +8,7 @@ para cada notícia, com ``a[href]``, ``h2``, ``p``, ``time``).
 
 import pytest
 import responses
+from responses import registries
 
 from raspe.exceptions import ValidationError
 from raspe.scrapers.folha import ScraperFolha
@@ -23,7 +24,7 @@ def scraper():
 
 
 class TestRasparContract:
-    @responses.activate
+    @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
         """40 resultados → 2 páginas (25 por página)."""
         mocker.patch("time.sleep")
@@ -97,21 +98,21 @@ class TestValidacao:
         with pytest.raises(ValidationError, match="site"):
             scraper.raspar(pesquisa="x", site="invalido")
 
+    @responses.activate
     @pytest.mark.parametrize("site", ["todos", "online", "jornal"])
     def test_sites_validos_aceitos(self, site, mocker):
         """'todos', 'online' e 'jornal' são aceitos sem erro de validação."""
         mocker.patch("time.sleep")
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET, API_URL,
-                body=load_sample_bytes("folha", "raspar/no_results.html"),
-                status=200,
-                content_type="text/html; charset=utf-8",
-            )
-            # Não levanta — site válido. Instancia fresh para evitar
-            # colisão de timestamp em _create_download_dir.
-            df = ScraperFolha().raspar(pesquisa="x", site=site)
-            assert df.empty
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("folha", "raspar/no_results.html"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+        )
+        # Não levanta — site válido. Instancia fresh para evitar
+        # colisão de timestamp em _create_download_dir.
+        df = ScraperFolha().raspar(pesquisa="x", site=site)
+        assert df.empty
 
 
 class TestFormatacaoData:
