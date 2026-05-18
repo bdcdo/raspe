@@ -260,7 +260,8 @@ class BaseScraper(AbstractScraper):
         return paginas
 
     def _set_query_atual(self, query_real: dict[str, Any], pag: int) -> dict[str, Any]:
-        query_atual = query_real
+        # Cópia rasa para não mutar o dicionário do caller (valores são str/int).
+        query_atual = dict(query_real)
 
         query_atual[self.query_page_name] = pag * self.query_page_multiplier + self.query_page_increment
 

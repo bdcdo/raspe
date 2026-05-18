@@ -17,6 +17,16 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   Acompanha contratos offline em `tests/capes/` com samples
   capturados do site real (`natjus`, `saude`, busca sem resultados) e
   script de captura em `tests/fixtures/capture/capes.py`.
+- Notebook exemplificativo `notebooks/05_capes.ipynb` para o scraper
+  da CAPES, seguindo o padrão dos demais notebooks de demonstração.
+- Cobertura de testes ≥80% em todos os módulos não-Playwright, com
+  contratos offline (`responses` + samples versionados) para os 11
+  scrapers e testes unitários para `base_scraper`, `abstract_scraper`,
+  `utils`, `exceptions` e `scraper_manager`. Gate
+  `[tool.coverage.report] fail_under = 80` ativo: a suíte agora falha se
+  a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
+  do denominador (testá-lo offline exigiria mockar a API async inteira
+  do Playwright).
 
 ### Modificado
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
@@ -31,6 +41,12 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`
   como agregador `comunica_cnj`. Quem dependia de `raspe.cnj()` deve usar
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
+
+### Corrigido
+- `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
+  de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
+  de `_download_data`), mas vira armadilha em refactors futuros
+  (paralelização, cache, uso de `old_page_name`).
 
 ## [0.1.0] - 2025-05-15
 
