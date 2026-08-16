@@ -8,10 +8,18 @@ classes de scraper. Os scrapers não devem fazer rede em seus testes — para
 
 import pytest
 
+import raspe
 from raspe.scraper_manager import scraper
+from raspe.scrapers.ans import ScraperANS
+from raspe.scrapers.anvisa import ScraperANVISA
 from raspe.scrapers.camara import ScraperCamaraDeputados
+from raspe.scrapers.capes import ScraperCapes
+from raspe.scrapers.cfm import ScraperCFM
+from raspe.scrapers.folha import ScraperFolha
 from raspe.scrapers.ipea import IpeaScraper
+from raspe.scrapers.nyt import ScraperNYT
 from raspe.scrapers.presidencia import ScraperPresidencia
+from raspe.scrapers.saudelegis import ScraperSaudeLegis
 from raspe.scrapers.senado import ScraperSenadoFederal
 
 
@@ -38,6 +46,40 @@ class TestScraperFactory:
         instance = scraper("camara")
         assert isinstance(instance, ScraperCamaraDeputados)
 
+    def test_capes(self):
+        instance = scraper("capes")
+        assert isinstance(instance, ScraperCapes)
+
+    def test_cfm(self):
+        instance = scraper("cfm")
+        assert isinstance(instance, ScraperCFM)
+
+    def test_folha(self):
+        instance = scraper("folha")
+        assert isinstance(instance, ScraperFolha)
+
+    def test_nyt(self):
+        """O NYT exige API key — repassada via **kwargs ao construtor."""
+        instance = scraper("nyt", api_key="chave-de-teste")
+        assert isinstance(instance, ScraperNYT)
+
+    def test_saudelegis(self):
+        instance = scraper("saudelegis")
+        assert isinstance(instance, ScraperSaudeLegis)
+
+    def test_ans(self):
+        instance = scraper("ans")
+        assert isinstance(instance, ScraperANS)
+
+    def test_anvisa(self):
+        instance = scraper("anvisa")
+        assert isinstance(instance, ScraperANVISA)
+
+    def test_kwargs_repassados_ao_construtor(self):
+        """kwargs chegam ao raspador — `headless` desliga o modo headless."""
+        instance = scraper("ans", headless=False)
+        assert instance._headless is False
+
     def test_nome_case_insensitive(self):
         """A função normaliza o nome com .upper(), aceitando minúsculas/misturas."""
         assert isinstance(scraper("Presidencia"), ScraperPresidencia)
@@ -46,3 +88,24 @@ class TestScraperFactory:
     def test_nome_invalido_levanta_value_error(self):
         with pytest.raises(ValueError, match="não é suportado"):
             scraper("desconhecido")
+
+    def test_erro_lista_fontes_suportadas(self):
+        """A mensagem de erro enumera as fontes válidas."""
+        with pytest.raises(ValueError, match="Disponíveis:.*CFM.*"):
+            scraper("desconhecido")
+
+    def test_cobre_todas_as_factories_publicas(self):
+        """O mapping não pode ficar para trás das factories de `raspe`.
+
+        Toda factory pública (`raspe.cfm()`, `raspe.ans()`, ...) deve ter
+        entrada correspondente em `scraper()`.
+        """
+        factories = {
+            "presidencia", "ipea", "senado", "camara", "cfm",
+            "nyt", "folha", "capes", "saudelegis", "ans", "anvisa",
+        }
+        # Guarda contra a lista acima envelhecer em relação a `raspe.__all__`.
+        assert factories <= set(raspe.__all__)
+
+        from raspe.scraper_manager import _MAPPING
+        assert {nome.upper() for nome in factories} == set(_MAPPING)

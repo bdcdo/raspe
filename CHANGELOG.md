@@ -71,6 +71,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - **Incompatível:** `paginas` passou a exigir `range` crescente, não vazio e começando em 1.
 - **Incompatível:** `sort` do `nyt()` passou a aceitar só `newest`, `oldest`, `relevance` e `best`.
 - `cfm()` e `nyt()` passaram a devolver a coluna `termo_busca`, como os demais raspadores.
+- `raspe.scraper_manager.scraper()` passou a cobrir as 11 fontes, com `CFM`, `FOLHA`, `NYT`, `SAUDELEGIS`, `ANS` e
+  `ANVISA`; a mensagem de erro lista as fontes válidas e o retorno passou a ser `AbstractScraper` (com base no #42).
+- `raspe.scrapers` passou a reexportar todas as classes de raspador; antes só `ScraperFolha` (com base no #42).
 
 ### Descontinuado
 - Descontinuado o parâmetro `download_path` de `ScraperIpea`, que sempre foi ignorado: agora emite
