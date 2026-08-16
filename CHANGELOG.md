@@ -36,6 +36,14 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   alteração. Factory `raspe.ipea()` segue inalterada.
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
+- `README.md` passa a documentar os 11 raspadores disponíveis. A lista de
+  fontes na abertura, antes com 7 entradas, agora cobre também CFM,
+  SaudeLegis, ANS e ANVISA. A tabela de fontes foi separada entre
+  raspadores HTTP e raspadores com navegador, e ganhou o nome do parâmetro
+  de busca de cada fonte (`pesquisa`, `texto`, `termo` ou `assunto`).
+  Adicionadas seções de uso e colunas retornadas para Presidência, Câmara,
+  Senado, IPEA, CAPES e CFM, colunas retornadas para SaudeLegis e NYT, e
+  índice dos notebooks de exemplo.
 
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`
