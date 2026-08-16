@@ -36,6 +36,15 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   alteração. Factory `raspe.ipea()` segue inalterada.
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
+- `raspe.scraper_manager.scraper()` agora cobre as 11 fontes. Antes o mapping
+  tinha 5 entradas (Presidência, IPEA, Senado, Câmara, CAPES) e `scraper("CFM")`
+  levantava `ValueError`; foram adicionados `CFM`, `FOLHA`, `NYT`, `SAUDELEGIS`,
+  `ANS` e `ANVISA`. A mensagem de erro passa a enumerar as fontes válidas, e o
+  tipo de retorno foi ampliado de `BaseScraper` para `AbstractScraper` para
+  acomodar os raspadores baseados em Playwright.
+- `raspe.scrapers` passa a reexportar todas as classes de raspador. Antes só
+  `ScraperFolha` estava no `__all__`, de modo que `from raspe.scrapers import
+  ScraperCFM` dependia de importar o submódulo diretamente.
 - `README.md` passa a documentar os 11 raspadores disponíveis. A lista de
   fontes na abertura, antes com 7 entradas, agora cobre também CFM,
   SaudeLegis, ANS e ANVISA. A tabela de fontes foi separada entre

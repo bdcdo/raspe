@@ -225,6 +225,23 @@ para limitar quantas páginas serão coletadas, e aceitam uma **lista** de termo
 lugar de um único texto — nesse caso, o resultado ganha a coluna `termo_busca`
 identificando a qual busca cada linha pertence.
 
+### Escolhendo a fonte pelo nome
+
+Se o nome da fonte vier de uma variável (de um formulário, de um arquivo de
+configuração, de um laço), use `raspe.scraper_manager.scraper()` em vez de
+chamar cada factory na mão:
+
+```python
+from raspe.scraper_manager import scraper
+
+for fonte in ["presidencia", "cfm", "capes"]:
+    df = scraper(fonte).raspar(...)
+```
+
+O nome não diferencia maiúsculas de minúsculas e cobre as 11 fontes. Parâmetros
+do construtor são repassados normalmente — `scraper("nyt", api_key="...")`,
+`scraper("ans", headless=False)`.
+
 ---
 
 ## 🏛️ Presidência, Câmara, Senado e IPEA
