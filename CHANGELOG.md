@@ -48,6 +48,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
   (paralelização, cache, uso de `old_page_name`).
+- Corrigida a coluna `titulo` de `raspe.capes()`, que perdia o espaço em volta do termo buscado (o portal o destaca com `<b>`) e colava palavras: `E-NATJUSNA JUDICIALIZAÇÃO` agora sai `E-NATJUS NA JUDICIALIZAÇÃO`, como o navegador exibe. Um `<br>` no título vira espaço (#40).
 
 ## [0.1.0] - 2025-05-15
 

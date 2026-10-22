@@ -11,17 +11,47 @@ Exemplo:
     >>> df[["titulo", "autores", "ano", "revista"]].head()
 """
 
+import copy
 import re
 from typing import Any, Literal
 from urllib.parse import urljoin
 
 import pandas as pd
+from bs4 import Tag
 
 from ..base_scraper import BaseScraper
 from ..exceptions import ValidationError
 from ..html_scraper import HTMLScraper
 
 _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
+
+
+def _texto_exibido(elemento: Tag) -> str:
+    """Extrai o texto de um elemento como o navegador o exibe.
+
+    O portal destaca o termo buscado com ``<b>`` dentro do título, e o espaço
+    em volta do destaque vem do HTML: em ``E-<b>NATJUS</b> NA`` há espaço só
+    depois do ``<b>``. O navegador emenda os nós de texto como estão e reduz
+    cada sequência de espaço em branco (quebra de linha e recuo incluídos) a
+    um espaço. Juntar os nós sem separador e depois normalizar o espaço
+    reproduz isso. ``get_text(strip=True)`` corta o espaço de cada nó e cola
+    as palavras (``E-NATJUSNA``); ``get_text(' ', strip=True)`` põe espaço em
+    toda fronteira de nó, inclusive onde o HTML não tem (``E- NATJUS``).
+
+    ``<br>`` não gera nó de texto, e as palavras em volta colariam; no
+    navegador ele quebra a linha, que num campo de uma linha vira espaço. A
+    troca é feita numa cópia para não alterar a árvore do card.
+
+    Args:
+        elemento: Tag cujo texto será extraído.
+
+    Returns:
+        Texto com o espaço em branco normalizado e sem espaço nas pontas.
+    """
+    copia = copy.copy(elemento)
+    for quebra in copia.find_all('br'):
+        quebra.replace_with(' ')
+    return ' '.join(copia.get_text().split())
 
 
 class ScraperCapes(BaseScraper, HTMLScraper):
@@ -151,7 +181,7 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         out['revisado_por_pares'] = card.find(id=re.compile(r'^peer-reviewed-item-')) is not None
 
         titulo_a = card.select_one('a.titulo-busca')
-        out['titulo'] = titulo_a.get_text(strip=True) if titulo_a else ''
+        out['titulo'] = _texto_exibido(titulo_a) if titulo_a else ''
 
         raw_link = titulo_a.get('href', '') if titulo_a else ''
         out['link'] = urljoin(_BASE_DOMAIN, raw_link) if raw_link else ''
