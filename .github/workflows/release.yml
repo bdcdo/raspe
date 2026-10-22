@@ -66,6 +66,35 @@ jobs:
       - name: Construir sdist e wheel
         run: uv build
 
+      # Esta conferência não lê o MANIFEST.in, para pegar o MANIFEST.in apagado
+      # ou quebrado: ela repete a regra dele a partir do git. O sdist leva todo
+      # arquivo versionado de src/ e tests/ e os de topo, e nada além disso e
+      # dos metadados que o build gera. Bytecode e notebook ficam fora mesmo
+      # versionados; o que a suíte acabou de deixar na árvore fica fora por não
+      # ser versionado.
+      - name: Conferir o conteúdo do sdist
+        run: |
+          uv run --no-project python - <<'EOF'
+          import pathlib
+          import subprocess
+          import tarfile
+
+          (sdist,) = pathlib.Path("dist").glob("*.tar.gz")
+          with tarfile.open(sdist) as pacote:
+              nomes = {m.name.split("/", 1)[1] for m in pacote.getmembers() if m.isfile()}
+          ls_files = subprocess.run(["git", "ls-files", "-z"], capture_output=True, text=True, check=True).stdout
+          versionados = set(ls_files.split("\0")) - {""}
+          fora = (".pyc", ".pyo", ".pyd", ".ipynb")
+          gerados = {"PKG-INFO", "setup.cfg"} | {n for n in nomes if n.startswith("src/raspe.egg-info/")}
+          sobram = sorted(n for n in nomes - gerados if n not in versionados or n.endswith(fora))
+          topo = {"CHANGELOG.md", "LICENSE", "README.md", "pyproject.toml"}
+          faltam = sorted(
+              n for n in versionados - nomes if (n.startswith(("src/", "tests/")) or n in topo) and not n.endswith(fora)
+          )
+          assert not sobram and not faltam, f"sobram no sdist: {sobram}; faltam no sdist: {faltam}"
+          print(f"{sdist.name}: {len(nomes)} arquivos, nenhum sobrando ou faltando")
+          EOF
+
       - name: Conferir os metadados dos pacotes
         run: uvx twine==7.0.0 check --strict dist/*
 
