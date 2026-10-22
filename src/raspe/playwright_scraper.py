@@ -579,15 +579,13 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         """Executa o processo completo de raspagem de forma assíncrona.
 
         Args:
-            **kwargs: Parâmetros de busca específicos do scraper.
+            **kwargs: Parâmetros de busca já validados por :meth:`raspar`.
 
         Returns:
             pd.DataFrame: Dados raspados consolidados.
         """
         import shutil
 
-        # Valida parâmetros
-        kwargs = self._validar_parametros(**kwargs)
         self.logger.info(f"Iniciando raspagem Playwright: {kwargs}")
 
         download_dir = self._create_download_dir()
@@ -659,10 +657,21 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         Interface síncrona que internamente usa asyncio para executar
         o código assíncrono do Playwright.
 
+        A validação dos parâmetros roda aqui, antes de ``asyncio.run``, por dois
+        motivos: kwarg inválido falha sem abrir navegador, e o
+        ``DeprecationWarning`` de alias sai de uma pilha que ainda passa pelo
+        código de quem chamou ``raspar()`` (dentro do loop do asyncio, ele seria
+        atribuído ao próprio asyncio e não apareceria).
+
         Args:
             **kwargs: Parâmetros de busca específicos do scraper.
 
         Returns:
             pd.DataFrame: Dados raspados consolidados.
+
+        Raises:
+            ValidationError: Se algum parâmetro for inválido ou desconhecido.
         """
-        return asyncio.run(self._raspar_async(**kwargs))
+        kwargs = self._validar_parametros(**kwargs)
+        resultado = asyncio.run(self._raspar_async(**kwargs))
+        return self._conferir_saida(resultado)

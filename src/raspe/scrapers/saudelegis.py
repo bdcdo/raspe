@@ -6,7 +6,7 @@ que requer JavaScript para funcionar corretamente.
 
 Exemplo:
     >>> import raspe
-    >>> df = raspe.saudelegis().raspar(assunto="doença rara")
+    >>> df = raspe.saudelegis().raspar(pesquisa="doença rara")
     >>> print(df.head())
 """
 
@@ -15,6 +15,7 @@ import asyncio
 import pandas as pd
 
 from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
+from raspe.schemas.saudelegis import InputSaudeLegis, OutputSaudeLegis
 
 
 class ScraperSaudeLegis(PlaywrightScraper):
@@ -31,10 +32,16 @@ class ScraperSaudeLegis(PlaywrightScraper):
 
     Exemplo:
         >>> scraper = ScraperSaudeLegis()
-        >>> df = scraper.raspar(assunto="doença rara")
+        >>> df = scraper.raspar(pesquisa="doença rara")
         >>> print(df.columns.tolist())
-        ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
+        ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url', 'termo_busca']
+
+    O nome antigo do parâmetro de busca, ``assunto``, ainda é aceito com
+    ``DeprecationWarning``.
     """
+
+    schema_entrada = InputSaudeLegis
+    schema_saida = OutputSaudeLegis
 
     def __init__(self, debug: bool = True, headless: bool = True):
         """Inicializa o ScraperSaudeLegis."""
@@ -57,9 +64,9 @@ class ScraperSaudeLegis(PlaywrightScraper):
         """Preenche o formulário de busca e executa a pesquisa.
 
         Args:
-            **kwargs: Deve conter 'assunto' com o termo de busca.
+            **kwargs: Deve conter 'pesquisa' com o termo de busca.
         """
-        assunto = kwargs.get('assunto', '')
+        assunto = kwargs.get('pesquisa', '')
 
         if not assunto:
             self.logger.warning("Nenhum termo de busca (assunto) fornecido")

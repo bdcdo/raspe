@@ -8,6 +8,7 @@ import pandas as pd
 
 from ..base_scraper import BaseScraper
 from ..exceptions import APIError, APIKeyError
+from ..schemas.nyt import InputNYT, OutputNYT
 
 
 class ScraperNYT(BaseScraper):
@@ -22,27 +23,33 @@ class ScraperNYT(BaseScraper):
         scraper = ScraperNYT(api_key="sua-api-key")
 
         # Busca simples
-        df = scraper.raspar(texto="supreme court", ano=2024)
+        df = scraper.raspar(pesquisa="supreme court", ano=2024)
 
         # Busca com datas específicas
         df = scraper.raspar(
-            texto="climate change",
+            pesquisa="climate change",
             data_inicio="2024-01-01",
             data_fim="2024-06-30"
         )
 
         # Busca com filtros avançados
         df = scraper.raspar(
-            texto="election",
+            pesquisa="election",
             ano=2024,
             filtro='section.name:"Politics"'
         )
+
+    O nome antigo do parâmetro de busca, ``texto``, ainda é aceito com
+    ``DeprecationWarning``.
 
     Limites da API:
         - 10 resultados por página
         - Máximo de 100 páginas (1000 resultados) por busca
         - Rate limit: 5 requisições por minuto, 500 por dia
     """
+
+    schema_entrada = InputNYT
+    schema_saida = OutputNYT
 
     API_BASE = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
     RESULTS_PER_PAGE = 10
@@ -116,7 +123,7 @@ class ScraperNYT(BaseScraper):
         """Monta os parâmetros base da query.
 
         Args:
-            texto: Termo de busca.
+            pesquisa: Termo de busca.
             ano: Ano para filtrar (usa ano inteiro).
             data_inicio: Data inicial (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD).
             data_fim: Data final (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD).
@@ -129,7 +136,7 @@ class ScraperNYT(BaseScraper):
         Note:
             As datas são validadas automaticamente pelo BaseScraper._validar_parametros().
         """
-        texto = kwargs.get('texto', '')
+        pesquisa = kwargs.get('pesquisa', '')
         ano = kwargs.get('ano')
         data_inicio = kwargs.get('data_inicio')
         data_fim = kwargs.get('data_fim')
@@ -144,7 +151,7 @@ class ScraperNYT(BaseScraper):
 
         params = {
             "api-key": self._api_key,
-            "q": texto,
+            "q": pesquisa,
             "sort": sort,
         }
 

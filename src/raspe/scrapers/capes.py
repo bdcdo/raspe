@@ -20,12 +20,16 @@ import pandas as pd
 from ..base_scraper import BaseScraper
 from ..exceptions import ValidationError
 from ..html_scraper import HTMLScraper
+from ..schemas.capes import InputCapes, OutputCapes
 
 _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 
 
 class ScraperCapes(BaseScraper, HTMLScraper):
     """Raspador HTTP para o buscador do Portal de Periódicos da CAPES."""
+
+    schema_entrada = InputCapes
+    schema_saida = OutputCapes
 
     def __init__(self):
         super().__init__("capes")

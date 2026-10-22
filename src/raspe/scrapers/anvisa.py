@@ -6,7 +6,7 @@ e coleta atos normativos do portal ANVISALegis.
 
 Exemplo:
     >>> import raspe
-    >>> df = raspe.anvisa().raspar(termo="doença rara")
+    >>> df = raspe.anvisa().raspar(pesquisa="doença rara")
     >>> print(df.head())
 """
 
@@ -24,7 +24,7 @@ class ScraperANVISA(ScraperDatalegis):
 
     Exemplo:
         >>> scraper = ScraperANVISA()
-        >>> df = scraper.raspar(termo="doença rara")
+        >>> df = scraper.raspar(pesquisa="doença rara")
         >>> print(df.columns.tolist())
         ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
     """

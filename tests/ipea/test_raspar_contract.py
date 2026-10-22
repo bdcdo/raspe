@@ -11,11 +11,14 @@ import pytest
 import responses
 from responses import matchers, registries
 
+from raspe.schemas.ipea import OutputIpea
 from raspe.scrapers.ipea import IpeaScraper
 from tests._helpers import load_sample_bytes
 
 API_URL = "https://www.ipea.gov.br/portal/coluna-5/central-de-conteudo/busca-publicacoes"
-COLUNAS_OBRIGATORIAS = {"titulo", "link", "autores", "data", "assuntos"}
+# Igualdade, não subconjunto: com o wiring do schema, raspar() devolve
+# exatamente as colunas de OutputIpea, na ordem de colunas().
+COLUNAS = OutputIpea.colunas()
 
 
 @pytest.fixture
@@ -52,7 +55,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="economia")
 
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
         # page_01 tem 3 publicações, page_02 tem 2 → total 5
         assert len(df) == 5
         # Links têm prefixo ipea.gov.br
@@ -79,7 +82,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="pobreza")
         assert len(df) == 3
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
@@ -94,6 +97,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_query_params_obrigatorios(self, scraper, mocker):

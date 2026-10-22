@@ -27,6 +27,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
   do denominador (testá-lo offline exigiria mockar a API async inteira
   do Playwright).
+- Schemas pydantic de entrada e saída em `raspe.schemas` para presidencia, ipea, capes, cfm, folha, nyt, saudelegis, ans e anvisa. O de entrada descreve os parâmetros de `raspar()`; o de saída, as colunas do DataFrame. Cada raspador aponta para os seus em `schema_entrada` e `schema_saida`. Câmara e Senado ficam sem schema até a reescrita sobre as APIs oficiais.
+- `docs/colunas.md`, gerado dos schemas de saída por `python -m raspe.schemas.documentacao`, com coluna, tipo, descrição e exemplo de cada fonte.
+- Dependência `pydantic>=2`.
 
 ### Modificado
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
@@ -37,6 +40,15 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
 - Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
+- **Incompatível:** o termo de busca passou a se chamar `pesquisa` em todos os raspadores com schema. Os nomes antigos continuam aceitos, com `DeprecationWarning`, e serão removidos: `texto` em `cfm()` e `nyt()`, `assunto` em `saudelegis()` e `termo` em `ans()` e `anvisa()`. Passar o nome antigo e `pesquisa` juntos levanta `ValidationError`.
+- **Incompatível:** as colunas do `cfm()` foram renomeadas para snake_case ASCII: `Tipo` para `tipo`, `UF` para `uf`, `Nº/Ano` para `numero_ano`, `Situação` para `situacao`, `Ementa` para `ementa` e `Link` para `link`.
+- **Incompatível:** `raspar()` levanta `ValidationError`, com a lista dos parâmetros aceitos e a sugestão do nome mais parecido, quando recebe parâmetro desconhecido. Antes o parâmetro era ignorado em silêncio, e um erro de digitação como `data_incio` virava uma busca sem filtro.
+- **Incompatível:** `pesquisa` passou a ser obrigatória em `presidencia()`, `ipea()`, `capes()` e `folha()`. Em `cfm()` e `nyt()` continua opcional, porque esses portais aceitam busca só por filtro.
+- **Incompatível:** `saudelegis()`, `ans()` e `anvisa()` recusam `paginas` e lista em `pesquisa`, que antes eram ignorados em silêncio.
+- **Incompatível:** `paginas` precisa ser um `range` crescente, não vazio e começando em 1.
+- **Incompatível:** `sort` do `nyt()` aceita só `newest`, `oldest`, `relevance` e `best`, os valores da Article Search API.
+- `cfm()` e `nyt()` passaram a devolver a coluna `termo_busca`, como os demais raspadores.
+- A busca sem resultado devolve um DataFrame vazio com as colunas do schema, em vez de um DataFrame sem colunas ou só com `termo_busca`.
 
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`

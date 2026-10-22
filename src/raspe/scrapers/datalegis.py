@@ -13,6 +13,7 @@ import asyncio
 import pandas as pd
 
 from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
+from raspe.schemas.datalegis import InputDatalegis, OutputDatalegis
 
 
 class ScraperDatalegis(PlaywrightScraper):
@@ -33,7 +34,13 @@ class ScraperDatalegis(PlaywrightScraper):
 
     Atributos:
         Herda todos os atributos de PlaywrightScraper.
+
+    O nome antigo do parâmetro de busca, ``termo``, ainda é aceito com
+    ``DeprecationWarning``.
     """
+
+    schema_entrada = InputDatalegis
+    schema_saida = OutputDatalegis
 
     # Subclasses devem definir estes atributos
     _dominio: str = ""
@@ -69,9 +76,9 @@ class ScraperDatalegis(PlaywrightScraper):
         """Preenche o formulário de busca e executa a pesquisa.
 
         Args:
-            **kwargs: Deve conter 'termo' com o texto de busca.
+            **kwargs: Deve conter 'pesquisa' com o texto de busca.
         """
-        termo = kwargs.get('termo', '')
+        termo = kwargs.get('pesquisa', '')
 
         if not termo:
             self.logger.warning("Nenhum termo de busca fornecido")

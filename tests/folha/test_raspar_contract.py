@@ -11,11 +11,14 @@ import responses
 from responses import registries
 
 from raspe.exceptions import ValidationError
+from raspe.schemas.folha import OutputFolha
 from raspe.scrapers.folha import ScraperFolha
 from tests._helpers import load_sample_bytes
 
 API_URL = "https://search.folha.uol.com.br/search"
-COLUNAS_OBRIGATORIAS = {"link", "titulo", "resumo", "data"}
+# Igualdade, não subconjunto: com o wiring do schema, raspar() devolve
+# exatamente as colunas de OutputFolha, na ordem de colunas().
+COLUNAS = OutputFolha.colunas()
 
 
 @pytest.fixture
@@ -52,7 +55,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="educação")
 
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
         # page_01 tem 3 notícias, page_02 tem 2 → total 5
         assert len(df) == 5
         assert (df["termo_busca"] == "educação").all()
@@ -76,7 +79,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="saúde")
         assert len(df) == 3
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
@@ -91,12 +94,25 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
+        assert list(df.columns) == COLUNAS
 
 
 class TestValidacao:
     def test_site_invalido_levanta_validation_error(self, scraper):
         with pytest.raises(ValidationError, match="site"):
             scraper.raspar(pesquisa="x", site="invalido")
+
+    def test_sites_validos_vem_do_schema(self):
+        assert ScraperFolha.SITES_VALIDOS == ("todos", "online", "jornal")
+
+    def test_data_com_erro_de_digitacao_levanta_com_sugestao(self, scraper):
+        """Antes do schema, 'data_incio' era ignorado e a busca rodava sem período."""
+        with pytest.raises(ValidationError, match="você quis dizer 'data_inicio'"):
+            scraper.raspar(pesquisa="x", data_incio="2024-01-01")
+
+    def test_pesquisa_obrigatoria(self, scraper):
+        with pytest.raises(ValidationError, match="'pesquisa': parâmetro obrigatório ausente"):
+            scraper.raspar(site="online")
 
     @responses.activate
     @pytest.mark.parametrize("site", ["todos", "online", "jornal"])
@@ -113,6 +129,7 @@ class TestValidacao:
         # colisão de timestamp em _create_download_dir.
         df = ScraperFolha().raspar(pesquisa="x", site=site)
         assert df.empty
+        assert list(df.columns) == COLUNAS
 
 
 class TestFormatacaoData:
