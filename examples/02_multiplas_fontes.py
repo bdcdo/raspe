@@ -76,31 +76,11 @@ PADRAO_NORMA = re.compile(
 )
 
 
-def coletar_fonte(fonte: dict[str, Any]) -> pd.DataFrame:
-    """Coleta os resultados de uma fonte com o termo e as páginas definidos em FONTES.
-
-    Args:
-        fonte: Um dos dicionários de FONTES.
-
-    Returns:
-        DataFrame com as colunas originais da fonte.
-
-    Raises:
-        requests.RequestException: Se o site não responder ou responder com erro.
-        raspe.ScraperError: Se o raspador recusar os parâmetros da busca.
-    """
-    raspador = fonte["criar"]()
-    # Deixa na tela só avisos e erros e apaga a pasta temporária das páginas baixadas.
-    raspador.logger.setLevel(logging.WARNING)
-    raspador.debug = False
-    return raspador.raspar(pesquisa=fonte["pesquisa"], paginas=fonte["paginas"])
-
-
 def padronizar(dados: pd.DataFrame, fonte: dict[str, Any]) -> pd.DataFrame:
     """Converte o resultado de uma fonte para as colunas comuns fonte, titulo, link e texto.
 
     Args:
-        dados: DataFrame devolvido por coletar_fonte().
+        dados: Dados brutos de uma fonte, como coletar_todas() os devolve.
         fonte: O dicionário de FONTES que gerou os dados.
 
     Returns:
@@ -158,7 +138,11 @@ def coletar_todas(fontes: list[dict[str, Any]]) -> dict[str, pd.DataFrame]:
     for fonte in fontes:
         print(f"Coletando {fonte['nome']} ({fonte['pesquisa']})")
         try:
-            bruto = coletar_fonte(fonte)
+            raspador = fonte["criar"]()
+            # Deixa na tela só avisos e erros e apaga a pasta temporária das páginas baixadas.
+            raspador.logger.setLevel(logging.WARNING)
+            raspador.debug = False
+            bruto = raspador.raspar(pesquisa=fonte["pesquisa"], paginas=fonte["paginas"])
         except (requests.RequestException, raspe.ScraperError) as erro:
             # Uma fonte fora do ar não deve derrubar a coleta das outras.
             print(f"  A coleta falhou ({type(erro).__name__}: {erro}). Seguindo com as outras fontes.")

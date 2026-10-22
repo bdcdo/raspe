@@ -42,12 +42,11 @@ PASTA_EXEMPLOS = Path(__file__).resolve().parent
 PASTA_DADOS = PASTA_EXEMPLOS / "datasets"
 
 
-def coletar_publicacoes(termo: str, paginas: range = PAGINAS) -> pd.DataFrame:
+def coletar_publicacoes(termo: str) -> pd.DataFrame:
     """Coleta os trabalhos da CAPES para um termo, com o ano já convertido em número.
 
     Args:
         termo: Termo de busca.
-        paginas: Páginas a coletar.
 
     Returns:
         DataFrame com as colunas de COLUNAS. Trabalhos sem ano legível ficam com ano vazio.
@@ -56,7 +55,7 @@ def coletar_publicacoes(termo: str, paginas: range = PAGINAS) -> pd.DataFrame:
     # Deixa na tela só avisos e erros e apaga a pasta temporária das páginas baixadas.
     raspador.logger.setLevel(logging.WARNING)
     raspador.debug = False
-    publicacoes = raspador.raspar(pesquisa=termo, paginas=paginas)
+    publicacoes = raspador.raspar(pesquisa=termo, paginas=PAGINAS)
 
     # O mesmo trabalho pode aparecer em duas páginas se o portal reordenar os resultados
     # durante a coleta; o id do OpenAlex identifica o trabalho.
