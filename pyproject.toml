@@ -1,5 +1,10 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+# `license` como expressão SPDX (PEP 639) exige setuptools 77; o 76 recusa a
+# string "MIT" como configuração inválida. O piso é a 77.0.3, que corrige os
+# erros de `license-files` e do import de `packaging.licenses` trazidos pela
+# série 77.0. O `wheel` saiu porque o setuptools constrói a wheel sozinho desde
+# a 70.1.
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,13 +13,30 @@ version = "0.1.0"
 description = "Raspadores para Pesquisas Acadêmicas - ferramentas para coleta de dados de fontes brasileiras"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
 authors = [
     { name = "Bruno da Cunha de Oliveira", email = "bruno.dcdo@gmail.com" },
 ]
+keywords = [
+    "raspagem de dados",
+    "web scraping",
+    "pesquisa empírica",
+    "dados abertos",
+    "legislação",
+    "Brasil",
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: Portuguese (Brazilian)",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
     "pandas>=2.0.0",
@@ -50,6 +72,9 @@ all = [
 
 [project.urls]
 Homepage = "https://github.com/bdcdo/raspe"
+Repository = "https://github.com/bdcdo/raspe"
+Issues = "https://github.com/bdcdo/raspe/issues"
+Changelog = "https://github.com/bdcdo/raspe/blob/main/CHANGELOG.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

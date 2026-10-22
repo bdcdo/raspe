@@ -1,0 +1,167 @@
+name: Release
+
+# Publica no PyPI quando uma tag vX.Y.Z chega ao GitHub. O job build roda sem
+# credencial; o job publish, que só começa se o build passar, é o único que
+# recebe o token OIDC do Trusted Publishing. Um upload ao PyPI não se desfaz e o
+# número da versão não volta a ficar livre, por isso toda conferência vem antes.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  build:
+    name: Conferir, testar e construir
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Baixar o código da tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Histórico e branches inteiros, para a conferência da tag saber se
+          # o commit dela está na main.
+          fetch-depth: 0
+
+      - name: Instalar uv e Python 3.11
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.12.11"
+          python-version: "3.11"
+          # Sem cache: um cache gravado por outro workflow seria uma entrada que
+          # este job não controla, e o que sai daqui vai para o PyPI.
+          enable-cache: false
+
+      # O commit da tag tem de estar na main, para que uma tag num commit de
+      # branch não publique código fora da revisão. O CHANGELOG vai no sdist e o
+      # README vira a descrição do pacote no PyPI, e nenhum dos dois muda depois
+      # do upload. O README passa a instalar pelo PyPI no commit de release,
+      # porque até a primeira publicação `pip install raspe` não acha o pacote.
+      - name: Conferir a tag contra o pyproject.toml, o CHANGELOG, o README e a main
+        run: |
+          uv run --no-project python - <<'EOF'
+          import os
+          import re
+          import subprocess
+          import sys
+          import tomllib
+
+          versao = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+          changelog = open("CHANGELOG.md", encoding="utf-8").read()
+          readme = open("README.md", encoding="utf-8").read()
+          erros = []
+          if tag != f"v{versao}":
+              erros.append(f"A tag {tag} não corresponde à versão {versao} do pyproject.toml; a tag esperada é v{versao}.")
+          if not re.search(rf"^## \[{re.escape(versao)}\] - \d{{4}}-\d{{2}}-\d{{2}}$", changelog, re.M):
+              erros.append(f"O CHANGELOG.md não tem a seção '## [{versao}] - AAAA-MM-DD'.")
+          if subprocess.run(["git", "merge-base", "--is-ancestor", "HEAD", "origin/main"]).returncode != 0:
+              erros.append("O commit da tag não está na main do GitHub; a tag vai no commit de release, depois de enviá-lo à main.")
+          if not re.search(r"^pip install raspe$", readme, re.M):
+              erros.append("O README.md não tem a linha 'pip install raspe'; troque a instalação pelo GitHub pela do PyPI.")
+          for erro in erros:
+              print(f"::error::{erro}")
+          sys.exit(1 if erros else 0)
+          EOF
+          echo "Tag $GITHUB_REF_NAME confere com o pyproject.toml, o CHANGELOG, o README e a main."
+
+      - name: Rodar a suíte offline
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+          .venv/bin/pytest
+
+      - name: Construir sdist e wheel
+        run: uv build
+
+      # Esta conferência não lê o MANIFEST.in, para pegar o MANIFEST.in apagado
+      # ou quebrado: ela repete a regra dele a partir do git. O sdist leva todo
+      # arquivo versionado de src/ e tests/ e os de topo, e nada além disso e
+      # dos metadados que o build gera. Bytecode e notebook ficam fora mesmo
+      # versionados; o que a suíte acabou de deixar na árvore fica fora por não
+      # ser versionado.
+      - name: Conferir o conteúdo do sdist
+        run: |
+          uv run --no-project python - <<'EOF'
+          import pathlib
+          import subprocess
+          import tarfile
+
+          (sdist,) = pathlib.Path("dist").glob("*.tar.gz")
+          with tarfile.open(sdist) as pacote:
+              nomes = {m.name.split("/", 1)[1] for m in pacote.getmembers() if m.isfile()}
+          ls_files = subprocess.run(["git", "ls-files", "-z"], capture_output=True, text=True, check=True).stdout
+          versionados = set(ls_files.split("\0")) - {""}
+          fora = (".pyc", ".pyo", ".pyd", ".ipynb")
+          gerados = {"PKG-INFO", "setup.cfg"} | {n for n in nomes if n.startswith("src/raspe.egg-info/")}
+          sobram = sorted(n for n in nomes - gerados if n not in versionados or n.endswith(fora))
+          topo = {"CHANGELOG.md", "LICENSE", "README.md", "pyproject.toml"}
+          faltam = sorted(
+              n for n in versionados - nomes if (n.startswith(("src/", "tests/")) or n in topo) and not n.endswith(fora)
+          )
+          assert not sobram and not faltam, f"sobram no sdist: {sobram}; faltam no sdist: {faltam}"
+          print(f"{sdist.name}: {len(nomes)} arquivos, nenhum sobrando ou faltando")
+          EOF
+
+      - name: Conferir os metadados dos pacotes
+        run: uvx twine==7.0.0 check --strict dist/*
+
+      # A suíte roda sobre o código-fonte; este passo pega o que só aparece no
+      # pacote: módulo de src/raspe que ficou fora da wheel, import quebrado na
+      # instalação sem o extra browser ou versão diferente da tag. Os módulos dos
+      # raspadores com navegador importam o Playwright só ao rodar, por isso o
+      # import deles funciona sem o extra.
+      - name: Importar todos os módulos a partir da wheel numa venv limpa
+        run: |
+          uv venv "$RUNNER_TEMP/fumaca"
+          uv pip install --python "$RUNNER_TEMP/fumaca/bin/python" dist/*.whl
+          "$RUNNER_TEMP/fumaca/bin/python" -I - <<'EOF'
+          import importlib
+          import os
+          import pathlib
+          import pkgutil
+
+          import raspe
+
+          assert "v" + raspe.__version__ == os.environ["GITHUB_REF_NAME"], raspe.__version__
+          instalados = sorted(["raspe"] + [m.name for m in pkgutil.walk_packages(raspe.__path__, "raspe.")])
+          fonte = pathlib.Path("src")
+          esperados = sorted(
+              ".".join(p.relative_to(fonte).with_suffix("").parts).removesuffix(".__init__")
+              for p in (fonte / "raspe").rglob("*.py")
+          )
+          assert instalados == esperados, sorted(set(instalados) ^ set(esperados))
+          for nome in instalados:
+              importlib.import_module(nome)
+          print(f"raspe {raspe.__version__}: {len(instalados)} módulos importados de {raspe.__file__}")
+          EOF
+
+      - name: Guardar os pacotes para o job de publicação
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publicar no PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # O Trusted Publisher do PyPI aceita só este environment, e é nele que o
+    # GitHub aplica a aprovação manual, se ela estiver configurada.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/raspe/
+    permissions:
+      id-token: write # token OIDC que o PyPI troca por credencial de upload de curta duração
+    steps:
+      - name: Baixar os pacotes construídos
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publicar por Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
