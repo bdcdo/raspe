@@ -23,49 +23,27 @@ isso o timeout de leitura maior.
 
 As requisições saem da sessão e da query do próprio ``ScraperCFM``
 (headers, ``tipo[0..4]``, ``pagina``), para que o sample reflita o que o
-scraper envia em produção. O fragmento ``#resultado`` de ``api_base``
-aparece na URL impressa, mas não chega ao servidor: a linha de requisição
-HTTP leva só o caminho e a query.
+scraper envia em produção. O fragmento ``#resultado`` de ``api_base`` não
+chega ao servidor: a linha de requisição HTTP leva só o caminho e a query.
 """
 
 import argparse
-import time
 from pathlib import Path
 
 from raspe.scrapers.cfm import ScraperCFM
-from tests.fixtures.capture._util import dump_response
+from tests.fixtures.capture._util import capturar_cenarios
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "cfm" / "samples" / "raspar"
 
-# (arquivo de saída, termo, página). A busca typical precisa de pelo menos
-# duas páginas; a single_page, de uma só; a no_results, de zero registros.
+# (arquivo de saída, parâmetros de raspar, página do raspe). A busca
+# typical precisa de pelo menos duas páginas; a single_page, de uma só; a
+# no_results, de zero registros.
 CENARIOS = (
-    ("page_01.html", "publicidade médica", 1),
-    ("page_02.html", "publicidade médica", 2),
-    ("single_page.html", "medicamento órfão", 1),
-    ("no_results.html", "termoextremamenteimprovavelxyz123", 1),
+    ("page_01.html", {"pesquisa": "publicidade médica"}, 1),
+    ("page_02.html", {"pesquisa": "publicidade médica"}, 2),
+    ("single_page.html", {"pesquisa": "medicamento órfão"}, 1),
+    ("no_results.html", {"pesquisa": "termoextremamenteimprovavelxyz"}, 1),
 )
-
-
-def capturar(saida: Path) -> None:
-    """Baixa cada cenário de ``CENARIOS`` e grava o HTML cru em ``saida``.
-
-    Args:
-        saida: Pasta onde os arquivos serão gravados (criada se preciso).
-    """
-    saida.mkdir(parents=True, exist_ok=True)
-    scraper = ScraperCFM(debug=False)
-    scraper.timeout = (20, 120)
-
-    for i, (arquivo, termo, pagina) in enumerate(CENARIOS):
-        if i:
-            # Mesmo intervalo que o scraper usa entre páginas em produção.
-            time.sleep(scraper.sleep_time)
-        query = scraper._set_query_atual(scraper._set_query_base(pesquisa=termo), pagina)
-        resp = scraper.session.get(scraper.api_base, params=query, timeout=scraper.timeout)
-        resp.raise_for_status()
-        dump_response(resp, saida / arquivo)
-        print(f"{arquivo}: HTTP {resp.status_code}, {len(resp.content)} bytes, {resp.url}")
 
 
 def main() -> None:
@@ -76,7 +54,9 @@ def main() -> None:
         default=SAMPLES_DIR,
         help="pasta de saída (padrão: os samples commitados do CFM)",
     )
-    capturar(parser.parse_args().saida)
+    scraper = ScraperCFM(debug=False)
+    scraper.timeout = (20, 120)
+    capturar_cenarios(scraper, CENARIOS, parser.parse_args().saida)
 
 
 if __name__ == "__main__":

@@ -5,24 +5,33 @@ exercita o scraper real, captura as respostas HTTP cruas e salva em
 `tests/<scraper>/samples/<endpoint>/<cenario>.<ext>`. Esses samples
 viram a fonte de verdade dos contratos offline.
 
+Os scripts importam ``tests.fixtures`` e por isso rodam como módulo, a
+partir da raiz do repositório (``python -m tests.fixtures.capture.<scraper>``).
+Rodado como arquivo, o Python põe a pasta do script no ``sys.path`` no
+lugar da raiz, e o import de ``tests`` falha.
+
 Uso típico em um script de captura:
 
     from pathlib import Path
-    import requests
-    from tests.fixtures.capture._util import attach_capture_hook
 
-    samples_dir = Path("tests/presidencia/samples/raspar")
-    samples_dir.mkdir(parents=True, exist_ok=True)
+    from raspe.scrapers.presidencia import ScraperPresidencia
+    from tests.fixtures.capture._util import capturar_cenarios
 
-    session = requests.Session()
-    attach_capture_hook(session, samples_dir, prefix="page")
-    # ... usa a session para exercitar o scraper ...
+    capturar_cenarios(
+        ScraperPresidencia(),
+        [("page_01.html", {"pesquisa": "saúde"}, 1)],
+        Path("tests/presidencia/samples/raspar"),
+    )
 """
 
+import time
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Callable
 
 import requests
+
+from raspe.base_scraper import BaseScraper
 
 
 def dump_response(resp: requests.Response, path: Path) -> None:
@@ -37,6 +46,52 @@ def dump_response(resp: requests.Response, path: Path) -> None:
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(resp.content)
+
+
+def capturar_cenarios(
+    scraper: BaseScraper,
+    cenarios: Iterable[tuple[str, dict[str, Any], int]],
+    saida: Path,
+    enxugar: Callable[[bytes], bytes] | None = None,
+) -> None:
+    """Baixa cada cenário com a query e o método HTTP do próprio scraper.
+
+    A query de cada cenário é a que ``raspar`` montaria para aquela página:
+    ``_validar_parametros``, ``_set_query_base`` e ``_set_query_atual``, nessa
+    ordem. A requisição sai de ``_set_r``, que escolhe GET ou POST conforme
+    ``api_method`` e usa a sessão do scraper, com os headers dele. Assim o
+    sample reflete o que o scraper envia em produção.
+
+    A linha impressa por cenário traz o valor do parâmetro de página e o
+    ``_find_n_pags`` da resposta, para conferir se o termo cabe no cenário
+    (``single_page`` tem de dar 1, ``no_results`` tem de dar 0). Ela não
+    imprime a URL, que em alguns scrapers leva chave de API.
+
+    Args:
+        scraper: Instância do scraper a exercitar.
+        cenarios: Tuplas ``(arquivo de saída, parâmetros de raspar, página do raspe)``.
+        saida: Pasta onde os arquivos serão gravados (criada se preciso).
+        enxugar: Função aplicada ao body antes de gravar, para cortar o que o
+            scraper não lê quando a página passa do limite de tamanho do
+            repositório. ``_find_n_pags`` continua lendo a resposta inteira.
+    """
+    saida.mkdir(parents=True, exist_ok=True)
+    for i, (arquivo, params, pagina) in enumerate(cenarios):
+        if i:
+            # Mesmo intervalo que o scraper usa entre páginas em produção.
+            time.sleep(scraper.sleep_time)
+        query_base = scraper._set_query_base(**scraper._validar_parametros(**params))
+        query = scraper._set_query_atual(query_base, pagina)
+        resp = scraper._set_r(query)
+        resp.raise_for_status()
+        conteudo = resp.content if enxugar is None else enxugar(resp.content)
+        (saida / arquivo).write_bytes(conteudo)
+        print(
+            f"{arquivo}: HTTP {resp.status_code}, {len(resp.content)} bytes recebidos, "
+            f"{len(conteudo)} gravados, "
+            f"{scraper.query_page_name}={query[scraper.query_page_name]}, "
+            f"_find_n_pags={scraper._find_n_pags(resp)}"
+        )
 
 
 def attach_capture_hook(
