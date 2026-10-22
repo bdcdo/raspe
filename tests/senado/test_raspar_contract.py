@@ -1,5 +1,11 @@
 """Contrato offline para ``ScraperSenadoFederal.raspar``.
 
+Os samples ``page_01``, ``page_02`` e ``single_page`` foram construídos à
+mão, com a estrutura que o parser lê (``a[data-click-type]`` com a contagem
+e ``div.sf-busca-resultados-item``) e texto de enchimento. Não há script de
+captura para eles: a busca HTML sai de cena com a reescrita do scraper
+sobre a API oficial do Senado (#29).
+
 ``no_results.html`` e ``anti_robo.html`` são reais (2026-11-14). A busca sem
 resultados não traz o link da coleção com a contagem, só o aviso "Nenhum
 resultado encontrado" (capturada com navegador). ``anti_robo.html`` é a

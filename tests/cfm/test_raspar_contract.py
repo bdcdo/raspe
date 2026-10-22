@@ -2,6 +2,13 @@
 
 CFM tem ``_find_n_pags`` baseado em "X registros encontrados" + parsing
 de "Mostrando página X de Y" para descobrir total de páginas.
+
+Os samples ``page_01``, ``page_02`` e ``single_page`` foram construídos à
+mão, com essa estrutura (e ``div#resultsNormas > article``) e texto de
+enchimento; ``no_results.html`` é uma busca real. O script ``python -m
+tests.fixtures.capture.cfm`` grava os quatro cenários reais, mas não rodou
+contra o portal para os três primeiros: em 21/10/2026 a conexão com
+``portal.cfm.org.br`` não abriu.
 """
 
 import pytest

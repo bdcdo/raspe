@@ -4,6 +4,13 @@ O construtor de ``ScraperCamaraDeputados`` invoca ``_prep_scrape``, que
 faz GET na página inicial da Câmara para estabelecer sessão. Mockamos
 esse método antes de instanciar — o foco do contrato é o fluxo de busca,
 não a inicialização da sessão.
+
+Os samples ``page_01``, ``page_02`` e ``single_page`` foram construídos à
+mão, com a estrutura que o parser lê (``div.busca-info__resultado`` com a
+contagem e ``div.resultado-busca li``) e texto de enchimento, e seguem
+assim porque a busca HTML sai de cena com a reescrita do scraper sobre a
+API oficial da Câmara (#29). ``no_results.html`` é uma busca real, gravada
+por ``python -m tests.fixtures.capture.camara``.
 """
 
 import pytest
