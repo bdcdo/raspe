@@ -14,13 +14,13 @@ O **raspe** foi desenvolvido para **pesquisadores** que precisam coletar grandes
 
 ## 🎯 O que o raspe faz?
 
-O raspe automatiza a coleta de dados de **11 fontes** oficiais brasileiras e internacionais:
+O raspe automatiza a coleta de dados de **11 fontes** brasileiras e internacionais:
 
 **Legislação e atividade parlamentar**
 
 - 🏛️ **Presidência da República** - Leis, decretos e legislação federal
-- 📋 **Câmara dos Deputados** - Proposições e projetos de lei
-- 📜 **Senado Federal** - Projetos de lei e atividade legislativa
+- 📋 **Câmara dos Deputados** - Legislação federal indexada pela Câmara
+- 📜 **Senado Federal** - Legislação federal indexada pelo Senado
 
 **Saúde e regulação sanitária**
 
@@ -173,8 +173,7 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 
 ### 📓 Notebooks de exemplo
 
-A pasta [`notebooks/`](notebooks) traz um caderno pronto para cada fonte, com
-exemplos executáveis passo a passo:
+A pasta [`notebooks/`](notebooks) traz cadernos com exemplos passo a passo para nove das 11 fontes. ANS e ANVISA ainda não têm caderno; os exemplos delas estão na seção dos raspadores com navegador, mais abaixo.
 
 | Notebook | Fonte |
 |----------|-------|
@@ -200,15 +199,15 @@ crie o raspador e chame `.raspar()` com o termo de busca.
 | Fonte | Comando | O que busca | Termo de busca |
 |-------|---------|-------------|----------------|
 | Presidência da República | `raspe.presidencia()` | Leis, decretos e legislação federal | `pesquisa=` |
-| Câmara dos Deputados | `raspe.camara()` | Proposições e projetos de lei da Câmara | `pesquisa=` |
-| Senado Federal | `raspe.senado()` | Projetos de lei e atividades do Senado | `pesquisa=` |
+| Câmara dos Deputados | `raspe.camara()` | Legislação federal na busca da Câmara | `pesquisa=` |
+| Senado Federal | `raspe.senado()` | Legislação federal na busca do Senado | `pesquisa=` |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA | `pesquisa=` |
 | CAPES | `raspe.capes()` | Metadados de artigos do Portal de Periódicos | `pesquisa=` |
 | CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina e dos CRMs | `texto=` |
 | Folha de São Paulo | `raspe.folha()` | Notícias da Folha de São Paulo | `pesquisa=` |
 | New York Times | `raspe.nyt(api_key="...")` | Artigos do NYT (requer API key gratuita) | `texto=` |
 
-### Raspadores com navegador (exigem `pip install raspe[browser]`)
+### Raspadores com navegador (exigem o extra `browser` e o Chromium)
 
 | Fonte | Comando | O que busca | Termo de busca |
 |-------|---------|-------------|----------------|
@@ -216,31 +215,37 @@ crie o raspador e chame `.raspar()` com o termo de busca.
 | ANS | `raspe.ans()` | Atos da Agência Nacional de Saúde Suplementar | `termo=` |
 | ANVISA | `raspe.anvisa()` | Atos da Agência Nacional de Vigilância Sanitária | `termo=` |
 
+Os comandos de instalação do extra `browser` e do Chromium estão na seção dos raspadores com navegador, mais abaixo.
+
 > ⚠️ **Atenção ao nome do parâmetro:** ele muda conforme a fonte (`pesquisa`,
 > `texto`, `termo` ou `assunto`). Consulte a coluna "Termo de busca" acima ou a
 > seção específica de cada fonte mais abaixo.
 
-Todos os raspadores aceitam também o parâmetro `paginas` (ex.: `paginas=range(1, 6)`)
-para limitar quantas páginas serão coletadas, e aceitam uma **lista** de termos no
-lugar de um único texto — nesse caso, o resultado ganha a coluna `termo_busca`
-identificando a qual busca cada linha pertence.
+**Paginação e vários termos.** Os oito raspadores HTTP aceitam o parâmetro `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e aceitam uma **lista** de termos no lugar de um único texto. Com lista, o raspador faz uma busca para cada termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha.
+
+Os três raspadores com navegador (SaudeLegis, ANS e ANVISA) não aceitam nenhum dos dois. Eles ignoram `paginas` e coletam todas as páginas de resultado até um limite interno, e recebem um único termo por chamada: uma lista no lugar do termo dá erro. Para buscar vários termos nessas fontes, chame `.raspar()` uma vez para cada termo.
+
+Com um termo só, a coluna `termo_busca` também aparece quando o parâmetro de busca é `pesquisa`, `termo` ou `assunto`. No CFM e no NYT, que usam `texto`, ela só aparece na busca por lista.
 
 ### Escolhendo a fonte pelo nome
 
-Se o nome da fonte vier de uma variável (de um formulário, de um arquivo de
-configuração, de um laço), use `raspe.scraper_manager.scraper()` em vez de
-chamar cada factory na mão:
+Se o nome da fonte vier de uma variável (de um formulário, de um arquivo de configuração, de um laço), use `raspe.scraper_manager.scraper()` em vez de chamar cada factory na mão. Como o nome do parâmetro de busca muda conforme a fonte, guarde os parâmetros junto com o nome:
 
 ```python
 from raspe.scraper_manager import scraper
 
-for fonte in ["presidencia", "cfm", "capes"]:
-    df = scraper(fonte).raspar(...)
+buscas = {
+    "presidencia": {"pesquisa": "doença rara"},
+    "cfm": {"texto": "doença rara"},
+    "capes": {"pesquisa": "doença rara"},
+}
+
+resultados = {}
+for fonte, parametros in buscas.items():
+    resultados[fonte] = scraper(fonte).raspar(**parametros)
 ```
 
-O nome não diferencia maiúsculas de minúsculas e cobre as 11 fontes. Parâmetros
-do construtor são repassados normalmente — `scraper("nyt", api_key="...")`,
-`scraper("ans", headless=False)`.
+O nome da fonte é o mesmo da factory (`"cfm"` para `raspe.cfm()`, `"saudelegis"` para `raspe.saudelegis()`), não diferencia maiúsculas de minúsculas e cobre as 11 fontes. Parâmetros do construtor são repassados ao raspador, como em `scraper("nyt", api_key="...")` e `scraper("ans", headless=False)`.
 
 ---
 
@@ -251,7 +256,7 @@ Essas quatro fontes usam o parâmetro `pesquisa` e funcionam da mesma forma.
 ```python
 import raspe
 
-# Presidência da República — leis e decretos federais
+# Presidência da República: leis e decretos federais
 df = raspe.presidencia().raspar(pesquisa="meio ambiente")
 
 # Câmara dos Deputados
@@ -260,17 +265,17 @@ df = raspe.camara().raspar(pesquisa="educação")
 # Senado Federal
 df = raspe.senado().raspar(pesquisa="reforma tributária")
 
-# IPEA — publicações e estudos
+# IPEA: publicações e estudos
 df = raspe.ipea().raspar(pesquisa="desigualdade")
 ```
 
 **Filtros extras da Câmara e do Senado**
 
-Ambos aceitam `ano` e `tipo_materia` para refinar a busca:
+As duas fontes aceitam `ano`. A Câmara aceita também `tipo_materia`, com o tipo de norma escrito como aparece no site da Câmara (ex.: `"Lei Ordinária"`):
 
 ```python
 df = raspe.camara().raspar(pesquisa="saúde", ano=2023, tipo_materia="Lei Ordinária")
-df = raspe.senado().raspar(pesquisa="saúde", ano=2023, tipo_materia="Lei Ordinária")
+df = raspe.senado().raspar(pesquisa="saúde", ano=2023)
 ```
 
 **Dados retornados**
@@ -311,7 +316,7 @@ resoluções, pareceres, emendas, normas e decisões.
 ```python
 import raspe
 
-# Busca simples — note que aqui o parâmetro é 'texto', não 'pesquisa'
+# Busca simples: note que aqui o parâmetro é 'texto', não 'pesquisa'
 df = raspe.cfm().raspar(texto="doenças raras")
 
 # Busca por vários termos de uma vez
