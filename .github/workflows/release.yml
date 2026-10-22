@@ -22,6 +22,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Histórico e branches inteiros, para a conferência da tag saber se
+          # o commit dela está na main.
+          fetch-depth: 0
 
       - name: Instalar uv e Python 3.11
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -32,30 +35,38 @@ jobs:
           # este job não controla, e o que sai daqui vai para o PyPI.
           enable-cache: false
 
-      # O README vira a descrição do pacote no PyPI, que não muda depois do
-      # upload; ele passa a instalar pelo PyPI no commit de release, porque até
-      # a primeira publicação `pip install raspe` não encontra o pacote.
-      - name: Conferir a tag contra o pyproject.toml e o README
+      # O commit da tag tem de estar na main, para que uma tag num commit de
+      # branch não publique código fora da revisão. O CHANGELOG vai no sdist e o
+      # README vira a descrição do pacote no PyPI, e nenhum dos dois muda depois
+      # do upload. O README passa a instalar pelo PyPI no commit de release,
+      # porque até a primeira publicação `pip install raspe` não acha o pacote.
+      - name: Conferir a tag contra o pyproject.toml, o CHANGELOG, o README e a main
         run: |
           uv run --no-project python - <<'EOF'
           import os
           import re
+          import subprocess
           import sys
           import tomllib
 
           versao = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
           tag = os.environ["GITHUB_REF_NAME"]
+          changelog = open("CHANGELOG.md", encoding="utf-8").read()
           readme = open("README.md", encoding="utf-8").read()
           erros = []
           if tag != f"v{versao}":
               erros.append(f"A tag {tag} não corresponde à versão {versao} do pyproject.toml; a tag esperada é v{versao}.")
+          if not re.search(rf"^## \[{re.escape(versao)}\] - \d{{4}}-\d{{2}}-\d{{2}}$", changelog, re.M):
+              erros.append(f"O CHANGELOG.md não tem a seção '## [{versao}] - AAAA-MM-DD'.")
+          if subprocess.run(["git", "merge-base", "--is-ancestor", "HEAD", "origin/main"]).returncode != 0:
+              erros.append("O commit da tag não está na main do GitHub; a tag vai no commit de release, depois de enviá-lo à main.")
           if not re.search(r"^pip install raspe$", readme, re.M):
               erros.append("O README.md não tem a linha 'pip install raspe'; troque a instalação pelo GitHub pela do PyPI.")
           for erro in erros:
               print(f"::error::{erro}")
           sys.exit(1 if erros else 0)
           EOF
-          echo "Tag $GITHUB_REF_NAME confere com o pyproject.toml e o README."
+          echo "Tag $GITHUB_REF_NAME confere com o pyproject.toml, o CHANGELOG, o README e a main."
 
       - name: Rodar a suíte offline
         run: |
