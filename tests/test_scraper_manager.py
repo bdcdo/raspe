@@ -6,8 +6,6 @@ classes de scraper. Os scrapers não devem fazer rede em seus testes — para
 (que faz GET na página inicial), mockamos o método antes da instanciação.
 """
 
-import inspect
-
 import pytest
 
 import raspe
@@ -78,7 +76,6 @@ class TestScraperFactory:
         assert isinstance(instance, ScraperANVISA)
 
     def test_kwargs_repassados_ao_construtor(self):
-        """kwargs chegam ao raspador — `headless` desliga o modo headless."""
         instance = scraper("ans", headless=False)
         assert instance._headless is False
 
@@ -92,7 +89,6 @@ class TestScraperFactory:
             scraper("desconhecido")
 
     def test_erro_lista_fontes_suportadas(self):
-        """A mensagem de erro enumera as fontes válidas."""
         with pytest.raises(ValueError, match="Disponíveis:.*CFM.*"):
             scraper("desconhecido")
 
@@ -106,14 +102,10 @@ class TestScraperFactory:
         com a lista à mão, uma factory nova entraria no `__all__` sem entrar no
         teste, e o mapping voltaria a ficar defasado sem ninguém notar. O filtro
         por `__module__ == "raspe"` separa as funções definidas no próprio
-        `raspe/__init__.py` dos utilitários que ele reexporta de `raspe.utils`;
-        as exceções do `__all__` ficam de fora por serem classes.
+        `raspe/__init__.py` dos utilitários e das exceções que ele reexporta de
+        `raspe.utils` e `raspe.exceptions`.
         """
-        factories = {
-            nome
-            for nome in raspe.__all__
-            if inspect.isfunction(getattr(raspe, nome)) and getattr(raspe, nome).__module__ == "raspe"
-        }
+        factories = {nome for nome in raspe.__all__ if getattr(raspe, nome).__module__ == "raspe"}
 
         from raspe.scraper_manager import _MAPPING
         assert {nome.upper() for nome in factories} == set(_MAPPING)

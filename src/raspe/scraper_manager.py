@@ -1,11 +1,6 @@
 """Factory que resolve um raspador a partir do nome da fonte.
 
-Permite escolher a fonte dinamicamente, a partir de uma string:
-
-    from raspe.scraper_manager import scraper
-
-    df = scraper("CFM").raspar(texto="doença rara")
-
+Permite escolher a fonte dinamicamente, a partir de uma string.
 É uma alternativa às factories de `raspe` (`raspe.cfm()`, `raspe.ans()`, ...),
 útil quando o nome da fonte vem de configuração ou entrada do usuário.
 """
