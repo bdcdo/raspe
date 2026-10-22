@@ -33,10 +33,10 @@ SAMPLES_DIR = Path(__file__).resolve().parents[2] / "folha" / "samples" / "raspa
 # typical precisa de pelo menos duas páginas de 25; a single_page, de uma
 # só; a no_results, de zero resultados.
 CENARIOS = (
-    ("page_01.html", {"pesquisa": "Lula"}, 1),
-    ("page_02.html", {"pesquisa": "Lula"}, 2),
+    ("page_01.html", {"pesquisa": "Elevidys"}, 1),
+    ("page_02.html", {"pesquisa": "Elevidys"}, 2),
     ("single_page.html", {"pesquisa": "natjus"}, 1),
-    ("no_results.html", {"pesquisa": "termoextremamenteimprovavelxyz123"}, 1),
+    ("no_results.html", {"pesquisa": "termoextremamenteimprovavelxyz"}, 1),
 )
 
 
