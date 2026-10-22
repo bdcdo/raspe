@@ -48,6 +48,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
   (paralelização, cache, uso de `old_page_name`).
+- Corrigida a busca por lista (`raspar(pesquisa=[...])`), que abortava com `FileExistsError` quando dois termos caíam no mesmo segundo, como acontece com termos sem resultado (#43). O diretório de download de cada busca continua em `{download_path}/{nome_buscador}/`, mas o nome passa de `AAAAMMDDHHMMSS` para `AAAAMMDDHHMMSS_<sufixo aleatório>`.
 
 ## [0.1.0] - 2025-05-15
 

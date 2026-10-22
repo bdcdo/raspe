@@ -98,25 +98,30 @@ class TestValidarParametros:
 
 
 class TestCreateDownloadDir:
-    def test_cria_diretorio(self):
+    def test_cria_diretorio_dentro_da_pasta_do_buscador(self):
         s = _DummyScraper("dl")
         path = s._create_download_dir()
         assert os.path.isdir(path)
-        assert s.nome_buscador in path
+        assert os.path.dirname(path) == os.path.join(s.download_path, s.nome_buscador)
 
-    def test_chamadas_sequenciais_geram_paths_diferentes(self, mocker):
-        """Mock datetime para garantir timestamps distintos."""
+    def test_chamadas_no_mesmo_segundo_geram_paths_diferentes(self, mocker):
+        """Relógio parado: o timestamp repete e o sufixo aleatório desempata."""
         from datetime import datetime as real_datetime
 
         s = _DummyScraper("dl2")
         mock_dt = mocker.patch("raspe.abstract_scraper.datetime")
-        mock_dt.now.side_effect = [
-            real_datetime(2024, 1, 1, 12, 0, 0),
-            real_datetime(2024, 1, 1, 12, 0, 1),
-        ]
+        mock_dt.now.return_value = real_datetime(2024, 1, 1, 12, 0, 0)
+
         p1 = s._create_download_dir()
         p2 = s._create_download_dir()
+
         assert p1 != p2
+        for path in (p1, p2):
+            assert os.path.isdir(path)
+            assert os.path.dirname(path) == os.path.join(s.download_path, s.nome_buscador)
+            nome = os.path.basename(path)
+            assert nome.startswith("20240101120000_")
+            assert len(nome) > len("20240101120000_")
 
 
 class TestParseData:
