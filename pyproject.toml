@@ -39,6 +39,7 @@ dev = [
     "pyright>=1.1.350",
     "types-requests>=2.32.0",
     "pre-commit>=3.0.0",
+    "pyyaml>=6.0",
 ]
 browser = [
     "playwright>=1.40.0",

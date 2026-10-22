@@ -5,8 +5,13 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      # Sem estes argumentos, os dois hooks olham o índice e o estado de merge,
+      # e no checkout do CI passariam sem examinar os arquivos. O porquê de
+      # cada um está em tests/test_pre_commit_config.py, que exige os dois.
       - id: check-added-large-files
+        args: ["--enforce-all"]
       - id: check-merge-conflict
+        args: ["--assume-in-merge"]
       - id: debug-statements
 
   - repo: https://github.com/pycqa/isort
