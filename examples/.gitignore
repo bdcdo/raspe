@@ -1,0 +1,3 @@
+# O exemplo 1 salva a mesma tabela em CSV e em Excel. Só o CSV fica versionado:
+# é texto, o diff mostra o que mudou entre duas coletas e qualquer programa o abre.
+datasets/*.xlsx
