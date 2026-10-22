@@ -6,6 +6,8 @@ classes de scraper. Os scrapers não devem fazer rede em seus testes — para
 (que faz GET na página inicial), mockamos o método antes da instanciação.
 """
 
+import inspect
+
 import pytest
 
 import raspe
@@ -98,14 +100,20 @@ class TestScraperFactory:
         """O mapping não pode ficar para trás das factories de `raspe`.
 
         Toda factory pública (`raspe.cfm()`, `raspe.ans()`, ...) deve ter
-        entrada correspondente em `scraper()`.
+        entrada correspondente em `scraper()`, com o mesmo nome em maiúsculas.
+
+        As factories saem de `raspe.__all__`, e não de uma lista escrita aqui:
+        com a lista à mão, uma factory nova entraria no `__all__` sem entrar no
+        teste, e o mapping voltaria a ficar defasado sem ninguém notar. O filtro
+        por `__module__ == "raspe"` separa as funções definidas no próprio
+        `raspe/__init__.py` dos utilitários que ele reexporta de `raspe.utils`;
+        as exceções do `__all__` ficam de fora por serem classes.
         """
         factories = {
-            "presidencia", "ipea", "senado", "camara", "cfm",
-            "nyt", "folha", "capes", "saudelegis", "ans", "anvisa",
+            nome
+            for nome in raspe.__all__
+            if inspect.isfunction(getattr(raspe, nome)) and getattr(raspe, nome).__module__ == "raspe"
         }
-        # Guarda contra a lista acima envelhecer em relação a `raspe.__all__`.
-        assert factories <= set(raspe.__all__)
 
         from raspe.scraper_manager import _MAPPING
         assert {nome.upper() for nome in factories} == set(_MAPPING)
