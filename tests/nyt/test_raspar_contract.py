@@ -3,6 +3,8 @@
 Os samples em ``tests/nyt/samples/raspar/`` são JSON sintético replicando
 a estrutura da Article Search API v2 do NYT
 (``response.docs[]`` + ``response.meta.hits`` ou ``response.metadata.hits``).
+O script ``python -m tests.fixtures.capture.nyt`` grava os cenários reais,
+mas exige ``NYT_API_KEY`` e ainda não rodou.
 """
 
 import pytest

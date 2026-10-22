@@ -1,4 +1,11 @@
-"""Contrato offline para ``ScraperSenadoFederal.raspar``."""
+"""Contrato offline para ``ScraperSenadoFederal.raspar``.
+
+Os samples em ``tests/senado/samples/raspar/`` foram construídos à mão,
+com a estrutura que o parser lê (``a[data-click-type]`` com a contagem e
+``div.sf-busca-resultados-item``) e texto de enchimento. Não há script de
+captura para eles: a busca HTML sai de cena com a reescrita do scraper
+sobre a API oficial do Senado (#29).
+"""
 
 import pytest
 import responses
