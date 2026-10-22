@@ -143,6 +143,38 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="termoextremamenteimprovavelxyz")
         assert df.empty
 
+    @responses.activate
+    def test_sem_contagem_retorna_vazio(self, scraper, mocker):
+        """Sem ``div.c-search__result`` e sem o número, nenhuma página é baixada.
+
+        Parte do sample page_01, que tem 25 notícias, e tira a classe do
+        container da contagem e o número de "28 Resultados para". Sem o
+        container, ``_find_n_pags`` procura "N resultado" em qualquer texto
+        da página; o número só aparecia ali, então a contagem vira 0. O
+        contrato fixa que a falta da contagem dá DataFrame vazio, sem
+        exceção, mesmo com as notícias na página.
+        """
+        mocker.patch("time.sleep")
+        html = load_sample_bytes("folha", "raspar/page_01.html").decode("utf-8")
+        for trecho, troca in [('c-search__result">', '">'), ("28 Resultados para", "Resultados para")]:
+            assert html.count(trecho) == 1, "o sample page_01.html mudou; ajuste o trecho trocado"
+            html = html.replace(trecho, troca)
+        # As notícias continuam na página; só a contagem sumiu.
+        assert 'class="u-list-unstyled c-search"' in html
+
+        responses.add(
+            responses.GET, API_URL,
+            body=html.encode("utf-8"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+        )
+
+        df = scraper.raspar(pesquisa="Elevidys")
+
+        assert df.empty
+        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        assert len(responses.calls) == 1
+
 
 class TestValidacao:
     def test_site_invalido_levanta_validation_error(self, scraper):
