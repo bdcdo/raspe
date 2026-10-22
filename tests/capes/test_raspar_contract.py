@@ -16,6 +16,9 @@ com cards ``div.col-md-12.br-item[id^="conteudo-"]``.
 - ``no_results.html``: termo absurdo, sem ``nav.br-pagination``.
 """
 
+import os
+from datetime import datetime
+
 import pytest
 import responses
 from responses import matchers
@@ -120,6 +123,46 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyz123")
         assert df.empty
+
+    @responses.activate
+    def test_busca_por_lista_sem_resultados_no_mesmo_segundo(self, scraper, mocker):
+        """Dois termos sem resultado no mesmo segundo ganham diretórios distintos.
+
+        O relógio fica parado para que os dois termos gerem o mesmo timestamp
+        em ``_create_download_dir``, de forma determinística. A busca por lista
+        precisa terminar sem ``FileExistsError`` e, com ``debug=True`` (o
+        default, que mantém os arquivos), deixar um diretório por termo
+        (issue #43).
+        """
+        mocker.patch("time.sleep")
+        relogio = mocker.patch("raspe.abstract_scraper.datetime")
+        relogio.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
+
+        corpo = load_sample_bytes("capes", "raspar/no_results.html")
+        # Sem ``nav.br-pagination``, ``_find_n_pags`` devolve 0 e cada termo
+        # faz só a requisição inicial. Se uma recaptura trouxer paginação, o
+        # teste deixa de exercitar o caso de borda e precisa falhar aqui.
+        assert b"br-pagination" not in corpo
+        termos = ["termo_inexistente_a", "termo_inexistente_b"]
+        for termo in termos:
+            responses.add(
+                responses.GET, API_URL,
+                body=corpo,
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({
+                    "q": f"all:contains({termo})",
+                    "mode": "advanced",
+                    "source": "all",
+                })],
+            )
+
+        df = scraper.raspar(pesquisa=termos)
+
+        assert df.empty
+        assert len(responses.calls) == len(termos)
+        diretorios = os.listdir(os.path.join(scraper.download_path, scraper.nome_buscador))
+        assert len(diretorios) == len(termos)
 
     @responses.activate
     def test_query_params_corretos(self, scraper, mocker):
