@@ -21,7 +21,13 @@ import pandas as pd
 from tqdm import tqdm
 
 from raspe.exceptions import ScraperError
+from raspe.schemas.base import InputBase, OutputBase, conferir_saida, validar_entrada
 from raspe.utils import validar_intervalo_datas
+
+# Fora da classe porque, dentro dela, o nome 'type' é a propriedade abstrata
+# declarada mais abaixo, e o pylint lê 'type[...]' como uso antes da definição.
+_SchemaEntrada = type[InputBase] | None
+_SchemaSaida = type[OutputBase] | None
 
 
 class _HandlerRaspe(logging.StreamHandler):
@@ -139,11 +145,23 @@ class AbstractScraper(ABC):
         exclude_cols_from_dedup: Colunas a excluir na deduplicação.
         logger: Logger da instância (``logging.LoggerAdapter`` sobre ``raspe.<nome_buscador>``),
             com nível próprio.
+
+    Atributos de classe:
         colunas: Colunas do DataFrame que o scraper devolve. Uma busca sem
             resultados devolve um DataFrame vazio com estas colunas.
+        schema_entrada: Schema pydantic dos parâmetros de ``raspar()``. Com ele,
+            kwarg desconhecido levanta ``ValidationError`` e alias deprecado
+            emite ``DeprecationWarning``. ``None`` mantém o comportamento antigo,
+            sem validação dos nomes.
+        schema_saida: Schema pydantic das colunas do DataFrame de ``raspar()``,
+            conferido em :meth:`_conferir_saida`. Com ele, ``colunas`` mais
+            ``termo_busca`` precisam bater com os campos do schema (conferido em
+            ``tests/schemas/test_output_parity.py``).
     """
 
     colunas: ClassVar[list[str]] = []
+    schema_entrada: ClassVar[_SchemaEntrada] = None
+    schema_saida: ClassVar[_SchemaSaida] = None
 
     def __init__(self, nome_buscador: str, debug: bool = True):
         """Inicializa o AbstractScraper com configuração comum."""
@@ -177,8 +195,11 @@ class AbstractScraper(ABC):
     def _validar_parametros(self, **kwargs) -> dict[str, Any]:
         """Valida e normaliza parâmetros de busca antes da raspagem.
 
-        Este método valida parâmetros comuns como datas. Subclasses podem
-        sobrescrever para adicionar validações específicas, mas devem chamar
+        Com ``schema_entrada`` definido, os kwargs passam primeiro pelo schema
+        (alias deprecado, kwarg desconhecido, tipo e valor permitido) e saem com
+        todos os campos preenchidos. Depois, as datas comuns são normalizadas
+        para ``YYYY-MM-DD``. Subclasses podem sobrescrever para adicionar
+        validações específicas, mas devem chamar
         super()._validar_parametros(**kwargs) para manter as validações base.
 
         Args:
@@ -191,6 +212,8 @@ class AbstractScraper(ABC):
             ValidationError: Se algum parâmetro for inválido.
         """
         params = dict(kwargs)
+        if self.schema_entrada is not None:
+            params = validar_entrada(self.schema_entrada, params, metodo=f"{type(self).__name__}.raspar()")
 
         # Valida parâmetros de data comuns
         # Detecta automaticamente parâmetros que parecem ser datas
@@ -218,6 +241,22 @@ class AbstractScraper(ABC):
                     params[fim_key] = fim_norm
 
         return params
+
+    def _conferir_saida(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Confere o DataFrame de ``raspar()`` contra ``schema_saida``.
+
+        Ver :func:`raspe.schemas.base.conferir_saida` para o que acontece com
+        DataFrame vazio e com colunas divergentes.
+
+        Args:
+            df: DataFrame montado por ``raspar()``.
+
+        Returns:
+            pd.DataFrame: O mesmo DataFrame sem schema; conferido com schema.
+        """
+        if self.schema_saida is None:
+            return df
+        return conferir_saida(df, self.schema_saida, metodo=f"{type(self).__name__}.raspar()")
 
     def _create_download_dir(self) -> str:
         """Cria um diretório para armazenar os arquivos baixados.

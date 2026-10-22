@@ -7,6 +7,7 @@ import pandas as pd
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.ipea import InputIpea, OutputIpea
 
 
 def _nivel_do_chamador() -> int:
@@ -26,6 +27,8 @@ def _nivel_do_chamador() -> int:
 
 class ScraperIpea(BaseScraper, HTMLScraper):
     colunas = ['titulo', 'link', 'autores', 'data', 'assuntos']
+    schema_entrada = InputIpea
+    schema_saida = OutputIpea
 
     def __init__(self, download_path: str | None = None, debug: bool = True):
         """Inicializa o raspador do IPEA.

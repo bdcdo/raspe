@@ -21,15 +21,14 @@ import responses
 from responses import matchers
 
 from raspe.exceptions import ScraperError
+from raspe.schemas.capes import OutputCapes
 from raspe.scrapers.capes import ScraperCapes
 from tests._helpers import load_sample_bytes
 
 API_URL = "https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html"
-COLUNAS_OBRIGATORIAS = {
-    "id", "tipo", "titulo", "link", "autores", "ano", "revista",
-    "instituicao", "topicos", "resumo", "doi", "link_editor",
-    "acesso_aberto", "producao_nacional", "revisado_por_pares",
-}
+# Igualdade, não subconjunto: com o wiring do schema, raspar() devolve
+# exatamente as colunas de OutputCapes, na ordem de colunas().
+COLUNAS = OutputCapes.colunas()
 
 
 @pytest.fixture
@@ -70,7 +69,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="saude", paginas=range(1, 3))
 
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
         # page_01 contribui com 20 cards; page_02 foi trimada para 12
         # (ver docstring), mas qualquer regeneração pode mudar o trim.
         # Validamos só o limite inferior: page_01 cheia + ≥10 da page_02.
@@ -100,7 +99,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="natjus")
 
         assert len(df) == 20
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
         assert df["id"].str.match(r"^W\d+$").all()
         assert df["titulo"].str.len().min() > 0
         # Tolerância de 2 cards sem ano de 4 dígitos (ex.: "no prelo",
@@ -121,7 +120,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyz123")
         assert df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_pagina_sem_paginacao_nem_aviso_levanta_erro(self, scraper, mocker):

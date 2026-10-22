@@ -20,6 +20,7 @@ import pandas as pd
 from ..base_scraper import BaseScraper
 from ..exceptions import ValidationError
 from ..html_scraper import HTMLScraper
+from ..schemas.capes import InputCapes, OutputCapes
 
 _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 
@@ -32,6 +33,8 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
         'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
     ]
+    schema_entrada = InputCapes
+    schema_saida = OutputCapes
 
     _SELETOR_CARD = 'div.col-md-12.br-item[id^="conteudo-"]'
 
