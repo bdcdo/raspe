@@ -55,7 +55,10 @@ jobs:
         run: uvx twine==7.0.0 check --strict dist/*
 
       # A suíte roda sobre o código-fonte; este passo pega o que só aparece no
-      # pacote, como módulo que ficou fora da wheel ou versão diferente da tag.
+      # pacote: módulo de src/raspe que ficou fora da wheel, import quebrado na
+      # instalação sem o extra browser ou versão diferente da tag. Os módulos dos
+      # raspadores com navegador importam o Playwright só ao rodar, por isso o
+      # import deles funciona sem o extra.
       - name: Importar todos os módulos a partir da wheel numa venv limpa
         run: |
           uv venv "$RUNNER_TEMP/fumaca"
@@ -63,6 +66,7 @@ jobs:
           "$RUNNER_TEMP/fumaca/bin/python" -I - <<'EOF'
           import importlib
           import os
+          import pathlib
           import pkgutil
           import sys
 
@@ -70,10 +74,16 @@ jobs:
 
           assert raspe.__file__.startswith(sys.prefix), raspe.__file__
           assert "v" + raspe.__version__ == os.environ["GITHUB_REF_NAME"], raspe.__version__
-          modulos = [m.name for m in pkgutil.walk_packages(raspe.__path__, "raspe.")]
-          for nome in modulos:
+          instalados = sorted(["raspe"] + [m.name for m in pkgutil.walk_packages(raspe.__path__, "raspe.")])
+          fonte = pathlib.Path("src")
+          esperados = sorted(
+              ".".join(p.relative_to(fonte).with_suffix("").parts).removesuffix(".__init__")
+              for p in (fonte / "raspe").rglob("*.py")
+          )
+          assert instalados == esperados, sorted(set(instalados) ^ set(esperados))
+          for nome in instalados:
               importlib.import_module(nome)
-          print(f"raspe {raspe.__version__}: {len(modulos)} módulos importados de {raspe.__file__}")
+          print(f"raspe {raspe.__version__}: {len(instalados)} módulos importados de {raspe.__file__}")
           EOF
 
       - name: Guardar os pacotes para o job de publicação
