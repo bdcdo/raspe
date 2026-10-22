@@ -162,12 +162,12 @@ class TestListaDePesquisa:
 
 
 class TestConferirSaida:
-    def _df(self, **colunas):
+    def _df(self, colunas):
         return pd.DataFrame({coluna: ["valor"] for coluna in colunas})
 
     def test_reordena_para_a_ordem_do_schema(self):
         colunas = OutputPresidencia.colunas()
-        df = self._df(**{coluna: None for coluna in reversed(colunas)})
+        df = self._df(reversed(colunas))
         assert list(conferir_saida(df, OutputPresidencia, metodo="m()").columns) == colunas
 
     def test_sem_linhas_devolve_as_colunas_do_schema(self):
@@ -177,7 +177,7 @@ class TestConferirSaida:
 
     def test_colunas_divergentes_avisam_e_mantem_os_dados(self):
         colunas = [coluna for coluna in OutputPresidencia.colunas() if coluna != "link"] + ["extra"]
-        df = self._df(**{coluna: None for coluna in colunas})
+        df = self._df(colunas)
         with pytest.warns(UserWarning, match=r"faltando: \['link'\]; sobrando: \['extra'\]") as avisos:
             devolvido = conferir_saida(df, OutputPresidencia, metodo="ScraperPresidencia.raspar()")
         assert devolvido is df
