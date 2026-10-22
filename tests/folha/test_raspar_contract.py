@@ -1,14 +1,22 @@
 """Contrato offline para ``ScraperFolha.raspar``.
 
-Os samples em ``tests/folha/samples/raspar/`` foram construídos manualmente
-replicando a estrutura HTML observada na busca pública da Folha
-(``div.c-search__result`` para contagem, ``ol.u-list-unstyled.c-search > li``
-para cada notícia, com ``a[href]``, ``h2``, ``p``, ``time``).
+Os samples em ``tests/folha/samples/raspar/`` são respostas reais da busca
+pública da Folha, capturadas em 21/10/2026 com
+``python -m tests.fixtures.capture.folha``. O único ajuste é o do
+pre-commit, que tira o espaço no fim das linhas. A contagem fica em
+``div.c-search__result`` ("N Resultados para ...") e cada notícia em
+``ol.u-list-unstyled.c-search > li``, com ``a[href]``, ``h2``, ``p``, ``time``.
+
+- ``page_01.html`` e ``page_02.html``: busca "Elevidys", ``sr=1`` e
+  ``sr=26``. O site diz "28 Resultados"; a página 1 tem 25 notícias e a
+  página 2, 3.
+- ``single_page.html``: busca "natjus", "6 Resultados".
+- ``no_results.html``: busca "termoextremamenteimprovavelxyz", "0 Resultados".
 """
 
 import pytest
 import responses
-from responses import registries
+from responses import matchers, registries
 
 from raspe.exceptions import ValidationError
 from raspe.scrapers.folha import ScraperFolha
@@ -26,7 +34,7 @@ def scraper():
 class TestRasparContract:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
-        """40 resultados → 2 páginas (25 por página)."""
+        """28 resultados → 2 páginas (25 por página)."""
         mocker.patch("time.sleep")
 
         # Initial + page 1 + page 2 = 3 requests
@@ -49,17 +57,59 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="educação")
+        df = scraper.raspar(pesquisa="Elevidys")
 
         assert not df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
-        # page_01 tem 3 notícias, page_02 tem 2 → total 5
-        assert len(df) == 5
-        assert (df["termo_busca"] == "educação").all()
+        # page_01 tem 25 notícias e page_02 tem 3: as 28 que o site anuncia.
+        assert len(df) == 28
+        assert (df["termo_busca"] == "Elevidys").all()
+
+    @responses.activate(registry=registries.OrderedRegistry, assert_all_requests_are_fired=True)
+    @pytest.mark.parametrize(
+        ("paginas", "esperado"),
+        [
+            (range(1, 2), [("1", "page_01.html")]),
+            (range(2, 3), [("26", "page_02.html")]),
+            (range(1, 3), [("1", "page_01.html"), ("26", "page_02.html")]),
+        ],
+    )
+    def test_parametro_sr_avanca_de_25_em_25(self, scraper, mocker, paginas, esperado):
+        """A página 1 pede ``sr=1`` e a página 2 pede ``sr=26``.
+
+        ``sr`` é a posição do primeiro resultado da página (25 por página).
+        A requisição inicial também vai com ``sr=1``, que vem de
+        ``_set_query_base``. O ``query_param_matcher`` é estrito, e a ordem
+        do registry prende cada valor à sua página.
+        """
+        mocker.patch("time.sleep")
+        query_base = {"q": "Elevidys", "site": "todos", "periodo": "todos"}
+        # Inicial: page_01 diz 28 resultados, ou seja, 2 páginas.
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("folha", "raspar/page_01.html"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+            match=[matchers.query_param_matcher({**query_base, "sr": "1"})],
+        )
+        for sr, sample in esperado:
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("folha", f"raspar/{sample}"),
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({**query_base, "sr": sr})],
+            )
+
+        df = scraper.raspar(pesquisa="Elevidys", paginas=paginas)
+
+        assert len(responses.calls) == 1 + len(esperado)
+        noticias_por_sample = {"page_01.html": 25, "page_02.html": 3}
+        assert len(df) == sum(noticias_por_sample[sample] for _, sample in esperado)
 
     @responses.activate
     def test_single_page(self, scraper, mocker):
-        """3 resultados → 1 página."""
+        """6 resultados → 1 página."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -74,13 +124,13 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="saúde")
-        assert len(df) == 3
+        df = scraper.raspar(pesquisa="natjus")
+        assert len(df) == 6
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
-        """Sem ``c-search__result`` no HTML → ``_find_n_pags`` retorna 0."""
+        """``0 Resultados para ...`` em ``c-search__result`` → 0 páginas → DataFrame vazio."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -89,8 +139,40 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
+        df = scraper.raspar(pesquisa="termoextremamenteimprovavelxyz")
         assert df.empty
+
+    @responses.activate
+    def test_sem_contagem_retorna_vazio(self, scraper, mocker):
+        """Sem ``div.c-search__result`` e sem o número, nenhuma página é baixada.
+
+        Parte do sample page_01, que tem 25 notícias, e tira a classe do
+        container da contagem e o número de "28 Resultados para". Sem o
+        container, ``_find_n_pags`` procura "N resultado" em qualquer texto
+        da página; o número só aparecia ali, então a contagem vira 0. O
+        contrato fixa que a falta da contagem dá DataFrame vazio, sem
+        exceção, mesmo com as notícias na página.
+        """
+        mocker.patch("time.sleep")
+        html = load_sample_bytes("folha", "raspar/page_01.html").decode("utf-8")
+        for trecho, troca in [('c-search__result">', '">'), ("28 Resultados para", "Resultados para")]:
+            assert html.count(trecho) == 1, "o sample page_01.html mudou; ajuste o trecho trocado"
+            html = html.replace(trecho, troca)
+        # As notícias continuam na página; só a contagem sumiu.
+        assert 'class="u-list-unstyled c-search"' in html
+
+        responses.add(
+            responses.GET, API_URL,
+            body=html.encode("utf-8"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+        )
+
+        df = scraper.raspar(pesquisa="Elevidys")
+
+        assert df.empty
+        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        assert len(responses.calls) == 1
 
 
 class TestValidacao:

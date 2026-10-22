@@ -3,6 +3,8 @@
 Os samples em ``tests/nyt/samples/raspar/`` são JSON sintético replicando
 a estrutura da Article Search API v2 do NYT
 (``response.docs[]`` + ``response.meta.hits`` ou ``response.metadata.hits``).
+O script ``python -m tests.fixtures.capture.nyt`` grava os cenários reais,
+mas exige ``NYT_API_KEY`` e ainda não rodou.
 """
 
 import pytest
@@ -52,6 +54,46 @@ class TestRasparContract:
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
         # page_01 tem 2 docs, page_02 tem 1 doc → 3 total
         assert len(df) == 3
+
+    @responses.activate(registry=registries.OrderedRegistry, assert_all_requests_are_fired=True)
+    @pytest.mark.parametrize(
+        ("paginas", "esperado"),
+        [
+            (range(1, 2), [("0", "page_01.json")]),
+            (range(2, 3), [("1", "page_02.json")]),
+            (range(1, 3), [("0", "page_01.json"), ("1", "page_02.json")]),
+        ],
+    )
+    def test_parametro_page_comeca_em_zero(self, scraper, mocker, paginas, esperado):
+        """A página 1 do raspe vira ``page=0`` na API, e a página 2 vira ``page=1``.
+
+        A requisição inicial, que só lê ``meta.hits``, vai sem ``page``. O
+        ``query_param_matcher`` é estrito: um ``page`` a mais ou a menos em
+        qualquer requisição a faz não casar, e a ordem do registry prende
+        cada valor à sua página.
+        """
+        mocker.patch("time.sleep")
+        query_base = {"api-key": "test-key-12345", "q": "politics", "sort": "newest"}
+        # Inicial: page_01 diz 15 hits, ou seja, 2 páginas.
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("nyt", "raspar/page_01.json"),
+            status=200, content_type="application/json",
+            match=[matchers.query_param_matcher(query_base)],
+        )
+        for page, sample in esperado:
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("nyt", f"raspar/{sample}"),
+                status=200, content_type="application/json",
+                match=[matchers.query_param_matcher({**query_base, "page": page})],
+            )
+
+        df = scraper.raspar(texto="politics", paginas=paginas)
+
+        assert len(responses.calls) == 1 + len(esperado)
+        docs_por_sample = {"page_01.json": 2, "page_02.json": 1}
+        assert len(df) == sum(docs_por_sample[sample] for _, sample in esperado)
 
     @responses.activate
     def test_single_page(self, scraper, mocker):

@@ -2,6 +2,12 @@
 
 CFM tem ``_find_n_pags`` baseado em "X registros encontrados" + parsing
 de "Mostrando página X de Y" para descobrir total de páginas.
+
+Os samples em ``tests/cfm/samples/raspar/`` foram construídos à mão, com
+essa estrutura (e ``div#resultsNormas > article``) e texto de enchimento.
+O script ``python -m tests.fixtures.capture.cfm`` grava os quatro
+cenários reais, mas ainda não rodou contra o portal: em 21/10/2026 a
+conexão com ``portal.cfm.org.br`` não abriu.
 """
 
 import pytest
