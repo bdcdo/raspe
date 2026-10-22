@@ -134,6 +134,8 @@ Após executar o código, você terá um **DataFrame** (uma tabela) com os dados
 - **Ver quantas linhas:** `print(len(dados))` - mostra o número total de registros
 - **Ver as colunas:** `print(dados.columns)` - mostra quais informações foram coletadas
 
+O que cada coluna significa, fonte por fonte, com tipo, descrição e exemplo, está em [`docs/colunas.md`](docs/colunas.md). A busca sem resultado devolve uma tabela vazia com as mesmas colunas.
+
 ---
 
 ## 🎓 Tutorial Completo para Iniciantes
@@ -196,7 +198,7 @@ python -m playwright install chromium
 import raspe
 
 # Buscar atos normativos sobre doenças raras
-df = raspe.ans().raspar(termo="doença rara")
+df = raspe.ans().raspar(pesquisa="doença rara")
 df.to_excel("atos_ans.xlsx", index=False)
 ```
 
@@ -206,7 +208,7 @@ df.to_excel("atos_ans.xlsx", index=False)
 import raspe
 
 # Buscar atos normativos sobre medicamentos
-df = raspe.anvisa().raspar(termo="medicamento órfão")
+df = raspe.anvisa().raspar(pesquisa="medicamento órfão")
 df.to_excel("atos_anvisa.xlsx", index=False)
 ```
 
@@ -216,16 +218,13 @@ df.to_excel("atos_anvisa.xlsx", index=False)
 import raspe
 
 # Buscar normas sanitárias
-df = raspe.saudelegis().raspar(assunto="doença rara")
+df = raspe.saudelegis().raspar(pesquisa="doença rara")
 df.to_excel("normas_saude.xlsx", index=False)
 ```
 
 ### Dados retornados (ANS/ANVISA)
 
-- **url**: Link para o ato normativo
-- **titulo**: Tipo e número (ex: RDC nº 205/2017)
-- **descricao**: Ementa do ato
-- **situacao**: Status (vigente, revogado, etc.)
+As colunas estão em [`docs/colunas.md`](docs/colunas.md#raspeans-e-raspeanvisa).
 
 ### Modo visual (debug)
 
@@ -233,7 +232,7 @@ Se precisar visualizar o navegador durante a coleta (útil para debug):
 
 ```python
 # Executa com navegador visível
-df = raspe.ans(headless=False).raspar(termo="doença rara")
+df = raspe.ans(headless=False).raspar(pesquisa="doença rara")
 ```
 
 ---
@@ -276,10 +275,7 @@ dados.to_excel("noticias_folha.xlsx", index=False)
 
 ### Dados retornados
 
-- **link**: URL da notícia
-- **titulo**: Título da matéria
-- **resumo**: Resumo/lead da notícia
-- **data**: Data de publicação
+As colunas estão em [`docs/colunas.md`](docs/colunas.md#raspefolha).
 
 ---
 
@@ -303,18 +299,18 @@ import raspe
 nyt = raspe.nyt(api_key="sua-api-key-aqui")
 
 # Busca simples
-dados = nyt.raspar(texto="climate change", ano=2024)
+dados = nyt.raspar(pesquisa="climate change", ano=2024)
 
 # Busca com intervalo de datas
 dados = nyt.raspar(
-    texto="Brazil",
+    pesquisa="Brazil",
     data_inicio="2024-01-01",
     data_fim="2024-06-30"
 )
 
 # Busca com filtros avançados (seção específica)
 dados = nyt.raspar(
-    texto="election",
+    pesquisa="election",
     ano=2024,
     filtro='section.name:"Politics"'
 )
@@ -336,6 +332,10 @@ dados.to_excel("artigos_nyt.xlsx", index=False)
 ### Retry Automático
 
 O raspe tenta novamente automaticamente quando encontra problemas temporários de conexão ou quando o servidor está sobrecarregado. Você não precisa fazer nada - é tudo automático.
+
+### Parâmetros conferidos
+
+O raspe confere os parâmetros de `raspar()` antes de qualquer requisição. Um nome que o raspador não conhece, como `data_incio`, levanta erro com a lista dos parâmetros aceitos e, quando houver, a sugestão do nome certo; um valor de tipo errado também. Os nomes antigos do termo de busca (`texto`, `termo` e `assunto`) ainda funcionam, com aviso de descontinuação: use `pesquisa`.
 
 ### Formatos de Data Aceitos
 

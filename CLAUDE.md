@@ -20,7 +20,7 @@ Novos scrapers devem:
 1. Herdar de `BaseScraper` (e `HTMLScraper` se necessário)
 2. Implementar as propriedades abstratas: `api_base`, `type`, `query_page_name`, `api_method`
 3. Implementar os métodos: `_set_query_base()`, `_find_n_pags()`, `_parse_page()`
-4. Validar parâmetros em `_validar_parametros()` (sobrescrevendo o método base)
+4. Declarar `schema_entrada` e `schema_saida` (em `src/raspe/schemas/`), registrar em `tests/schemas/test_schema_coverage.py` e regerar `docs/colunas.md` com `python -m raspe.schemas.documentacao`
 
 ## Versionamento e CHANGELOG
 
@@ -95,8 +95,7 @@ qualquer método adicional). O PR fica bloqueado sem isso.
      - `urlencoded_params_matcher(..., strict_match=False)` para POST form.
      - `json_params_matcher(...)` para POST JSON.
      - `query_param_matcher(...)` para GET.
-   - Schema validado por **subset**: `{"col_a", "col_b"} <= set(df.columns)`.
-     Nunca igualdade.
+   - Colunas por igualdade: `list(df.columns) == OutputXx.colunas()`, também no no_results.
    - Pelo menos 3 casos: typical, single_page, no_results.
 4. **Sem `@pytest.mark.integration`** no contrato.
 5. **Sem dependência de rede, relógio ou TLS real**. Adapter custom
@@ -106,6 +105,4 @@ qualquer método adicional). O PR fica bloqueado sem isso.
 7. **Captchas, tokens dinâmicos, lazy imports** (ex.: `txtcaptcha`,
    `browser_cookie3`) são **mockados** via `mocker.patch.dict(sys.modules, ...)`,
    nunca invocados de verdade.
-8. **CHANGELOG**: a adição de novo scraper já é uma entrada `Adicionado`;
-   adicionar testes para scraper existente é mudança interna e não
-   precisa de entrada (ver "Versionamento e CHANGELOG" acima).
+8. **CHANGELOG**: scraper novo é entrada `Adicionado` (ver "Versionamento e CHANGELOG").
