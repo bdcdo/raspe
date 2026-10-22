@@ -1,0 +1,8 @@
+# O setuptools já põe no sdist o código de src/, o README, o LICENSE e o
+# pyproject.toml. Daqui entram o CHANGELOG e a suíte inteira, com os samples,
+# para que os testes rodem a partir do sdist. Bytecode e notebooks ficam fora:
+# o bytecode é gerado pela máquina de quem constrói e os notebooks não são
+# executados pela suíte.
+include CHANGELOG.md
+graft tests
+global-exclude *.py[cod] *.ipynb
