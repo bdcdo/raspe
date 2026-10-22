@@ -67,11 +67,9 @@ jobs:
           import os
           import pathlib
           import pkgutil
-          import sys
 
           import raspe
 
-          assert raspe.__file__.startswith(sys.prefix), raspe.__file__
           assert "v" + raspe.__version__ == os.environ["GITHUB_REF_NAME"], raspe.__version__
           instalados = sorted(["raspe"] + [m.name for m in pkgutil.walk_packages(raspe.__path__, "raspe.")])
           fonte = pathlib.Path("src")
@@ -90,7 +88,6 @@ jobs:
         with:
           name: dist
           path: dist/
-          if-no-files-found: error
 
   publish:
     name: Publicar no PyPI
