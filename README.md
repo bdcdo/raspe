@@ -138,6 +138,16 @@ Após executar o código, você terá um **DataFrame** (uma tabela) com os dados
 
 ## 🎓 Tutorial Completo para Iniciantes
 
+### Exemplos prontos
+
+Para partir de um script que já funciona, a pasta [`examples/`](examples) traz quatro exemplos de uma pesquisa sobre doenças raras e judicialização de medicamentos, do mais simples ao mais completo: busca em uma fonte, a mesma busca em três fontes legislativas, série temporal da produção acadêmica e um pipeline com coleta, limpeza, análise e exportação. O [README da pasta](examples/README.md) diz quanto tempo cada um leva e quantas requisições faz, e `examples/datasets/` guarda as tabelas que eles geraram.
+
+Três notebooks explicam esses exemplos célula por célula:
+
+- [`10_pipeline_completo.ipynb`](notebooks/10_pipeline_completo.ipynb): coleta, limpeza, análise e exportação, com tratamento de erro;
+- [`11_multiplas_fontes.ipynb`](notebooks/11_multiplas_fontes.ipynb): a mesma busca na Presidência, na Câmara e no Senado, comparadas;
+- [`12_analise_longitudinal.ipynb`](notebooks/12_analise_longitudinal.ipynb): a produção acadêmica sobre judicialização de medicamentos ano a ano.
+
 ### Passo 1: Criar um arquivo Python
 
 1. Abra um editor de texto (pode ser o Bloco de Notas, mas recomendo o [Visual Studio Code](https://code.visualstudio.com/))

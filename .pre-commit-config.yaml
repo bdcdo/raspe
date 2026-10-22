@@ -3,6 +3,10 @@ repos:
     rev: v4.4.0
     hooks:
       - id: trailing-whitespace
+        # As tabelas de examples/datasets/ guardam o texto como o site publicou, inclusive
+        # espaços antes das quebras de linha dentro de células. Aparar esses espaços mudaria
+        # o dado bruto que o exemplo 4 salva justamente para poder refazer a limpeza.
+        exclude: ^examples/datasets/
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
