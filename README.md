@@ -118,11 +118,11 @@ dados.to_excel("camara_educacao.xlsx", index=False)
 import raspe
 
 # Buscar três temas numa chamada só (vale para os raspadores HTTP)
-senado = raspe.senado()
-dados = senado.raspar(pesquisa=["educação", "saúde", "segurança"])
+presidencia = raspe.presidencia()
+dados = presidencia.raspar(pesquisa=["educação", "saúde", "segurança"])
 
 # O resultado terá uma coluna 'termo_busca' identificando cada tema
-dados.to_excel("senado_varios_temas.xlsx", index=False)
+dados.to_excel("presidencia_varios_temas.xlsx", index=False)
 ```
 
 ### Exemplo 4: Limitar o número de páginas (para testes rápidos)
@@ -131,10 +131,10 @@ dados.to_excel("senado_varios_temas.xlsx", index=False)
 import raspe
 
 # Buscar apenas as primeiras 5 páginas (vale para os raspadores HTTP)
-senado = raspe.senado()
-dados = senado.raspar(pesquisa="reforma tributária", paginas=range(1, 6))
+presidencia = raspe.presidencia()
+dados = presidencia.raspar(pesquisa="reforma tributária", paginas=range(1, 6))
 
-dados.to_excel("senado_teste.xlsx", index=False)
+dados.to_excel("presidencia_teste.xlsx", index=False)
 ```
 
 ---
@@ -223,6 +223,8 @@ Os comandos de instalação do extra `browser` e do Chromium estão na seção d
 
 **Paginação e vários termos.** Os oito raspadores HTTP aceitam o parâmetro `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e aceitam uma **lista** de termos no lugar de um único texto. Com lista, o raspador faz uma busca para cada termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha.
 
+Enquanto a [issue #43](https://github.com/bdcdo/raspe/issues/43) estiver aberta, a busca por lista pode parar com `FileExistsError` quando um termo que não é o último volta sem resultado: a busca do termo seguinte tenta criar a pasta de download com o mesmo nome. Para contornar, faça uma chamada por termo e crie o raspador de novo a cada chamada, como em `raspe.cfm().raspar(texto="doença rara")` seguido de `raspe.cfm().raspar(texto="medicamento órfão")`.
+
 Os três raspadores com navegador (SaudeLegis, ANS e ANVISA) não aceitam nenhum dos dois. Eles ignoram `paginas` e coletam todas as páginas de resultado até um limite interno, e recebem um único termo por chamada: uma lista no lugar do termo dá erro. Para buscar vários termos nessas fontes, chame `.raspar()` uma vez para cada termo.
 
 Com um termo só, a coluna `termo_busca` também aparece quando o parâmetro de busca é `pesquisa`, `termo` ou `assunto`. No CFM e no NYT, que usam `texto`, ela só aparece na busca por lista.
@@ -269,7 +271,7 @@ df = raspe.senado().raspar(pesquisa="reforma tributária")
 df = raspe.ipea().raspar(pesquisa="desigualdade")
 ```
 
-Em outubro de 2026, o site do Senado responde às buscas do raspe com uma página de verificação de segurança, e `raspe.senado().raspar()` volta vazio, sem mensagem de erro.
+Em outubro de 2026, o site do Senado responde às buscas do raspe com uma página de verificação de segurança. Com um termo, `raspe.senado().raspar()` volta vazio, sem mensagem de erro. Com uma lista de termos, todos voltam sem resultado, e a busca pode parar com `FileExistsError`, pelo motivo descrito em "Paginação e vários termos", acima.
 
 **Filtros extras da Câmara e do Senado**
 
