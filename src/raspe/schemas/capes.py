@@ -43,9 +43,9 @@ class OutputCapes(OutputBase):
     )
     resumo: str = Field(
         description="Trechos do resumo que o buscador destaca, não o resumo inteiro.",
-        examples=[
-            "... the Center for Technical Support of the Judiciary ( NatJus ), which supports judicial decisions."
-        ],
+        # Recorte sem o termo destacado: o espaço em volta do <b> depende de como
+        # o parser junta os nós de texto, e o exemplo não deve depender disso.
+        examples=["... the Center for Technical Support of the Judiciary"],
     )
     doi: str = Field(description="DOI, sem o prefixo `https://doi.org/`.", examples=["10.1590/0102-311xpt024723"])
     link_editor: str = Field(

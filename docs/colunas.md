@@ -31,7 +31,7 @@ Schema: `OutputCapes`.
 | `revista` | texto | Periódico em que o registro saiu. | Cadernos de Saúde Pública |
 | `instituicao` | texto | Instituição informada no card. | Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz |
 | `topicos` | texto | Tópico de pesquisa atribuído ao registro. | Cannabis and Cannabinoid Research |
-| `resumo` | texto | Trechos do resumo que o buscador destaca, não o resumo inteiro. | ... the Center for Technical Support of the Judiciary ( NatJus ), which supports judicial decisions. |
+| `resumo` | texto | Trechos do resumo que o buscador destaca, não o resumo inteiro. | ... the Center for Technical Support of the Judiciary |
 | `doi` | texto | DOI, sem o prefixo `https://doi.org/`. | 10.1590/0102-311xpt024723 |
 | `link_editor` | texto | Endereço do DOI na editora. | https://doi.org/10.1590/0102-311xpt024723 |
 | `acesso_aberto` | booleano | O card traz o selo de acesso aberto. | True |
