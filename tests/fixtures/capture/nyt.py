@@ -61,9 +61,7 @@ CENARIOS: tuple[tuple[str, dict[str, Any], int, range], ...] = (
 
 
 def _consultar(scraper: ScraperNYT, params: dict[str, Any], pagina: int) -> requests.Response:
-    query = scraper._set_query_atual(scraper._set_query_base(**params), pagina)
-    resp: requests.Response = scraper.session.get(scraper.api_base, params=query, timeout=scraper.timeout)
-    return resp
+    return scraper._set_r(scraper._set_query_atual(scraper._set_query_base(**params), pagina))
 
 
 def _hits(resp: requests.Response) -> int:
@@ -72,12 +70,15 @@ def _hits(resp: requests.Response) -> int:
     return int(meta.get("hits", 0))
 
 
-def capturar(saida: Path) -> None:
-    """Baixa cada cenário de ``CENARIOS`` e o caso de chave inválida.
-
-    Args:
-        saida: Pasta onde os arquivos serão gravados (criada se preciso).
-    """
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--saida",
+        type=Path,
+        default=SAMPLES_DIR,
+        help="pasta de saída (padrão: os samples commitados do NYT)",
+    )
+    saida: Path = parser.parse_args().saida
     saida.mkdir(parents=True, exist_ok=True)
     scraper = ScraperNYT()
 
@@ -97,17 +98,6 @@ def capturar(saida: Path) -> None:
     resp = _consultar(invalido, {"texto": "Brazil"}, 1)
     dump_response(resp, saida / "unauthorized.json")
     print(f"unauthorized.json: HTTP {resp.status_code}, {len(resp.content)} bytes")
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados do NYT)",
-    )
-    capturar(parser.parse_args().saida)
 
 
 if __name__ == "__main__":

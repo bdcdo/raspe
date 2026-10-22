@@ -92,7 +92,6 @@ class TestRasparContract:
         df = scraper.raspar(texto="politics", paginas=paginas)
 
         assert len(responses.calls) == 1 + len(esperado)
-        # page_01 tem 2 docs, page_02 tem 1
         docs_por_sample = {"page_01.json": 2, "page_02.json": 1}
         assert len(df) == sum(docs_por_sample[sample] for _, sample in esperado)
 

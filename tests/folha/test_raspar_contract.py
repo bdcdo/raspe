@@ -104,7 +104,6 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="Elevidys", paginas=paginas)
 
         assert len(responses.calls) == 1 + len(esperado)
-        # page_01 tem 25 notícias, page_02 tem 3
         noticias_por_sample = {"page_01.html": 25, "page_02.html": 3}
         assert len(df) == sum(noticias_por_sample[sample] for _, sample in esperado)
 
