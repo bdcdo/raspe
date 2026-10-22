@@ -9,7 +9,7 @@ classes de scraper. Os scrapers não devem fazer rede em seus testes — para
 import pytest
 
 import raspe
-from raspe.scraper_manager import scraper
+from raspe.scraper_manager import _MAPPING, scraper
 from raspe.scrapers.ans import ScraperANS
 from raspe.scrapers.anvisa import ScraperANVISA
 from raspe.scrapers.camara import ScraperCamaraDeputados
@@ -88,9 +88,17 @@ class TestScraperFactory:
         with pytest.raises(ValueError, match="não é suportado"):
             scraper("desconhecido")
 
-    def test_erro_lista_fontes_suportadas(self):
-        with pytest.raises(ValueError, match="Disponíveis:.*CFM.*"):
+    def test_erro_lista_todas_as_fontes_suportadas(self):
+        """A mensagem enumera todas as fontes do mapping, em ordem alfabética.
+
+        Conferir só uma fonte deixaria passar uma lista cortada ou escrita à
+        mão; o mapping, por sua vez, é travado contra as factories de `raspe`
+        em `test_cobre_todas_as_factories_publicas`.
+        """
+        with pytest.raises(ValueError) as exc:
             scraper("desconhecido")
+        listadas = str(exc.value).split("Disponíveis: ", 1)[1].removesuffix(".").split(", ")
+        assert listadas == sorted(_MAPPING)
 
     def test_cobre_todas_as_factories_publicas(self):
         """O mapping não pode ficar para trás das factories de `raspe`.
@@ -107,5 +115,4 @@ class TestScraperFactory:
         """
         factories = {nome for nome in raspe.__all__ if getattr(raspe, nome).__module__ == "raspe"}
 
-        from raspe.scraper_manager import _MAPPING
         assert {nome.upper() for nome in factories} == set(_MAPPING)
