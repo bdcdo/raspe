@@ -100,7 +100,7 @@ class TestValidacao:
 
     @responses.activate
     @pytest.mark.parametrize("site", ["todos", "online", "jornal"])
-    def test_sites_validos_aceitos(self, site, mocker):
+    def test_sites_validos_aceitos(self, scraper, site, mocker):
         """'todos', 'online' e 'jornal' são aceitos sem erro de validação."""
         mocker.patch("time.sleep")
         responses.add(
@@ -109,9 +109,7 @@ class TestValidacao:
             status=200,
             content_type="text/html; charset=utf-8",
         )
-        # Não levanta — site válido. Instancia fresh para evitar
-        # colisão de timestamp em _create_download_dir.
-        df = ScraperFolha().raspar(pesquisa="x", site=site)
+        df = scraper.raspar(pesquisa="x", site=site)
         assert df.empty
 
 
