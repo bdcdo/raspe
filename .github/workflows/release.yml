@@ -1,10 +1,9 @@
 name: Release
 
 # Publica no PyPI quando uma tag vX.Y.Z chega ao GitHub. O job build roda sem
-# credencial nenhuma; só o job publish, que depende dele, recebe o token OIDC do
-# Trusted Publishing, e só depois de a tag, a suíte e os pacotes passarem.
-# Um upload ao PyPI não se desfaz e o número da versão não pode ser reusado, por
-# isso toda conferência acontece antes dele.
+# credencial; o job publish, que só começa se o build passar, é o único que
+# recebe o token OIDC do Trusted Publishing. Um upload ao PyPI não se desfaz e o
+# número da versão não volta a ficar livre, por isso toda conferência vem antes.
 on:
   push:
     tags:

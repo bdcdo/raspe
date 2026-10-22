@@ -1,9 +1,9 @@
 [build-system]
-# `license` como expressão SPDX (PEP 639) só existe a partir do setuptools 77; no
-# 76 a string "MIT" é recusada como configuração inválida. A 77.0.3 traz as
-# correções de `license-files` e do import de `packaging.licenses` que vieram
-# logo depois da 77.0.1. O pacote `wheel` saiu da lista porque o setuptools
-# constrói a wheel sozinho desde a 70.1.
+# `license` como expressão SPDX (PEP 639) exige setuptools 77; o 76 recusa a
+# string "MIT" como configuração inválida. O piso é a 77.0.3, que corrige os
+# erros de `license-files` e do import de `packaging.licenses` trazidos pela
+# série 77.0. O `wheel` saiu porque o setuptools constrói a wheel sozinho desde
+# a 70.1.
 requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
