@@ -32,14 +32,30 @@ jobs:
           # este job não controla, e o que sai daqui vai para o PyPI.
           enable-cache: false
 
-      - name: Conferir a tag contra a versão do pyproject.toml
+      # O README vira a descrição do pacote no PyPI, que não muda depois do
+      # upload; ele passa a instalar pelo PyPI no commit de release, porque até
+      # a primeira publicação `pip install raspe` não encontra o pacote.
+      - name: Conferir a tag contra o pyproject.toml e o README
         run: |
-          versao="$(uv run --no-project python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
-          if [ "$GITHUB_REF_NAME" != "v$versao" ]; then
-            echo "::error::A tag $GITHUB_REF_NAME não corresponde à versão $versao do pyproject.toml; a tag esperada é v$versao."
-            exit 1
-          fi
-          echo "Tag $GITHUB_REF_NAME confere com a versão $versao."
+          uv run --no-project python - <<'EOF'
+          import os
+          import re
+          import sys
+          import tomllib
+
+          versao = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
+          tag = os.environ["GITHUB_REF_NAME"]
+          readme = open("README.md", encoding="utf-8").read()
+          erros = []
+          if tag != f"v{versao}":
+              erros.append(f"A tag {tag} não corresponde à versão {versao} do pyproject.toml; a tag esperada é v{versao}.")
+          if not re.search(r"^pip install raspe$", readme, re.M):
+              erros.append("O README.md não tem a linha 'pip install raspe'; troque a instalação pelo GitHub pela do PyPI.")
+          for erro in erros:
+              print(f"::error::{erro}")
+          sys.exit(1 if erros else 0)
+          EOF
+          echo "Tag $GITHUB_REF_NAME confere com o pyproject.toml e o README."
 
       - name: Rodar a suíte offline
         run: |
