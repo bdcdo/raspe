@@ -1,9 +1,17 @@
 """Contrato offline para ``ScraperFolha.raspar``.
 
-Os samples em ``tests/folha/samples/raspar/`` foram construídos manualmente
-replicando a estrutura HTML observada na busca pública da Folha
-(``div.c-search__result`` para contagem, ``ol.u-list-unstyled.c-search > li``
-para cada notícia, com ``a[href]``, ``h2``, ``p``, ``time``).
+Os samples em ``tests/folha/samples/raspar/`` são respostas reais da busca
+pública da Folha, capturadas em 21/10/2026 com
+``python -m tests.fixtures.capture.folha``. O único ajuste é o do
+pre-commit, que tira o espaço no fim das linhas. A contagem fica em
+``div.c-search__result`` ("N Resultados para ...") e cada notícia em
+``ol.u-list-unstyled.c-search > li``, com ``a[href]``, ``h2``, ``p``, ``time``.
+
+- ``page_01.html`` e ``page_02.html``: busca "Elevidys", ``sr=1`` e
+  ``sr=26``. O site diz "28 Resultados"; a página 1 tem 25 notícias e a
+  página 2, 3.
+- ``single_page.html``: busca "natjus", "6 Resultados".
+- ``no_results.html``: busca "termoextremamenteimprovavelxyz", "0 Resultados".
 """
 
 import pytest
@@ -29,7 +37,7 @@ def scraper():
 class TestRasparContract:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
-        """40 resultados → 2 páginas (25 por página)."""
+        """28 resultados → 2 páginas (25 por página)."""
         mocker.patch("time.sleep")
 
         # Initial + page 1 + page 2 = 3 requests
@@ -52,13 +60,13 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="educação")
+        df = scraper.raspar(pesquisa="Elevidys")
 
         assert not df.empty
         assert list(df.columns) == COLUNAS
-        # page_01 tem 3 notícias, page_02 tem 2 → total 5
-        assert len(df) == 5
-        assert (df["termo_busca"] == "educação").all()
+        # page_01 tem 25 notícias e page_02 tem 3: as 28 que o site anuncia.
+        assert len(df) == 28
+        assert (df["termo_busca"] == "Elevidys").all()
 
     @responses.activate(registry=registries.OrderedRegistry, assert_all_requests_are_fired=True)
     @pytest.mark.parametrize(
@@ -78,8 +86,8 @@ class TestRasparContract:
         do registry prende cada valor à sua página.
         """
         mocker.patch("time.sleep")
-        query_base = {"q": "educação", "site": "todos", "periodo": "todos"}
-        # Inicial: page_01 diz 40 resultados, ou seja, 2 páginas.
+        query_base = {"q": "Elevidys", "site": "todos", "periodo": "todos"}
+        # Inicial: page_01 diz 28 resultados, ou seja, 2 páginas.
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("folha", "raspar/page_01.html"),
@@ -96,16 +104,16 @@ class TestRasparContract:
                 match=[matchers.query_param_matcher({**query_base, "sr": sr})],
             )
 
-        df = scraper.raspar(pesquisa="educação", paginas=paginas)
+        df = scraper.raspar(pesquisa="Elevidys", paginas=paginas)
 
         assert len(responses.calls) == 1 + len(esperado)
-        # page_01 tem 3 notícias, page_02 tem 2
-        noticias_por_sample = {"page_01.html": 3, "page_02.html": 2}
+        # page_01 tem 25 notícias, page_02 tem 3
+        noticias_por_sample = {"page_01.html": 25, "page_02.html": 3}
         assert len(df) == sum(noticias_por_sample[sample] for _, sample in esperado)
 
     @responses.activate
     def test_single_page(self, scraper, mocker):
-        """3 resultados → 1 página."""
+        """6 resultados → 1 página."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -120,13 +128,13 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="saúde")
-        assert len(df) == 3
+        df = scraper.raspar(pesquisa="natjus")
+        assert len(df) == 6
         assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
-        """Busca real sem resultados: "0 Resultados para <termo>" → 0 páginas."""
+        """Busca real sem resultados: ``0 Resultados para ...`` em ``c-search__result`` → 0 páginas."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -135,7 +143,7 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
+        df = scraper.raspar(pesquisa="termoextremamenteimprovavelxyz")
         assert df.empty
         assert list(df.columns) == COLUNAS
 
