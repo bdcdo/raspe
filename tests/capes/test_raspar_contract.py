@@ -134,7 +134,6 @@ class TestRasparContract:
         default, que mantém os arquivos), deixar um diretório por termo
         (issue #43).
         """
-        mocker.patch("time.sleep")
         relogio = mocker.patch("raspe.abstract_scraper.datetime")
         relogio.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
 
