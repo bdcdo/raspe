@@ -41,6 +41,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionada a coluna `rotulo` à `presidencia()`, depois de `descricao`, com o selo que o portal põe ao lado do
   nome do ato, como "Veto Parcial"; vazia quando não há.
 - Adicionado o notebook `notebooks/13_anvisa.ipynb`, com exemplos do raspador da ANVISA executados ao vivo.
+- Pacote preparado para o PyPI: instalação com `pip install raspe` (ou `pip install "raspe[browser]"` para os raspadores com navegador) e metadados com licença MIT em SPDX, palavras-chave, classificadores e links de repositório, issues e changelog. O sdist passa a levar a suíte de testes inteira, com os samples, e o `CHANGELOG.md`. A instalação pelo GitHub continua servindo para a versão de desenvolvimento.
 
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
