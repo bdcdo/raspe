@@ -22,12 +22,16 @@ re-rodar e gera samples menores. Adoção de VCR fica caso a caso.
 # Pré-requisitos:
 uv pip install -e ".[dev]"
 
-# Rodar a captura de um scraper específico:
-python tests/fixtures/capture/presidencia.py
+# Rodar a captura de um scraper específico, a partir da raiz do repositório:
+python -m tests.fixtures.capture.presidencia
+
+# Gravar numa pasta fora do repositório, para comparar com os samples commitados:
+python -m tests.fixtures.capture.presidencia --saida /tmp/captura-presidencia
 ```
 
-Cada script grava em `tests/<scraper>/samples/<endpoint>/`. Os samples
-ficam **commitados no repositório** — não estão em `.gitignore`.
+A forma `-m` é necessária porque os scripts importam `tests.fixtures`. Rodado como arquivo (`python tests/fixtures/capture/presidencia.py`), o Python põe a pasta do script no `sys.path` no lugar da raiz, e o import falha com `ModuleNotFoundError: No module named 'tests'`.
+
+Sem `--saida`, cada script grava em `tests/<scraper>/samples/<endpoint>/` e sobrescreve os samples commitados. Os samples ficam **commitados no repositório**, fora do `.gitignore`.
 
 ## Quando re-rodar
 
@@ -65,5 +69,4 @@ tests/<scraper>/samples/<endpoint>/
 
 ## Helper compartilhado
 
-`_util.py` fornece `dump_response(resp, path)` e `attach_capture_hook(session, dir)`,
-que instrumenta uma `requests.Session` para salvar cada resposta automaticamente.
+`_util.py` fornece `capturar_cenarios(scraper, cenarios, saida)`, que baixa cada cenário com a query e o método HTTP do próprio scraper, além de `dump_response(resp, path)` e `attach_capture_hook(session, dir)`, que instrumenta uma `requests.Session` para salvar cada resposta automaticamente.

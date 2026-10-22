@@ -1,74 +1,61 @@
 """Script ad-hoc para capturar samples do scraper Presidência.
 
-Como executar (faz requisições reais à internet — fora do CI):
+Como executar (faz requisições reais à internet, fora do CI), a partir
+da raiz do repositório:
 
-    cd /caminho/para/raspe
-    uv run python tests/fixtures/capture/presidencia.py
+    uv run python -m tests.fixtures.capture.presidencia
+    uv run python -m tests.fixtures.capture.presidencia --saida /tmp/captura-presidencia
 
-Os samples são salvos em ``tests/presidencia/samples/raspar/``. Os
-arquivos atuais foram construídos manualmente replicando a estrutura
-HTML observada no AJAX de pesquisa de legislação da Presidência. Este
-script só é necessário se algum teste de contrato começar a falhar por
-mudança real no site.
+A forma ``-m`` é necessária porque o script importa ``tests.fixtures``;
+rodado como arquivo, o Python não põe a raiz do repositório no
+``sys.path``. Sem ``--saida``, os samples vão para
+``tests/presidencia/samples/raspar/`` e sobrescrevem os commitados. Para
+comparar o site atual com os samples sem tocá-los, passe uma pasta de
+saída fora do repositório.
 
 Notas operacionais:
 
-* O servidor real tem cadeia de certificados SSL incompleta; o script
-  desativa a verificação como o scraper faz em produção
-  (``session.verify = False``).
-* A API é POST AJAX (``X-Requested-With: XMLHttpRequest``) com payload
-  ``application/x-www-form-urlencoded``.
+* As requisições saem da sessão do próprio ``ScraperPresidencia``, que
+  desativa a verificação SSL (o servidor tem cadeia de certificados
+  incompleta) e manda os headers do AJAX (``X-Requested-With``,
+  ``Origin``, ``Referer``).
+* A API é POST com payload ``application/x-www-form-urlencoded``; a
+  página 1 do raspe vira ``posicao=0`` e a página 2, ``posicao=10``.
+* O termo de ``single_page`` e o de ``no_results`` dependem do acervo do
+  dia. A linha impressa por cenário traz o ``_find_n_pags`` da resposta:
+  se ``single_page`` não der 1 ou ``no_results`` não der 0, troque o termo.
 """
 
+import argparse
 from pathlib import Path
 
-import requests
-import urllib3
+from raspe.scrapers.presidencia import ScraperPresidencia
+from tests.fixtures.capture._util import capturar_cenarios
 
-from tests.fixtures.capture._util import attach_capture_hook  # noqa: E402
+SAMPLES_DIR = Path(__file__).resolve().parents[2] / "presidencia" / "samples" / "raspar"
 
-SAMPLES_DIR = (
-    Path(__file__).resolve().parents[2] / "presidencia" / "samples" / "raspar"
-)
-API_URL = (
-    "https://legislacao.presidencia.gov.br/pesquisa/ajax/"
-    "resultado_pesquisa_legislacao.php"
+# (arquivo de saída, parâmetros de raspar, página do raspe). A busca
+# typical precisa de pelo menos duas páginas de 10; a single_page, de uma
+# só; a no_results, de zero resultados. O termo sem resultado não leva
+# dígitos: a busca casa cada palavra em separado, e "123" sozinho acha os
+# atos de número 123.
+CENARIOS = (
+    ("page_01.html", {"pesquisa": "telemedicina"}, 1),
+    ("page_02.html", {"pesquisa": "telemedicina"}, 2),
+    ("single_page.html", {"pesquisa": "fenilcetonúria"}, 1),
+    ("no_results.html", {"pesquisa": "termoextremamenteimprovavelxyz"}, 1),
 )
 
 
 def main() -> None:
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    session = requests.Session()
-    session.verify = False
-    session.headers.update({
-        "Origin": "https://legislacao.presidencia.gov.br",
-        "Referer": "https://legislacao.presidencia.gov.br/",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-Requested-With": "XMLHttpRequest",
-    })
-    attach_capture_hook(session, SAMPLES_DIR, prefix="page", extension="html")
-
-    # Cenário typical: termo com vários resultados
-    session.post(
-        API_URL,
-        data={
-            "termo": "meio ambiente",
-            "ordenacao": "maior_data",
-            "posicao": "0",
-        },
-        timeout=30,
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--saida",
+        type=Path,
+        default=SAMPLES_DIR,
+        help="pasta de saída (padrão: os samples commitados da Presidência)",
     )
-
-    # Cenário no_results: termo improvável
-    session.post(
-        API_URL,
-        data={
-            "termo": "zzzzzzz_termo_inexistente_xyzabc",
-            "ordenacao": "maior_data",
-            "posicao": "0",
-        },
-        timeout=30,
-    )
+    capturar_cenarios(ScraperPresidencia(), CENARIOS, parser.parse_args().saida)
 
 
 if __name__ == "__main__":

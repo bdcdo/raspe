@@ -1,65 +1,77 @@
 """Script ad-hoc para capturar samples do scraper IPEA.
 
-Como executar (faz requisições reais à internet — fora do CI):
+Como executar (faz requisições reais à internet, fora do CI), a partir
+da raiz do repositório:
 
-    cd /caminho/para/raspe
-    uv run python tests/fixtures/capture/ipea.py
+    uv run python -m tests.fixtures.capture.ipea
+    uv run python -m tests.fixtures.capture.ipea --saida /tmp/captura-ipea
 
-Os samples são salvos em ``tests/ipea/samples/raspar/`` e podem ser
-re-commitados quando o HTML do site mudar de estrutura. Os arquivos
-atuais foram construídos manualmente replicando a estrutura observada
-no portal, então este script só é necessário se algum teste de
-contrato começar a falhar por mudança real no site.
+A forma ``-m`` é necessária porque o script importa ``tests.fixtures``;
+rodado como arquivo, o Python não põe a raiz do repositório no
+``sys.path``. Sem ``--saida``, os samples vão para
+``tests/ipea/samples/raspar/`` e sobrescrevem os commitados. Para
+comparar o site atual com os samples sem tocá-los, passe uma pasta de
+saída fora do repositório.
+
+Notas operacionais:
+
+* As requisições saem da sessão e da query do próprio ``ScraperIpea``
+  (headers de navegador, ``palavra_chave``, ``pagina``).
+* Antes de gravar, o script esvazia os ``<select>`` do formulário de
+  busca (ver ``_esvaziar_selects``). O resto da página fica como o site
+  mandou.
+* O termo de ``single_page`` e o de ``no_results`` dependem do acervo do
+  dia. A linha impressa por cenário traz o ``_find_n_pags`` da resposta:
+  se ``single_page`` não der 1 ou ``no_results`` não der 0, troque o termo.
 """
 
+import argparse
+import re
 from pathlib import Path
 
-import requests
-
-from tests.fixtures.capture._util import attach_capture_hook  # noqa: E402
+from raspe.scrapers.ipea import ScraperIpea
+from tests.fixtures.capture._util import capturar_cenarios
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "ipea" / "samples" / "raspar"
-API_URL = (
-    "https://www.ipea.gov.br/portal/coluna-5/"
-    "central-de-conteudo/busca-publicacoes"
+
+# (arquivo de saída, parâmetros de raspar, página do raspe). A busca
+# typical precisa de pelo menos duas páginas de 10; a single_page, de uma
+# só; a no_results, de zero resultados.
+CENARIOS = (
+    ("page_01.html", {"pesquisa": "renda básica"}, 1),
+    ("page_02.html", {"pesquisa": "renda básica"}, 2),
+    ("single_page.html", {"pesquisa": "telemedicina"}, 1),
+    ("no_results.html", {"pesquisa": "termoextremamenteimprovavelxyz"}, 1),
 )
 
 
+def _esvaziar_selects(html: bytes) -> bytes:
+    """Esvazia os ``<select>`` do formulário de busca.
+
+    A lista de autores do formulário tem milhares de opções e leva cada
+    página a mais de 2 MB, acima do limite de 500 KB do hook
+    ``check-added-large-files``. O scraper não lê o formulário: a contagem
+    vem de ``div.col.clearfix`` e as publicações de ``div.lista-publicacoes``,
+    que ficam intactas, e o parse da página enxugada é igual ao da original.
+
+    Args:
+        html: Body cru da resposta.
+
+    Returns:
+        O mesmo HTML, com cada ``<select>`` vazio.
+    """
+    return re.sub(rb"(<select\b[^>]*>).*?(</select>)", rb"\1\2", html, flags=re.S)
+
+
 def main() -> None:
-    session = requests.Session()
-    attach_capture_hook(session, SAMPLES_DIR, prefix="page", extension="html")
-
-    # Cenário typical: busca com paginação (assunto comum)
-    session.get(
-        API_URL,
-        params={
-            "palavra_chave": "pobreza",
-            "tipo": "",
-            "assunto": "",
-            "autor": "",
-            "timeperiods": "all",
-            "data-inicial": "",
-            "data-final": "",
-            "pagina": "1",
-        },
-        timeout=30,
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--saida",
+        type=Path,
+        default=SAMPLES_DIR,
+        help="pasta de saída (padrão: os samples commitados do IPEA)",
     )
-
-    # Cenário no_results: termo improvável
-    session.get(
-        API_URL,
-        params={
-            "palavra_chave": "zzzzzzz_termo_inexistente_xyzabc",
-            "tipo": "",
-            "assunto": "",
-            "autor": "",
-            "timeperiods": "all",
-            "data-inicial": "",
-            "data-final": "",
-            "pagina": "1",
-        },
-        timeout=30,
-    )
+    capturar_cenarios(ScraperIpea(), CENARIOS, parser.parse_args().saida, enxugar=_esvaziar_selects)
 
 
 if __name__ == "__main__":

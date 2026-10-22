@@ -27,7 +27,7 @@ def _resolve(scraper: str, relative_path: str) -> Path:
     if not path.is_file():
         raise FileNotFoundError(
             f"Sample não encontrado: {path}. "
-            f"Capture com `python tests/fixtures/capture/{scraper}.py`."
+            f"Capture com `python -m tests.fixtures.capture.{scraper}` a partir da raiz do repositório."
         )
     return path
 
