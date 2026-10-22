@@ -4,9 +4,9 @@ Reexporta todas as classes de raspador para permitir importação direta:
 
     from raspe.scrapers import ScraperCFM, ScraperANS
 
-Os raspadores baseados em Playwright (``ScraperSaudeLegis``, ``ScraperANS``,
-``ScraperANVISA``) podem ser importados sem o extra ``browser`` instalado: o
-Playwright só é carregado quando o navegador é efetivamente aberto.
+Os raspadores baseados em Playwright podem ser importados sem o extra
+``browser`` instalado: o Playwright só é carregado quando o navegador é
+efetivamente aberto.
 """
 
 from .ans import ScraperANS
