@@ -8,7 +8,7 @@ para cada notícia, com ``a[href]``, ``h2``, ``p``, ``time``).
 
 import pytest
 import responses
-from responses import registries
+from responses import matchers, registries
 
 from raspe.exceptions import ValidationError
 from raspe.scrapers.folha import ScraperFolha
@@ -56,6 +56,49 @@ class TestRasparContract:
         # page_01 tem 3 notícias, page_02 tem 2 → total 5
         assert len(df) == 5
         assert (df["termo_busca"] == "educação").all()
+
+    @responses.activate(registry=registries.OrderedRegistry, assert_all_requests_are_fired=True)
+    @pytest.mark.parametrize(
+        ("paginas", "esperado"),
+        [
+            (range(1, 2), [("1", "page_01.html")]),
+            (range(2, 3), [("26", "page_02.html")]),
+            (range(1, 3), [("1", "page_01.html"), ("26", "page_02.html")]),
+        ],
+    )
+    def test_parametro_sr_avanca_de_25_em_25(self, scraper, mocker, paginas, esperado):
+        """A página 1 pede ``sr=1`` e a página 2 pede ``sr=26``.
+
+        ``sr`` é a posição do primeiro resultado da página (25 por página).
+        A requisição inicial também vai com ``sr=1``, que vem de
+        ``_set_query_base``. O ``query_param_matcher`` é estrito, e a ordem
+        do registry prende cada valor à sua página.
+        """
+        mocker.patch("time.sleep")
+        query_base = {"q": "educação", "site": "todos", "periodo": "todos"}
+        # Inicial: page_01 diz 40 resultados, ou seja, 2 páginas.
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("folha", "raspar/page_01.html"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+            match=[matchers.query_param_matcher({**query_base, "sr": "1"})],
+        )
+        for sr, sample in esperado:
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("folha", f"raspar/{sample}"),
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({**query_base, "sr": sr})],
+            )
+
+        df = scraper.raspar(pesquisa="educação", paginas=paginas)
+
+        assert len(responses.calls) == 1 + len(esperado)
+        # page_01 tem 3 notícias, page_02 tem 2
+        noticias_por_sample = {"page_01.html": 3, "page_02.html": 2}
+        assert len(df) == sum(noticias_por_sample[sample] for _, sample in esperado)
 
     @responses.activate
     def test_single_page(self, scraper, mocker):

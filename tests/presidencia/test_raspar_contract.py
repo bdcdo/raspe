@@ -83,6 +83,52 @@ class TestRasparContract:
         assert len(df) == 3
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
+    @responses.activate(registry=registries.OrderedRegistry)
+    @pytest.mark.parametrize(
+        ("contagem", "n_pags"),
+        [("1.006", 101), ("1.234.567", 123_457)],
+    )
+    def test_contagem_com_separador_de_milhar(self, scraper, mocker, contagem, n_pags):
+        """``"1.006 resultados encontrados"`` vira 1006 resultados, não 1 nem 6.
+
+        O ponto separa milhar na contagem do site. O teste pede as páginas
+        ``n_pags - 1`` até ``n_pags + 1``: só as duas primeiras existem, e a
+        terceira tem de ser cortada por ``_set_paginas``. Isso fixa
+        ``n_pags`` exato pela API pública, sem baixar as 101 páginas. Se o
+        ponto fosse lido como decimal ou cortasse o número, ``n_pags`` cairia
+        para 1 e nenhuma página seria pedida.
+        """
+        mocker.patch("time.sleep")
+        trecho = "<h4>15 resultados encontrados</h4>"
+        original = load_sample_bytes("presidencia", "raspar/page_01.html").decode("utf-8")
+        assert trecho in original, "o sample page_01.html mudou; ajuste o trecho trocado"
+        inicial = original.replace(trecho, f"<h4>{contagem} resultados encontrados</h4>")
+
+        # A posição de cada página segue posicao = pagina * 10 - 10.
+        pedidos = [
+            ("0", inicial.encode("utf-8")),
+            (str((n_pags - 2) * 10), load_sample_bytes("presidencia", "raspar/page_01.html")),
+            (str((n_pags - 1) * 10), load_sample_bytes("presidencia", "raspar/page_02.html")),
+        ]
+        for posicao, body in pedidos:
+            responses.add(
+                responses.POST, API_URL,
+                body=body,
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.urlencoded_params_matcher(
+                    {"termo": "meio ambiente", "posicao": posicao}, strict_match=False,
+                )],
+            )
+
+        df = scraper.raspar(pesquisa="meio ambiente", paginas=range(n_pags - 1, n_pags + 2))
+
+        # Inicial + as duas páginas existentes; a página n_pags + 1 não sai.
+        assert len(responses.calls) == 3
+        # page_01 tem 3 itens, page_02 tem 2
+        assert len(df) == 5
+        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+
     @responses.activate
     def test_no_results(self, scraper, mocker):
         """``0 resultados encontrados`` → 0 páginas → DataFrame vazio."""

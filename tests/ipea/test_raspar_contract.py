@@ -96,6 +96,36 @@ class TestRasparContract:
         assert df.empty
 
     @responses.activate
+    def test_sem_div_col_clearfix_retorna_vazio(self, scraper, mocker):
+        """Sem ``div.col.clearfix``, a contagem vira 0 e nenhuma página é baixada.
+
+        Parte do sample single_page, que tem 3 publicações, e tira só a
+        classe do container da contagem. ``_find_n_pags`` não tem outro
+        lugar onde procurar o número; o contrato fixa que a falta dele dá
+        DataFrame vazio, sem exceção, em vez de um parse parcial.
+        """
+        mocker.patch("time.sleep")
+        trecho = '<div class="col clearfix">'
+        original = load_sample_bytes("ipea", "raspar/single_page.html").decode("utf-8")
+        assert trecho in original, "o sample single_page.html mudou; ajuste o trecho trocado"
+        sem_container = original.replace(trecho, '<div class="col">')
+        # As publicações continuam na página; só a contagem ficou sem container.
+        assert 'class="publi-conteudo"' in sem_container
+
+        responses.add(
+            responses.GET, API_URL,
+            body=sem_container.encode("utf-8"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+        )
+
+        df = scraper.raspar(pesquisa="pobreza")
+
+        assert df.empty
+        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        assert len(responses.calls) == 1
+
+    @responses.activate
     def test_query_params_obrigatorios(self, scraper, mocker):
         """A query base contém os parâmetros esperados pela API IPEA."""
         mocker.patch("time.sleep")
