@@ -26,21 +26,30 @@ from ..html_scraper import HTMLScraper
 _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 
 
+# Elementos que o navegador exibe em bloco: os que aparecem nos cards e
+# ``li``, de lista. Antes e depois de cada um ele quebra a linha, mesmo sem
+# espaço no HTML.
+_ELEMENTOS_DE_BLOCO = ['blockquote', 'div', 'li', 'p']
+
+
 def _texto_exibido(elemento: Tag) -> str:
     """Extrai o texto de um elemento como o navegador o exibe.
 
-    O portal destaca o termo buscado com ``<b>`` dentro do título, e o espaço
-    em volta do destaque vem do HTML: em ``E-<b>NATJUS</b> NA`` há espaço só
-    depois do ``<b>``. O navegador emenda os nós de texto como estão e reduz
-    cada sequência de espaço em branco (quebra de linha e recuo incluídos) a
-    um espaço. Juntar os nós sem separador e depois normalizar o espaço
-    reproduz isso. ``get_text(strip=True)`` corta o espaço de cada nó e cola
-    as palavras (``E-NATJUSNA``); ``get_text(' ', strip=True)`` põe espaço em
-    toda fronteira de nó, inclusive onde o HTML não tem (``E- NATJUS``).
+    O portal destaca o termo buscado com ``<b>`` no título e no resumo, e o
+    espaço em volta do destaque vem do HTML: em ``E-<b>NATJUS</b> NA`` há
+    espaço só depois do ``<b>``. Entre nós inline, o navegador emenda o texto
+    como está e reduz cada sequência de espaço em branco (quebra de linha e
+    recuo incluídos) a um espaço. Juntar os nós sem separador e depois
+    normalizar o espaço reproduz isso. ``get_text(strip=True)`` corta o espaço
+    de cada nó e cola as palavras (``E-NATJUSNA``); ``get_text(' ', strip=True)``
+    põe espaço em toda fronteira de nó, inclusive onde o HTML não tem
+    (``E- NATJUS``).
 
-    ``<br>`` não gera nó de texto, e as palavras em volta colariam; no
-    navegador ele quebra a linha, que num campo de uma linha vira espaço. A
-    troca é feita numa cópia para não alterar a árvore do card.
+    ``<br>`` e os elementos de ``_ELEMENTOS_DE_BLOCO`` são a exceção: neles o
+    navegador quebra a linha mesmo sem espaço no HTML (``Color</p><p>Book.``
+    aparece em duas linhas), e as palavras dos dois lados colariam. Por isso
+    cada um recebe um espaço antes e outro depois, que a normalização reduz a
+    um só. A inserção é feita numa cópia para não alterar a árvore do card.
 
     Args:
         elemento: Tag cujo texto será extraído.
@@ -49,8 +58,9 @@ def _texto_exibido(elemento: Tag) -> str:
         Texto com o espaço em branco normalizado e sem espaço nas pontas.
     """
     copia = copy.copy(elemento)
-    for quebra in copia.find_all('br'):
-        quebra.replace_with(' ')
+    for fronteira in copia.find_all(['br', *_ELEMENTOS_DE_BLOCO]):
+        fronteira.insert_before(' ')
+        fronteira.insert_after(' ')
     return ' '.join(copia.get_text().split())
 
 
@@ -196,7 +206,7 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         )
 
         bq = card.find('blockquote', class_='blockquote-busca')
-        out['resumo'] = bq.get_text(' ', strip=True) if bq else ''
+        out['resumo'] = _texto_exibido(bq) if bq else ''
 
         out['topicos'] = ''
         out['ano'] = ''
