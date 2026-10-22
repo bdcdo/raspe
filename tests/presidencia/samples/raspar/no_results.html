@@ -1,10 +1,94 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head><title>Pesquisa Legislação Presidencial</title></head>
-<body>
-<h4>0 resultados encontrados</h4>
-<div class="aviso">
-  <p>Nenhuma legislação encontrada para o termo informado.</p>
+
+	<p class="text-right p-0 m-0"><div class="text-right text-info cursor-link p-0" onclick="removerTodosFiltros();pesquisaLegislacao('0');">Limpar todos os filtros<i class="pl-2 icon ti-close"></i></div></p>
+
+<div class="d-flex">
+  	<div class="w-100 ">
+
+  			<div class="row">
+                <div class="col">
+                  <h4 class="pb-2 fw-bold">Nenhum resultado encontrado</h4>
+                </div>
+                <div class="col text-right">
+
+    				<div class="dropdown ">
+                      <a class="dropdown-toggle" href="#" role="button" id="dropdownOrdenacao" data-toggle="dropdown" aria-expanded="false">
+                        Ordena&ccedil;&atilde;o:
+                        <b>
+                        Maior data de publica&ccedil;&atilde;o                        </b>
+                      </a>
+
+                      <div class="dropdown-menu" aria-labelledby="dropdownOrdenacao">
+                        <a class="dropdown-item pt-2 pb-2  " href="#" onclick="selecionaOrdenacao('relevancia');">Relev&acirc;ncia dos resultados</a>
+                        <a class="dropdown-item pt-2 pb-2 active " href="#" onclick="selecionaOrdenacao('maior_data');">Maior data de publica&ccedil;&atilde;o</a>
+                        <a class="dropdown-item pt-2 pb-2  " href="#" onclick="selecionaOrdenacao('menor_data');">Menor data de publica&ccedil;&atilde;o</a>
+
+                      </div>
+                    </div>
+
+
+                </div>
+            </div>
+
+			<div class="card-body p-0" >
+				<div class="d-flex flex-wrap  filtros-selecionados ">
+
+
+                                                <div class="card p-2 pr-3 pl-3 w-100 h-100 no-reults" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                            <div class="flex-shrink-0">
+                              <div class="container">
+                                  <div class="text-center mb-4 mt-4">
+                                        <h1 class="h3 m-4 mb-3 font-weight-normal">N&atilde;o foi econtrada nenhuma legisla&ccedil;&atilde;o para o(s) filtro(s) selecionado(s)</h1>
+                                        <p class="lead">Tente novamente com outros par&acirc;metros</a>.</p>
+                                        <i class="ti-search " style="font-size: 8rem;color: #bebebe"></i>
+                                  </div>
+                              </div>
+                            </div>
+
+
+
+                        </div>
+                                          </div>
+                </div>
+
+	</div>
+  	<div class="resumo-filtros-selecionados d-none d-sm-block ml-4"  style="max-width: 35%" ">
+
+			<h4 class="pb-2 fw-bold">Filtro(s) selecionado(s)</h4>
+
+
+			<div class="card p-2 pr-3 pl-3 w-100 container-filtros" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+                		<div class="card-body p-0" >
+
+                        		                                		    <div class="card-title text-muted text-center text-nowrap pb-0" style="font-size: 0.7em; min-width: 200px;" >
+
+                                    		   	<div class="d-flex justify-content-between mt-2">
+                                                    <div class="">Termo</div>
+                                                    <div class="text-info cursor-link limpar-todos" onclick="limparCampo('termo');pesquisaLegislacao('0');">Limpar</div>
+                                                </div>
+
+                                		    </div>
+                                		    <ul class="nav nav-pills nav-secondary nav-pills-no-bd nav-sm pb-2" id="pills-tab" role="tablist">
+                                		                                    		        	<li class="nav-item mr-2 text-truncate" style="margin-left: 0px !important;padding-right:0px !important; padding-left: 0px !important;">
+                                						<a class="nav-link tag-filtro" href="#" onclick="limparCampo('termo');pesquisaLegislacao('0');">termoextremamenteimprovavelxyz<i class="pl-2 icon ti-close"></i></a>
+                                					</li>
+
+                            		                                            			</ul>
+
+                        </div>
+            	</div>
+
+
+	</div>
 </div>
-</body>
-</html>
+
+
+<script>
+
+	var height_container = $(".container-resultado").height();
+
+	$(".no-reults").css("min-height", (height_container));
+	$(".container-filtros").css("min-height", (height_container));
+
+
+</script>

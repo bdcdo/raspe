@@ -1,10 +1,21 @@
 """Contrato offline para ``IpeaScraper.raspar``.
 
-Os samples em ``tests/ipea/samples/raspar/`` foram construídos manualmente
-replicando a estrutura HTML observada em respostas reais do portal IPEA
-(``div.lista-publicacoes`` → ``div.row`` → ``div.publi-conteudo``).
-Para regenerar a partir do site real, ver
-``tests/fixtures/capture/ipea.py``.
+Os samples em ``tests/ipea/samples/raspar/`` são respostas reais da busca
+de publicações do portal IPEA, capturadas em 21/10/2026 com
+``python -m tests.fixtures.capture.ipea``. Há dois ajustes: o script
+esvazia os ``<select>`` do formulário de busca, que o scraper não lê e que
+levavam cada página a mais de 2 MB, e o pre-commit tira o espaço no fim
+das linhas.
+
+- ``page_01.html`` e ``page_02.html``: busca "renda básica", ``pagina=1``
+  e ``pagina=2``. O ``h4`` diz "Resultado de 1 a 10 de <strong>13</strong>";
+  a página 1 tem 10 publicações e a página 2, 3.
+- ``single_page.html``: busca "telemedicina", 1 publicação.
+- ``no_results.html``: busca "termoextremamenteimprovavelxyz", "Resultado
+  de 0 a 0 de <strong>0</strong>".
+
+O ``div.autores`` vem vazio no HTML do site, por isso a coluna ``autores``
+sai vazia nos samples.
 """
 
 import pytest
@@ -26,43 +37,35 @@ def scraper():
 class TestRasparContract:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
-        """15 resultados → 2 páginas: 1 request inicial + 2 de página."""
+        """13 resultados → 2 páginas: 1 request inicial + 2 de página."""
         mocker.patch("time.sleep")
 
-        # 1 request inicial + 2 requests de página = 3 GETs no mesmo endpoint
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("ipea", "raspar/page_01.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("ipea", "raspar/page_01.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("ipea", "raspar/page_02.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
+        # Inicial (pagina=1), página 1 (pagina=1) e página 2 (pagina=2).
+        for pagina, sample in [("1", "page_01.html"), ("1", "page_01.html"), ("2", "page_02.html")]:
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("ipea", f"raspar/{sample}"),
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher(
+                    {"palavra_chave": "renda básica", "pagina": pagina}, strict_match=False,
+                )],
+            )
 
-        df = scraper.raspar(pesquisa="economia")
+        df = scraper.raspar(pesquisa="renda básica")
 
         assert not df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
-        # page_01 tem 3 publicações, page_02 tem 2 → total 5
-        assert len(df) == 5
+        # page_01 tem 10 publicações e page_02 tem 3: as 13 que o site anuncia.
+        assert len(df) == 13
         # Links têm prefixo ipea.gov.br
         assert df["link"].iloc[0].startswith("https://www.ipea.gov.br")
         assert "termo_busca" in df.columns
-        assert (df["termo_busca"] == "economia").all()
+        assert (df["termo_busca"] == "renda básica").all()
 
     @responses.activate
     def test_single_page(self, scraper, mocker):
-        """3 resultados → 1 página."""
+        """1 resultado → 1 página."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -77,13 +80,13 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="pobreza")
-        assert len(df) == 3
+        df = scraper.raspar(pesquisa="telemedicina")
+        assert len(df) == 1
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
-        """0 resultados → 0 páginas → DataFrame vazio."""
+        """``Resultado de 0 a 0 de <strong>0</strong>`` → 0 páginas → DataFrame vazio."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -92,14 +95,16 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
+        df = scraper.raspar(pesquisa="termoextremamenteimprovavelxyz")
         assert df.empty
+        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        assert len(responses.calls) == 1
 
     @responses.activate
     def test_sem_div_col_clearfix_retorna_vazio(self, scraper, mocker):
         """Sem ``div.col.clearfix``, a contagem vira 0 e nenhuma página é baixada.
 
-        Parte do sample single_page, que tem 3 publicações, e tira só a
+        Parte do sample single_page, que tem 1 publicação, e tira só a
         classe do container da contagem. ``_find_n_pags`` não tem outro
         lugar onde procurar o número; o contrato fixa que a falta dele dá
         DataFrame vazio, sem exceção, em vez de um parse parcial.
@@ -119,7 +124,7 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="pobreza")
+        df = scraper.raspar(pesquisa="telemedicina")
 
         assert df.empty
         # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
@@ -135,7 +140,7 @@ class TestRasparContract:
             status=200,
             content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher({
-                "palavra_chave": "economia",
+                "palavra_chave": "telemedicina",
                 "tipo": "",
                 "assunto": "",
                 "autor": "",
@@ -152,4 +157,4 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        scraper.raspar(pesquisa="economia")
+        scraper.raspar(pesquisa="telemedicina")
