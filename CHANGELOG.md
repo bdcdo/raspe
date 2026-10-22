@@ -144,6 +144,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigido o card de `raspe.capes()` sem instituição, que punha a revista em `instituicao` (`| Revista de
   Epidemiologia e Saúde Pública - RESP`) e deixava `revista` vazia: agora a revista vai para `revista` e `instituicao`
   fica vazia.
+- Corrigida a busca por lista (`raspar(pesquisa=[...])`), que abortava com `FileExistsError` quando dois termos
+  caíam no mesmo segundo, como acontece com termos sem resultado (#43). O diretório de download de cada busca
+  continua em `{download_path}/{nome_buscador}/`, mas o nome passa de `AAAAMMDDHHMMSS` para
+  `AAAAMMDDHHMMSS_<sufixo aleatório>`.
 
 ## [0.1.0] - 2025-05-15
 
