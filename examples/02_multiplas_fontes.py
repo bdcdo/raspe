@@ -145,18 +145,6 @@ def identificar_norma(titulo: str) -> str | None:
     return f"{tipo} {numero}/{achado['ano']}"
 
 
-def menciona_termo(texto: str) -> bool:
-    """Diz se o texto cita a expressão buscada, em qualquer flexão de PADRAO_TERMO.
-
-    Args:
-        texto: Título e ementa de um resultado.
-
-    Returns:
-        True se a expressão aparece no texto.
-    """
-    return PADRAO_TERMO.search(texto) is not None
-
-
 def coletar_todas(fontes: list[dict[str, Any]]) -> dict[str, pd.DataFrame]:
     """Coleta cada fonte em sequência; a que falhar volta vazia, com um aviso na tela.
 
@@ -192,14 +180,14 @@ def juntar(brutos: dict[str, pd.DataFrame], fontes: list[dict[str, Any]]) -> pd.
         Uma linha por resultado, sem links repetidos dentro de cada fonte, com as colunas de
         padronizar() mais chave_norma e menciona_termo.
     """
-    padronizados = [padronizar(brutos[fonte["nome"]], fonte) for fonte in fontes if fonte["nome"] in brutos]
+    padronizados = [padronizar(brutos[fonte["nome"]], fonte) for fonte in fontes]
     resultados = pd.concat(padronizados, ignore_index=True)
     # Um resultado repetido dentro da mesma fonte contaria duas vezes no resumo. O link
     # identifica o resultado; a mesma norma em fontes diferentes tem links diferentes e fica.
     resultados = resultados.drop_duplicates(subset=["fonte", "link"]).reset_index(drop=True)
     return resultados.assign(
         chave_norma=resultados["titulo"].map(identificar_norma),
-        menciona_termo=(resultados["titulo"] + " " + resultados["texto"]).map(menciona_termo),
+        menciona_termo=(resultados["titulo"] + " " + resultados["texto"]).str.contains(PADRAO_TERMO),
     )
 
 
