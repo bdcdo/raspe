@@ -33,8 +33,8 @@ Novos scrapers devem:
   2. Criar uma nova seção `## [Não lançado]` vazia logo acima
   3. Atualizar `version` em `pyproject.toml`
   4. Atualizar os links de comparação no rodapé do `CHANGELOG.md`
-  5. Criar e enviar a tag `vX.Y.Z` no commit do release (`git push origin vX.Y.Z`). Ela dispara `.github/workflows/release.yml`, que confere a tag contra `version`, testa e publica no PyPI. Se falhar antes de publicar: corrigir, apagar a tag (`git push --delete origin vX.Y.Z`) e recriá-la. Versão publicada não se republica.
-- Configuração única, antes do primeiro release: Trusted Publisher pendente no PyPI (https://pypi.org/manage/account/publishing/) com projeto `raspe`, dono `bdcdo`, repositório `raspe`, workflow `release.yml` e environment `pypi`; no GitHub, o environment `pypi` em Settings > Environments, com revisor obrigatório se cada publicação for aprovada à mão.
+  5. Com o commit do release na `main` remota, enviar a tag `vX.Y.Z` (`git push origin vX.Y.Z`). Ela dispara `.github/workflows/release.yml`, que confere, testa e publica no PyPI. Se falhar antes de publicar: corrigir, apagar a tag (`git push --delete origin vX.Y.Z`) e recriá-la. Versão publicada não se republica.
+- Uma vez, antes do primeiro release: Trusted Publisher pendente no PyPI (https://pypi.org/manage/account/publishing/) com projeto `raspe`, dono `bdcdo`, repositório `raspe`, workflow `release.yml` e environment `pypi`; no GitHub, o environment `pypi` (Settings > Environments, revisor opcional); no commit do release, o README passa a instalar pelo PyPI.
 - Escrever em português brasileiro, frases curtas no particípio passado ("Adicionado scraper X", "Corrigido erro Y").
 
 ## Desenvolvimento
