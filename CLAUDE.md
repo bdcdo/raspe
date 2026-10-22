@@ -26,30 +26,20 @@ Novos scrapers devem:
 
 - Projeto segue [Versionamento Semântico](https://semver.org/lang/pt-BR/): `MAJOR.MINOR.PATCH`. Versão atual em `pyproject.toml`.
 - `CHANGELOG.md` segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
-- **Toda mudança visível ao usuário** (novo scraper, novo parâmetro, mudança de comportamento, correção de bug, breaking change, mudança de dependência mínima) deve adicionar uma linha sob `## [Não lançado]`, na categoria adequada:
-  - **Adicionado** — novas funcionalidades
-  - **Modificado** — mudanças em funcionalidades existentes
-  - **Descontinuado** — funcionalidades que serão removidas em breve
-  - **Removido** — funcionalidades removidas
-  - **Corrigido** — correções de bugs
-  - **Segurança** — correções com impacto de segurança
+- **Toda mudança visível ao usuário** (novo scraper, novo parâmetro, mudança de comportamento, correção de bug, breaking change, mudança de dependência mínima) deve adicionar uma linha sob `## [Não lançado]`, na categoria adequada: Adicionado, Modificado, Descontinuado, Removido, Corrigido ou Segurança.
 - Mudanças puramente internas (refatoração sem efeito observável, reorganização de testes, ajuste de hooks de lint) **não** entram no CHANGELOG.
 - Ao lançar uma nova versão:
   1. Renomear `## [Não lançado]` para `## [X.Y.Z] - YYYY-MM-DD`
   2. Criar uma nova seção `## [Não lançado]` vazia logo acima
   3. Atualizar `version` em `pyproject.toml`
   4. Atualizar os links de comparação no rodapé do `CHANGELOG.md`
-  5. Criar a tag git `vX.Y.Z` apontando para o commit do release
+  5. Criar e enviar a tag `vX.Y.Z` no commit do release (`git push origin vX.Y.Z`). Ela dispara `.github/workflows/release.yml`, que confere a tag contra `version`, testa e publica no PyPI. Se falhar antes de publicar: corrigir, apagar a tag (`git push --delete origin vX.Y.Z`) e recriá-la. Versão publicada não se republica.
+- Configuração única, antes do primeiro release: Trusted Publisher pendente no PyPI (https://pypi.org/manage/account/publishing/) com projeto `raspe`, dono `bdcdo`, repositório `raspe`, workflow `release.yml` e environment `pypi`; no GitHub, o environment `pypi` em Settings > Environments, com revisor obrigatório se cada publicação for aprovada à mão.
 - Escrever em português brasileiro, frases curtas no particípio passado ("Adicionado scraper X", "Corrigido erro Y").
 
 ## Desenvolvimento
 
-- Python >= 3.11, gerenciador `uv`
-- Instalar deps de dev: `uv pip install -e ".[dev]"`
-- Ativar hooks: `pre-commit install`
-- Hooks rodam em cada commit: trailing whitespace, isort, pylint, flake8, mypy, pyright
-- Comprimento máximo de linha: 120
-- Para rodar todos os hooks manualmente: `pre-commit run --all-files`
+- Gerenciador `uv`. Instalar deps de dev com `uv pip install -e ".[dev]"` e ativar os hooks de `.pre-commit-config.yaml` com `pre-commit install`.
 
 ## Testes
 
@@ -61,17 +51,7 @@ sem tocar a rede. Convenção:
 - Helpers: `tests/_helpers.py` expõe `load_sample()` e `load_sample_bytes()`.
 - Captura de samples: `tests/fixtures/capture/<scraper>.py` (script ad-hoc).
 
-Comandos úteis:
-
-```bash
-pytest                                # padrão (exclui integração via addopts)
-pytest -m integration                 # só testes de integração
-pytest tests/<scraper>/ -v            # só um scraper
-pytest --cov=src/raspe                # com cobertura
-```
-
-Markers disponíveis: `slow`, `integration`. `filterwarnings = ["error"]`
-está ativo — qualquer warning não capturado vira erro de teste.
+`pytest` exclui os testes de integração pelo `addopts`; `pytest -m integration` roda só eles. `filterwarnings = ["error"]` está ativo: qualquer warning não capturado vira erro de teste.
 
 ### Checklist obrigatória ao adicionar um novo scraper
 

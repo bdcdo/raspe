@@ -27,6 +27,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
   do denominador (testá-lo offline exigiria mockar a API async inteira
   do Playwright).
+- Pacote preparado para o PyPI: instalação com `pip install raspe` (ou `pip install "raspe[browser]"` para os raspadores com navegador) e metadados com licença MIT em SPDX, palavras-chave, classificadores e links de repositório, issues e changelog. O sdist passa a levar a suíte de testes inteira, com os samples, e o `CHANGELOG.md`. A instalação pelo GitHub continua servindo para a versão de desenvolvimento.
 
 ### Modificado
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão

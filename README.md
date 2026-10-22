@@ -42,10 +42,18 @@ Você precisará ter o **Python** instalado no seu computador. Se ainda não tem
 Abra o terminal (no Windows, procure por "Prompt de Comando" ou "PowerShell") e digite:
 
 ```bash
-pip install git+https://github.com/bdcdo/raspe.git
+pip install raspe
 ```
 
 **Pronto!** O raspe está instalado e pronto para uso.
+
+#### Versão de desenvolvimento
+
+O comando acima instala a última versão publicada no [PyPI](https://pypi.org/project/raspe/). Para usar as mudanças que ainda não saíram numa versão, instale direto do GitHub:
+
+```bash
+pip install git+https://github.com/bdcdo/raspe.git
+```
 
 ### 🎯 Compatibilidade com Google Colab
 
@@ -57,7 +65,7 @@ Para usar no Google Colab:
 2. Crie um novo notebook
 3. Na primeira célula, instale o RasPe:
    ```python
-   !pip install git+https://github.com/bdcdo/raspe.git
+   !pip install raspe
    ```
 4. Execute a célula e comece a usar!
 
@@ -184,11 +192,13 @@ Algumas fontes possuem proteção anti-bot (Cloudflare) e requerem automação d
 
 ```bash
 # Instalar o raspe com suporte a navegador
-pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"
+pip install "raspe[browser]"
 
 # Instalar o navegador Chromium (necessário apenas uma vez)
 python -m playwright install chromium
 ```
+
+Para a versão de desenvolvimento com suporte a navegador, troque o primeiro comando por `pip install "raspe[browser] @ git+https://github.com/bdcdo/raspe.git"`.
 
 ### Exemplo: ANS (Agência Nacional de Saúde Suplementar)
 
@@ -371,7 +381,7 @@ Sim! Todos os dados coletados são públicos e disponibilizados pelos próprios 
 ### "E se der erro?"
 
 Os erros mais comuns são:
-- **"ModuleNotFoundError"**: O raspe não foi instalado corretamente. Reinstale com `pip install git+https://github.com/bdcdo/raspe.git`
+- **"ModuleNotFoundError"**: O raspe não foi instalado corretamente. Reinstale com `pip install raspe`
 - **"Timeout"**: O site demorou para responder. Tente novamente mais tarde.
 - **"No results found"**: Não há resultados para sua busca. Tente outros termos.
 
