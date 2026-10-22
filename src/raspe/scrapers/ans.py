@@ -6,7 +6,7 @@ e coleta atos normativos do portal ANSLegis.
 
 Exemplo:
     >>> import raspe
-    >>> df = raspe.ans().raspar(termo="doença rara")
+    >>> df = raspe.ans().raspar(pesquisa="doença rara")
     >>> print(df.head())
 """
 
@@ -24,7 +24,7 @@ class ScraperANS(ScraperDatalegis):
 
     Exemplo:
         >>> scraper = ScraperANS()
-        >>> df = scraper.raspar(termo="doença rara")
+        >>> df = scraper.raspar(pesquisa="doença rara")
         >>> print(df.columns.tolist())
         ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
     """

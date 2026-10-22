@@ -1,13 +1,13 @@
 """Raspador para busca de notícias da Folha de São Paulo."""
 
 import re
-from typing import Any, Literal
+from typing import Any, Literal, get_args
 
 import pandas as pd
 
 from ..base_scraper import BaseScraper
-from ..exceptions import ValidationError
 from ..html_scraper import HTMLScraper
+from ..schemas.folha import InputFolha, OutputFolha, SiteFolha
 
 
 class ScraperFolha(BaseScraper, HTMLScraper):
@@ -35,7 +35,11 @@ class ScraperFolha(BaseScraper, HTMLScraper):
         Se sua busca atingir esse limite, considere dividir em períodos menores.
     """
 
-    SITES_VALIDOS = ('todos', 'online', 'jornal')
+    schema_entrada = InputFolha
+    schema_saida = OutputFolha
+
+    # Derivado do schema, que é quem recusa um 'site' fora da lista.
+    SITES_VALIDOS: tuple[str, ...] = get_args(SiteFolha)
     LIMITE_MAX_RESULTADOS = 10000
 
     def __init__(self):
@@ -95,31 +99,6 @@ class ScraperFolha(BaseScraper, HTMLScraper):
             return ""
         ano, mes, dia = data_iso.split("-")
         return f"{dia}/{mes}/{ano}"
-
-    def _validar_parametros(self, **kwargs) -> dict[str, Any]:
-        """Valida e normaliza parâmetros de busca.
-
-        Sobrescreve o método base para adicionar validação do parâmetro 'site'.
-
-        Args:
-            **kwargs: Parâmetros de busca.
-
-        Returns:
-            Parâmetros validados e normalizados.
-
-        Raises:
-            ValidationError: Se 'site' não for um valor válido.
-        """
-        params = super()._validar_parametros(**kwargs)
-
-        site = params.get('site', 'todos')
-        if site not in self.SITES_VALIDOS:
-            raise ValidationError(
-                f"'site' deve ser um dos valores: {', '.join(self.SITES_VALIDOS)}. "
-                f"Valor recebido: '{site}'"
-            )
-
-        return params
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta a query base para busca na Folha.

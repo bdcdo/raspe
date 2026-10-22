@@ -152,7 +152,6 @@ def saudelegis(**kwargs):
     Requer instalação das dependências: pip install raspe[browser]
 
     Args:
-        assunto: Termo de busca no campo assunto.
         headless: Se True, executa em modo headless (default: True).
         debug: Se True, mantém arquivos baixados (default: True).
 
@@ -164,7 +163,7 @@ def saudelegis(**kwargs):
 
     Exemplo:
         >>> import raspe
-        >>> df = raspe.saudelegis().raspar(assunto="doença rara")
+        >>> df = raspe.saudelegis().raspar(pesquisa="doença rara")
     """
     from .scrapers.saudelegis import ScraperSaudeLegis
     return ScraperSaudeLegis(**kwargs)
@@ -178,7 +177,6 @@ def ans(**kwargs):
     Requer instalação das dependências: pip install raspe[browser]
 
     Args:
-        termo: Termo de busca.
         headless: Se True, executa em modo headless (default: True).
         debug: Se True, mantém arquivos baixados (default: True).
 
@@ -190,7 +188,7 @@ def ans(**kwargs):
 
     Exemplo:
         >>> import raspe
-        >>> df = raspe.ans().raspar(termo="doença rara")
+        >>> df = raspe.ans().raspar(pesquisa="doença rara")
     """
     from .scrapers.ans import ScraperANS
     return ScraperANS(**kwargs)
@@ -204,7 +202,6 @@ def anvisa(**kwargs):
     Requer instalação das dependências: pip install raspe[browser]
 
     Args:
-        termo: Termo de busca.
         headless: Se True, executa em modo headless (default: True).
         debug: Se True, mantém arquivos baixados (default: True).
 
@@ -216,7 +213,7 @@ def anvisa(**kwargs):
 
     Exemplo:
         >>> import raspe
-        >>> df = raspe.anvisa().raspar(termo="doença rara")
+        >>> df = raspe.anvisa().raspar(pesquisa="doença rara")
     """
     from .scrapers.anvisa import ScraperANVISA
     return ScraperANVISA(**kwargs)

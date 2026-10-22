@@ -6,9 +6,13 @@ import urllib3
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.presidencia import InputPresidencia, OutputPresidencia
 
 
 class ScraperPresidencia(BaseScraper, HTMLScraper):
+    schema_entrada = InputPresidencia
+    schema_saida = OutputPresidencia
+
     def __init__(self):
         super().__init__("PRESIDENCIA")
 

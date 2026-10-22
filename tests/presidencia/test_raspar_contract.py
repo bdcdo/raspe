@@ -15,6 +15,7 @@ import pytest
 import responses
 from responses import matchers, registries
 
+from raspe.schemas.presidencia import OutputPresidencia
 from raspe.scrapers.presidencia import ScraperPresidencia
 from tests._helpers import load_sample_bytes
 
@@ -22,7 +23,9 @@ API_URL = (
     "https://legislacao.presidencia.gov.br/pesquisa/ajax/"
     "resultado_pesquisa_legislacao.php"
 )
-COLUNAS_OBRIGATORIAS = {"nome", "link", "ficha", "revogacao", "descricao"}
+# Igualdade, não subconjunto: com o wiring do schema, raspar() devolve
+# exatamente as colunas de OutputPresidencia, na ordem de colunas().
+COLUNAS = OutputPresidencia.colunas()
 
 
 @pytest.fixture
@@ -57,7 +60,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="meio ambiente")
 
         assert not df.empty
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
         # page_01 tem 3 itens, page_02 tem 2 → total 5
         assert len(df) == 5
         assert (df["termo_busca"] == "meio ambiente").all()
@@ -81,7 +84,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="educação")
         assert len(df) == 3
-        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
@@ -96,6 +99,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
+        assert list(df.columns) == COLUNAS
 
     @responses.activate
     def test_payload_post_formato_form(self, scraper, mocker):

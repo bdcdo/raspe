@@ -4,9 +4,13 @@ import pandas as pd
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.ipea import InputIpea, OutputIpea
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
+    schema_entrada = InputIpea
+    schema_saida = OutputIpea
+
     def __init__(self, download_path=None):
         super().__init__("IPEA")
 

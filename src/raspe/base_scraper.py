@@ -116,7 +116,8 @@ class BaseScraper(AbstractScraper):
 
         Raises:
             ValueError: Se múltiplos parâmetros forem fornecidos como listas/tuplas.
-            ValidationError: Se algum parâmetro for inválido.
+            ValidationError: Se algum parâmetro for inválido ou desconhecido
+                pelo ``schema_entrada`` do raspador.
         """
 
         # Valida parâmetros antes de iniciar
@@ -146,13 +147,16 @@ class BaseScraper(AbstractScraper):
                     shutil.rmtree(path_result)
             result = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
-            return result
+            return self._conferir_saida(result)
         # Fallback para busca única
         else:
             path_result = self._download_data(**kwargs)
             result = self._parse_data(path_result)
 
-            # Determina qual parâmetro contém o termo de busca
+            # Determina qual parâmetro contém o termo de busca. Com schema_entrada,
+            # _validar_parametros devolve sempre 'pesquisa' (canônico, com default),
+            # e a coluna termo_busca sai em todo raspador ligado a schema. Os outros
+            # nomes só valem para raspador ainda sem schema.
             termo_param = next((k for k in kwargs if k in ['pesquisa', 'termo', 'q', 'query']), None)
             if termo_param:
                 termo_busca = str(kwargs[termo_param])
@@ -163,7 +167,7 @@ class BaseScraper(AbstractScraper):
             if self.debug is False:
                 shutil.rmtree(path_result)
 
-            return result
+            return self._conferir_saida(result)
 
     def _download_data(self, **kwargs) -> str:
         self.logger.debug("Definindo consulta")

@@ -6,6 +6,17 @@ from bs4 import BeautifulSoup
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.cfm import InputCFM, OutputCFM
+
+# Rótulo do cabeçalho do card no portal -> coluna canônica do DataFrame.
+# Rótulo fora deste mapa é descartado: o DataFrame só leva as colunas de _COLUNAS.
+_COLUNA_POR_ROTULO = {
+    'Tipo': 'tipo',
+    'UF': 'uf',
+    'Nº/Ano': 'numero_ano',
+    'Situação': 'situacao',
+}
+_COLUNAS = ['tipo', 'uf', 'numero_ano', 'situacao', 'ementa', 'link']
 
 
 class ScraperCFM(BaseScraper, HTMLScraper):
@@ -16,12 +27,18 @@ class ScraperCFM(BaseScraper, HTMLScraper):
     Exemplo de uso:
         scraper = ScraperCFM()
         # Busca por um termo
-        df = scraper.raspar(texto="doenças raras")
+        df = scraper.raspar(pesquisa="doenças raras")
 
         # Busca por múltiplos termos
         termos = ["doença rara", "medicamento órfão", "terapia órfã"]
-        df = scraper.raspar(texto=termos)
+        df = scraper.raspar(pesquisa=termos)
+
+    O nome antigo do parâmetro de busca, ``texto``, ainda é aceito com
+    ``DeprecationWarning``.
     """
+
+    schema_entrada = InputCFM
+    schema_saida = OutputCFM
 
     def __init__(self):
         super().__init__("CFM")
@@ -73,7 +90,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         """Monta os parâmetros base da query.
 
         Args:
-            texto: Termo de busca a ser pesquisado
+            pesquisa: Termo de busca a ser pesquisado
             uf: UF do CRM (opcional, vazio = todos)
             revogada: Filtrar normas revogadas (opcional)
             numero: Número da norma (opcional)
@@ -82,11 +99,13 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         Returns:
             dict: Parâmetros da query
         """
-        texto = kwargs.get('texto', '')
+        pesquisa = kwargs.get('pesquisa', '')
         uf = kwargs.get('uf', '')
         revogada = kwargs.get('revogada', '')
         numero = kwargs.get('numero', '')
-        ano = kwargs.get('ano', '')
+        # O schema entrega ano como int ou None; o portal espera texto, vazio sem filtro.
+        ano = kwargs.get('ano')
+        ano = '' if ano is None else str(ano)
 
         # Query base com todos os tipos de norma do CFM
         query_inicial = {
@@ -101,7 +120,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
             "ano": ano,
             "ta": "OU",      # Operador lógico para assuntos
             "assunto[0]": "",
-            "texto": texto,
+            "texto": pesquisa,
             "pagina": "1"
         }
 
@@ -175,7 +194,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         Returns:
             pd.DataFrame: DataFrame com as normas extraídas
         """
-        columns = ['Tipo', 'UF', 'Nº/Ano', 'Situação', 'Ementa', 'Link']
+        columns = _COLUNAS
 
         try:
             with open(path, 'r', encoding='utf-8') as file:
@@ -232,28 +251,28 @@ class ScraperCFM(BaseScraper, HTMLScraper):
                     strong = item.find('strong')
                     p = item.find('p')
                     if strong and p:
-                        key = strong.text.strip()
-                        value = p.text.strip()
-                        result[key] = value
+                        coluna = _COLUNA_POR_ROTULO.get(strong.text.strip())
+                        if coluna:
+                            result[coluna] = p.text.strip()
 
         # Extrair ementa
         body = article.find('div', class_='card-body')
         if body:
             ementa_span = body.find('span')
             if ementa_span:
-                result['Ementa'] = ementa_span.text.strip()
+                result['ementa'] = ementa_span.text.strip()
 
         # Extrair link para a norma
         link = body.find('a', class_='btn btn-primary') if body else None
         if link and link.get('href'):
-            result['Link'] = link.get('href')
+            result['link'] = link.get('href')
 
         # Verificar se conseguiu extrair pelo menos algumas informações essenciais
-        if not result or 'Tipo' not in result:
+        if not result or 'tipo' not in result:
             return None
 
         # Garantir que todas as colunas esperadas existam
-        for col in ['Tipo', 'UF', 'Nº/Ano', 'Situação', 'Ementa', 'Link']:
+        for col in _COLUNAS:
             if col not in result:
                 result[col] = ''
 
