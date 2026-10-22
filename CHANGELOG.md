@@ -36,6 +36,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   alteração. Factory `raspe.ipea()` segue inalterada.
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
+- Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
 - `raspe.scraper_manager.scraper()` agora cobre as 11 fontes. Antes o mapping
   tinha 5 entradas (Presidência, IPEA, Senado, Câmara, CAPES) e `scraper("CFM")`
   levantava `ValueError`; foram adicionados `CFM`, `FOLHA`, `NYT`, `SAUDELEGIS`,

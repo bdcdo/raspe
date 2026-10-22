@@ -49,7 +49,7 @@ O raspe automatiza a coleta de dados de **11 fontes** oficiais brasileiras e int
 
 Você precisará ter o **Python** instalado no seu computador. Se ainda não tem:
 
-1. **Windows/Mac:** Baixe em [python.org/downloads](https://www.python.org/downloads/) (versão 3.10 ou superior)
+1. **Windows/Mac:** Baixe em [python.org/downloads](https://www.python.org/downloads/) (versão 3.11 ou superior)
 2. **Linux:** Geralmente já vem instalado. Se não, use: `sudo apt install python3 python3-pip`
 
 ### Instalando o raspe
@@ -76,7 +76,7 @@ Para usar no Google Colab:
    ```
 4. Execute a célula e comece a usar!
 
-O Google Colab já vem com Python 3.10 pré-instalado, que é perfeitamente compatível com o RasPe.
+O Google Colab já vem com uma versão do Python compatível com o RasPe.
 
 ---
 
