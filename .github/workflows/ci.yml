@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Um push novo no mesmo PR cancela o run anterior, que ficou obsoleto. Na main
+# cada push termina o seu run, para que todo commit mesclado tenha resultado.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  testes:
+    name: testes (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11 é o piso de requires-python. 3.14 é a versão mais nova em que
+        # todas as dependências, inclusive as dos extras dev e browser, têm
+        # wheel; na 3.15 o pyyaml (dependência do pre-commit) ainda não tem.
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      - name: Instala o pacote com os extras dev e browser
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          uv venv --python "$PYTHON_VERSION" .venv
+          uv pip install --python .venv/bin/python -e ".[dev,browser]"
+
+      # Sem argumentos, o pytest usa o addopts do pyproject.toml: exclui os
+      # testes de integração (que tocam a rede) e reprova abaixo do
+      # fail_under da cobertura.
+      - name: Roda a suíte
+        run: .venv/bin/pytest
+
+  lint:
+    name: lint (pre-commit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Mesma versão do pythonVersion do mypy e do pyright no pyproject.toml.
+      PYTHON_LINT: "3.11"
+      # O pacote pyright do PyPI já traz o pyright embutido e roda com o node
+      # do runner, mas a cada execução consulta o PyPI para avisar de versão
+      # nova. Esta variável desliga a consulta.
+      PYRIGHT_PYTHON_IGNORE_WARNINGS: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      # Os hooks locais do pre-commit chamam .venv/bin/mypy e .venv/bin/pyright,
+      # e o pyright resolve os imports pelo venv = ".venv" do pyproject.toml.
+      # Por isso a venv mora na raiz do checkout. O extra browser instala o
+      # pacote playwright para o pyright achar os imports dos scrapers de
+      # navegador; nenhum navegador é baixado.
+      - name: Instala o pacote com os extras dev e browser
+        run: |
+          uv venv --python "$PYTHON_LINT" .venv
+          uv pip install --python .venv/bin/python -e ".[dev,browser]"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-py${{ env.PYTHON_LINT }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      # Monta aqui os ambientes dos hooks remotos do .pre-commit-config.yaml,
+      # para que a rede fique nos passos de instalação e o passo seguinte só
+      # rode os hooks.
+      - name: Instala os ambientes dos hooks
+        run: .venv/bin/pre-commit install-hooks
+
+      - name: Roda todos os hooks
+        run: .venv/bin/pre-commit run --all-files --show-diff-on-failure
