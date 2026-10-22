@@ -100,7 +100,7 @@ dados.to_excel("leis_meio_ambiente.xlsx", index=False)
 # Pronto! Agora você tem um arquivo Excel com todos os resultados
 ```
 
-### Exemplo 2: Buscar projetos de lei sobre "educação" na Câmara
+### Exemplo 2: Buscar legislação federal sobre "educação" na Câmara
 
 ```python
 import raspe
@@ -109,7 +109,7 @@ camara = raspe.camara()
 dados = camara.raspar(pesquisa="educação")
 
 # Salvar em Excel
-dados.to_excel("projetos_educacao.xlsx", index=False)
+dados.to_excel("camara_educacao.xlsx", index=False)
 ```
 
 ### Exemplo 3: Buscar múltiplos temas de uma vez
@@ -117,12 +117,12 @@ dados.to_excel("projetos_educacao.xlsx", index=False)
 ```python
 import raspe
 
-# Buscar três temas diferentes ao mesmo tempo
+# Buscar três temas numa chamada só (vale para os raspadores HTTP)
 senado = raspe.senado()
 dados = senado.raspar(pesquisa=["educação", "saúde", "segurança"])
 
 # O resultado terá uma coluna 'termo_busca' identificando cada tema
-dados.to_excel("projetos_multiplos.xlsx", index=False)
+dados.to_excel("senado_varios_temas.xlsx", index=False)
 ```
 
 ### Exemplo 4: Limitar o número de páginas (para testes rápidos)
@@ -130,7 +130,7 @@ dados.to_excel("projetos_multiplos.xlsx", index=False)
 ```python
 import raspe
 
-# Buscar apenas as primeiras 5 páginas (para testar rapidamente)
+# Buscar apenas as primeiras 5 páginas (vale para os raspadores HTTP)
 senado = raspe.senado()
 dados = senado.raspar(pesquisa="reforma tributária", paginas=range(1, 6))
 
@@ -268,6 +268,8 @@ df = raspe.senado().raspar(pesquisa="reforma tributária")
 # IPEA: publicações e estudos
 df = raspe.ipea().raspar(pesquisa="desigualdade")
 ```
+
+Em outubro de 2026, o site do Senado responde às buscas do raspe com uma página de verificação de segurança, e `raspe.senado().raspar()` volta vazio, sem mensagem de erro.
 
 **Filtros extras da Câmara e do Senado**
 
@@ -538,7 +540,7 @@ Quando usar datas (como `data_inicio` e `data_fim`), você pode usar qualquer um
 
 ### "Quanto tempo leva para coletar os dados?"
 
-Depende da busca. Termos genéricos podem ter milhares de resultados e levar horas. Comece testando com `paginas=range(1, 6)` para ver uma amostra rápida.
+Depende da busca. Termos genéricos podem ter milhares de resultados e levar horas. Nos raspadores HTTP, comece testando com `paginas=range(1, 6)` para ver uma amostra rápida. SaudeLegis, ANS e ANVISA ignoram `paginas` e coletam todas as páginas de resultado.
 
 ### "Os dados vêm em que formato?"
 
