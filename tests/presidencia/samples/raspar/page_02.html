@@ -1,23 +1,430 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head><title>Pesquisa Legislação Presidencial</title></head>
-<body>
-<div class="card-body p-0">
-  <div>
-    <div>
-      <a href="/atos/p2-d.html">Decreto D</a>
-      <a href="/fichas/p2-d.html">Ficha D</a>
-      <p>Sem revogação</p>
-      <p>Descrição D.</p>
-    </div>
-    <div>sep</div>
-    <div>
-      <a href="/atos/p2-e.html">Decreto E</a>
-      <a href="/fichas/p2-e.html">Ficha E</a>
-      <p>Sem revogação</p>
-      <p>Descrição E.</p>
-    </div>
-  </div>
+
+	<p class="text-right p-0 m-0"><div class="text-right text-info cursor-link p-0" onclick="removerTodosFiltros();pesquisaLegislacao('0');">Limpar todos os filtros<i class="pl-2 icon ti-close"></i></div></p>
+
+<div class="d-flex">
+  	<div class="w-100 ">
+
+  			<div class="row">
+                <div class="col">
+                  <h4 class="pb-2 fw-bold">19 resultados encontrados</h4>
+                </div>
+                <div class="col text-right">
+
+    				<div class="dropdown ">
+                      <a class="dropdown-toggle" href="#" role="button" id="dropdownOrdenacao" data-toggle="dropdown" aria-expanded="false">
+                        Ordena&ccedil;&atilde;o:
+                        <b>
+                        Maior data de publica&ccedil;&atilde;o                        </b>
+                      </a>
+
+                      <div class="dropdown-menu" aria-labelledby="dropdownOrdenacao">
+                        <a class="dropdown-item pt-2 pb-2  " href="#" onclick="selecionaOrdenacao('relevancia');">Relev&acirc;ncia dos resultados</a>
+                        <a class="dropdown-item pt-2 pb-2 active " href="#" onclick="selecionaOrdenacao('maior_data');">Maior data de publica&ccedil;&atilde;o</a>
+                        <a class="dropdown-item pt-2 pb-2  " href="#" onclick="selecionaOrdenacao('menor_data');">Menor data de publica&ccedil;&atilde;o</a>
+
+                      </div>
+                    </div>
+
+
+                </div>
+            </div>
+
+			<div class="card-body p-0" >
+				<div class="d-flex flex-wrap  filtros-selecionados ">
+
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2022/lei/l14510.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 14.510 de 27 de dezembro de 2022
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">Altera a <a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=8080&ano=1990&data=19/09/1990&ato=9f7gXSq1keFpWT905">Lei nº 8.080</a>, de 19 de setembro de 1990, para autorizar e disciplinar a prática da telessaúde em todo o território nacional, e a <a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=13146&ano=2015&data=06/07/2015&ato=c4aUTW65UNVpWT495">Lei nº 13.146</a>, de 6 de julho de 2015; e revoga a <a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=13989&ano=2020&data=15/04/2020&ato=596MTQ61EMZpWT585">Lei nº 13.989</a>, de 15 de abril de 2020.</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=14510&ano=2022&data=27/12/2022&ato=42aETQU9kMZpWT56d" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2022/lei/l14510.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l13989.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 13.989 de 15 de abril de 2020<span class="badge badge-info ml-2">Veto Parcial</span>
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Revogada</p>
+
+                                        <p class="pt-2">Dispõe sobre o uso da <mark>telemedicina</mark> durante a crise causada pelo coronavírus (SARS-CoV-2).</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=13989&ano=2020&data=15/04/2020&ato=596MTQ61EMZpWT585" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l13989.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/portaria/prt/portaria%20nº%20467-20-ms.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Portaria nº 467 de 20 de março de 2020
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">Dispõe, em caráter excepcional e temporário, sobre as ações de <mark>Telemedicina</mark>, com o objetivo de regulamentar e operacionalizar as medidas de enfrentamento da emergência de saúde pública de importância internacional previstas no art. 3º da Lei nº 13.979, de 6 de fevereiro de 2020, decorrente da epidemia de COVID-19.</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=PRT&numero=467&ano=2020&data=20/03/2020&ato=491ETTU5EMZpWT75f" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/portaria/prt/portaria%20nº%20467-20-ms.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/lei/l13846.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 13.846 de 18 de junho de 2019<span class="badge badge-info ml-2">Veto Parcial</span>
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">Institui o Programa Especial para Análise de Benefícios com Indícios de Irregularidade, o Programa de Revisão de Benefícios por Incapacidade, o Bônus de Desempenho Institucional por Análise de Benefícios com Indícios de Irregularidade do Monitoramento Operacional de Benefícios e o Bônus de Desempenho Institucional por Perícia Médica em Benefícios por Incapacidade; altera as <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/dc06fbb9e67b6bd2032569fa0073be05?OpenDocument" target="LEGBR - Atos\11 - Por Data">Leis nºs 6.015</a>, de 31 de dezembro de 1973, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/cb260fde59999336032569fa00677594?OpenDocument" target="LEGBR - Atos\11 - Por Data">7.783</a>, de 28 de junho de 1989, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/03256a0a007391d2032569fa00678331?OpenDocument" target="LEGBR - Atos\11 - Por Data">8.112</a>, de 11 de dezembro de 1990, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8cd1ff6a8ff42fba032569fa00679b3b?OpenDocument" target="LEGBR - Atos\11 - Por Data">8.212</a>, de 24 de julho de 1991, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/08eaf358884c97b7032569fa00679bc5?OpenDocument" target="LEGBR - Atos\11 - Por Data">8.213</a>, de 24 de julho de 1991, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/419fc07483f5c6bc032569fa00683f15?OpenDocument" target="LEGBR - Atos\11 - Por Data">8.742</a>, de 7 de dezembro de 1993, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/aff900c21d715376032569fc004cbbb7?OpenDocument" target="LEGBR - Atos\11 - Por Data">9.620</a>, de 2 de abril de 1998, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/02b479f60f1b5740032569fa00759964?OpenDocument" target="LEGBR - Atos\11 - Por Data">9.717</a>, de 27 de novembro de 1998, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/b49102d69e61088103256a0100693662?OpenDocument" target="LEGBR - Atos\11 - Por Data">9.796</a>, de 5 de maio de 1999, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/339bd2d8f13e7c3503256e6a0044b5d5?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.855</a>, de 1º de abril de 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/cb9d2930bd49410803256ea80041d385?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.876</a>, de 2 de junho de 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/6b861a59b2a713cf03256eba00511641?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.887</a>, de 18 de junho de 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/b0a259e174778cee832572ed003d8fe4?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.481</a>, de 31 de maio de 2007, e <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/32bb4968b0efd5f083257552003a1bd2?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.907</a>, de 2 de fevereiro de 2009; e revoga dispositivo da <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/5593fecb4c01b66203256d21003d5d12?OpenDocument" target="LEGBR - Atos\11 - Por Data">Lei nº 10.666</a>, de 8 de maio de 2003, e a Lei nº<a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/f92af4e70c0627ee832574710047c2ac?OpenDocument" target="LEGBR - Atos\11 - Por Data"> 11.720</a>, de 20 de junho de 2008.</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=13846&ano=2019&data=18/06/2019&ato=8bcQTT61keZpWT3c5" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/lei/l13846.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/decreto/d9795.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Decreto nº 9.795 de 17 de maio de 2019
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Revogado</p>
+
+                                        <p class="pt-2">Aprova a Estrutura Regimental e o Quadro Demonstrativo dos Cargos em Comissão e das Funções de Confiança do Ministério da Saúde, remaneja cargos em comissão e funções de confiança, transforma funções de confiança e substitui cargos em comissão do Grupo-Direção e Assessoramento Superiores - DAS por Funções Comissionadas do Poder Executivo - FCPE. <a href="http://www.planalto.gov.br/CCIVIL_03/_Ato2019-2022/2019/Decreto/D9795.htm#art9">Vigência</a></p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=DEC&numero=9795&ano=2019&data=17/05/2019&ato=21bUza65keZpWT995" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/decreto/d9795.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 13.146 de 06 de julho de 2015<span class="badge badge-info ml-2">Veto Parcial</span>
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">INSTITUI A LEI BRASILEIRA DE INCLUSÃO DA PESSOA COM DEFICIÊNCIA (ESTATUTO DA PESSOA COM DEFICIÊNCIA). <a href="http://www.planalto.gov.br/CCIVIL_03/_Ato2015-2018/2015/Lei/L13146.htm#art127">Vigência</a></p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=13146&ano=2015&data=06/07/2015&ato=c4aUTW65UNVpWT495" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13146.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2009/lei/l11907.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 11.907 de 02 de fevereiro de 2009<span class="badge badge-info ml-2">Veto Parcial</span>
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">DISPÕE SOBRE A REESTRUTURAÇÃO DA COMPOSIÇÃO REMUNERATÓRIA DAS CARREIRAS DE OFICIAL DE CHANCELARIA E DE ASSISTENTE DE CHANCELARIA, DE QUE TRATA O ART. 2° DA <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/a026e07957cf6d81832572570049b363?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.440</a>, DE 29 DE DEZEMBRO DE 2006, DA CARREIRA DE TECNOLOGIA MILITAR, DE QUE TRATA A<a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/e6b641075d90f13a032569fa006bd0ec?OpenDocument" target="LEGBR - Atos\11 - Por Data"> LEI N° 9.657</a>, DE 3 DE JUNHO DE 1998, DOS CARGOS DO GRUPO DEFESA AÉREA E CONTROLE DE TRÁFEGO AÉREO - GRUPO DACTA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8082a7bb70b8e2bf03256c710049fe61?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.551</a>, DE 13 DE NOVEMBRO DE 2002, DOS EMPREGOS PÚBLICOS DO QUADRO DE PESSOAL DO HOSPITAL DAS FORÇAS ARMADAS - HFA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/7ad0888c7bad62cb03256a500049bcae?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.225</a>, DE 15 DE MAIO DE 2001, DA CARREIRA DE SUPERVISOR MÉDICO-PERICIAL, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/aff900c21d715376032569fc004cbbb7?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 9.620</a>, DE 2 DE ABRIL DE 1998, DAS CARREIRAS DA ÁREA DE CIÊNCIA E TECNOLOGIA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/427ae28815e383b9032569fa006811a7?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 8.691</a>, DE 28 DE JULHO DE 1993, DO PLANO DE CARREIRAS DE CARGOS DA FIOCRUZ, DE QUE TRATA A<a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/195af7fb7a2ff9df0325720d0042065e?OpenDocument" target="LEGBR - Atos\11 - Por Data"> LEI N° 11.355</a>, DE 19 DE OUTUBRO DE 2006, DAS CARREIRAS E DO PLANO ESPECIAL DE CARGOS DO DEPARTAMENTO NACIONAL DE INFRA-ESTRUTURA DE TRANSPORTES - DNIT, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/07253c145d447225032570730040be74?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.171</a>, DE 2 DE SETEMBRO DE 2005, DA CARREIRA DA SEGURIDADE SOCIAL E DO TRABALHO, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/842e81278b7081a403256bec0043ae1c?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.483</a>, DE 3 DE JULHO DE 2002, DA CARREIRA PREVIDENCIÁRIA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/d7c62bb12752d7f603256b30005fb53c?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.355</a>, DE 26 DE DEZEMBRO DE 2001, DOS POLICIAIS E BOMBEIROS MILITARES DOS EX-TERRITÓRIOS FEDERAIS E DO ANTIGO DISTRITO FEDERAL, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/3d5515816a9bc7f603256bed006cbcf2?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.486</a>, DE 4 DE JULHO DE 2002, DO PLANO ESPECIAL DE CARGOS DA SUPERINTENDÊNCIA DA ZONA FRANCA DE MANAUS - SUFRAMA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/9bf7575b63a779c90325720d0047d0f1?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.356</a>, DE 19 DE OUTUBRO DE 2006, DO PLANO ESPECIAL DE CARGOS DA EMPRESA BRASILEIRA DE TURISMO - EMBRATUR, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/9bf7575b63a779c90325720d0047d0f1?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.356</a>, DE 19 DE OUTUBRO DE 2006, DO PLANO DE CLASSIFICAÇÃO DE CARGOS, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/fb9ce316a0dec3d0032569fa00736c6e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 5.645</a>, DE 10 DE DEZEMBRO DE 1970, DO PLANO GERAL DE CARGOS DO PODER EXECUTIVO, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/03c00b2dcd9915410325720d004d1a4d?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.357</a>, DE 19 DE OUTUBRO DE 2006, DO QUADRO DE PESSOAL DA IMPRENSA NACIONAL, DE QUE TRATA A<a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/3a750f93dba2cf8903256f850044246c?OpenDocument" target="LEGBR - Atos\11 - Por Data"> LEI N° 11.090</a>, DE 7 DE JANEIRO DE 2005, DA GRATIFICAÇÃO DE INCREMENTO À ATIVIDADE DE ADMINISTRAÇÃO DO PATRIMÔNIO DA UNIÃO - GIAPU, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/aeea4cba2cf2dd4c03256f89004381de?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.095</a>, DE 13 DE JANEIRO DE 2005, DAS CARREIRAS DA ÁREA DE MEIO AMBIENTE, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/69ab551607822f9303256b41004fabdd?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.410</a>, DE 11 DE JANEIRO DE 2002, DO PLANO ESPECIAL DE CARGOS DO MINISTÉRIO DO MEIO AMBIENTE E DO INSTITUTO BRASILEIRO DO MEIO AMBIENTE E DOS RECURSOS NATURAIS RENOVÁVEIS - IBAMA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/03c00b2dcd9915410325720d004d1a4d?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.357</a>, DE 19 DE OUTUBRO DE 2006, DAS CARREIRAS E DO PLANO ESPECIAL DE CARGOS DO FNDE, DE QUE TRATA A LEI N° 11.357, DE 19 DE OUTUBRO DE 2006, DAS CARREIRAS E DO PLANO ESPECIAL DE CARGOS DO INEP, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/03c00b2dcd9915410325720d004d1a4d?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.357</a>, DE 19 DE OUTUBRO DE 2006, DOS JUIZES DO TRIBUNAL MARÍTIMO, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/69f84e48b5d0b52f032571a4003e4a58?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.319</a>, DE 6 DE JULHO DE 2006, DO QUADRO DE PESSOAL DA FUNDAÇÃO NACIONAL DO ÍNDIO - FUNAI, DO PLANO DE CARREIRAS E CARGOS DO INSTITUTO NACIONAL DE METROLOGIA, NORMALIZAÇÃO E QUALIDADE INDUSTRIAL - INMETRO, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/195af7fb7a2ff9df0325720d0042065e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.355</a>, DE 19 DE OUTUBRO DE 2006, DO PLANO DE CARREIRAS E CARGOS DO INSTITUTO BRASILEIRO DE GEOGRAFIA E ESTATÍSTICA - IBGE, DE QUE TRATA A LEI N° 11.355, DE 19 DE OUTUBRO DE 2006, DO PLANO DE CARREIRAS E CARGOS DO INSTITUTO NACIONAL DE PROPRIEDADE INDUSTRIAL - INPI, DE QUE TRATA <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/195af7fb7a2ff9df0325720d0042065e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.355</a>, DE 19 DE OUTUBRO DE 2006, DA CARREIRA DO SEGURO SOCIAL, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/339bd2d8f13e7c3503256e6a0044b5d5?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.855</a>, DE 1° DE ABRIL DE 2004, DAS CARREIRAS E DO PLANO ESPECIAL DE CARGOS DO DEPARTAMENTO NACIONAL DE PRODUÇÃO MINERAL - DNPM, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/4444d0f837fba5cf03256f78003d8a6a?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.046</a>, DE 27 DE DEZEMBRO DE 2004, DO QUADRO DE PESSOAL DA AGU, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/c073eb20c2fd1c9f03256beb00623d8e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.480</a>, DE 2 DE JULHO DE 2002, DA TABELA DE VENCIMENTOS E DA GRATIFICAÇÃO DE DESEMPENHO DE ATIVIDADE DOS FISCAIS FEDERAIS AGROPECUÁRIOS, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/c031b7e31e3ddeb103256eb6003e6ff7?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.883</a>, DE 16 DE JUNHO DE 2004, DA GRATIFICAÇÃO DE DESEMPENHO DE ATIVIDADE TÉCNICA DE FISCALIZAÇÃO AGROPECUÁRIA - GDATFA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/595b1b751b2a705e03256bec00442d12?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.484</a>, DE 3 JULHO DE 2002, DA GRATIFICAÇÃO DE DESEMPENHO DE ATIVIDADE DE PERITO FEDERAL AGRÁRIO - GDAPA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/d9d76a72774ee85503256c710049870e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.550</a>, DE 13 DE NOVEMBRO DE 2002, DA GRATIFICAÇÃO DE DESEMPENHO DE ATIVIDADE DE REFORMA AGRÁRIA - GDARA, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/3a750f93dba2cf8903256f850044246c?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.090</a>, DE 7 DE JANEIRO DE 2005, DA GRATIFICAÇÃO DE DESEMPENHO DA CARREIRA DA PREVIDÊNCIA, DA SAÚDE E DO TRABALHO - GDPST, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/195af7fb7a2ff9df0325720d0042065e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.355</a>, DE 19 DE OUTUBRO DE 2006, DAS CARREIRAS E PLANOS ESPECIAIS DE CARGOS DAS AGÊNCIAS REGULADORAS, DE QUE TRATAM AS <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/852a3124f7b4959b83256de400435e1a?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEIS N°S 10.768</a>, DE 19 DE NOVEMBRO DE 2003, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/9a26960375fe502603256e9b004e3e45?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.871</a>, DE 20 DE MAIO DE 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8509a776f08e754b03256eb0004672e3?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.882</a>, DE 9 DE JUNHO DE 2004, E <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/03c00b2dcd9915410325720d004d1a4d?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.357</a>, DE 19 DE OUTUBRO DE 2006, DA GRATIFICAÇÃO TEMPORÁRIA DAS UNIDADES GESTORAS DOS SISTEMAS ESTRUTURADORES DA ADMINISTRAÇÃO PÚBLICA FEDERAL - GSISTE, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/9bf7575b63a779c90325720d0047d0f1?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 11.356</a>, DE 19 DE OUTUBRO DE 2006, SOBRE A INSTITUIÇÃO DA GRATIFICAÇÃO ESPECÍFICA DE PRODUÇÃO DE RADIOISÓTOPOS E RADIOFÁRMACOS - GEPR, DA GRATIFICAÇÃO ESPECÍFICA, DA GRATIFICAÇÃO DO SISTEMA DE ADMINISTRAÇÃO DOS RECURSOS DE INFORMAÇÃO E INFORMÁTICA - GSISP, DA GRATIFICAÇÃO TEMPORÁRIA DE ATIVIDADE EM ESCOLA DE GOVERNO - GAEG E DO ADICIONAL DE PLANTÃO HOSPITALAR, DISPÕE SOBRE A REMUNERAÇÃO DOS BENEFICIADOS PELA <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/5ed4adaa99cd22a0032569fa006875a8?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 8.878</a>, DE 11 DE MAIO DE 1994, DISPÕE SOBRE A ESTRUTURAÇÃO DA CARREIRA DE MÉDICO PERITO PREVIDENCIÁRIO, NO ÂMBITO DO QUADRO DE PESSOAL DO INSTITUTO NACIONAL DO SEGURO SOCIAL - INSS, DO PLANO DE CARREIRAS E CARGOS DO INSTITUTO EVANDRO CHAGAS E DO CENTRO NACIONAL DE PRIMATAS E DO PLANO ESPECIAL DE CARGOS DO MINISTÉRIO DA FAZENDA, REESTRUTURA A CARREIRA DE AGENTE PENITENCIÁRIO FEDERAL, DE QUE TRATA A <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/d6ef3eb14e3fa38f03256d51004733b7?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEI N° 10.693</a>, DE 25 DE JUNHO DE 2003; CRIA AS CARREIRA DE ESPECIALISTA EM ASSISTÊNCIA PENITENCIÁRIA E DE TÉCNICO DE APOIO À ASSISTÊNCIA PENITENCIÁRIA; ALTERA AS <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/e6b641075d90f13a032569fa006bd0ec?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEIS N°S 9.657</a>, DE 3 DE JUNHO DE 1998, 11.355, DE 19 DE OUTUBRO DE 2006, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8082a7bb70b8e2bf03256c710049fe61?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.551</a>, DE 13 DE NOVEMBRO DE 2002, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/7ad0888c7bad62cb03256a500049bcae?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.225</a>, DE 15 DE MAIO DE 2001, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/5f8aa7d281f505e1032571e6003d56c4?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.344</a>, DE 8 DE SETEMBRO DE 2006, 8.691, DE 28 DE JULHO DE 1993, 11.171, DE 2 DE SETEMBRO DE 2005, 10.483, DE 3 DE JULHO DE 2002, 10.355, DE 26 DE DEZEMBRO DE 2001, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/bec4b5bf27ff35f8832572a3004095d7?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.457</a>, DE 16 DE MARÇO DE 2007, 11.356, DE 19 DE OUTUBRO DE 2006, 11.357, DE 19 DE OUTUBRO DE 2006, 11.090, DE 7 DE JANEIRO DE 2005, 11.095, DE 13 DE JANEIRO DE 2005, 10.410, DE 11 DE JANEIRO DE 2002, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8cd2b0c09e3767a70325705000405644?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.156</a>, DE 29 DE JULHO DE 2005, 11.319, DE 6 DE JULHO DE 2006, 10.855,<a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/339bd2d8f13e7c3503256e6a0044b5d5?OpenDocument" target="LEGBR - Atos\11 - Por Data">&bull;</a> DE 1° DE ABRIL DE 2004, 11.046, DE 27 DE DEZEMBRO DE 2004, 10.480, DE 2 DE JULHO DE 2002, 10.883, DE 16 DE JUNHO DE 2004, 10.484, DE 3 DE JULHO DE 2002,<a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/d9d76a72774ee85503256c710049870e?OpenDocument" target="LEGBR - Atos\11 - Por Data"> 10.550</a>, DE 13 DE NOVEMBRO DE 2002, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/9a26960375fe502603256e9b004e3e45?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.871</a>, DE 20 DE MAIO DE 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/852a3124f7b4959b83256de400435e1a?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.768</a>, DE 19 DE NOVEMBRO DE 2003, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8509a776f08e754b03256eb0004672e3?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.882</a>, DE 9 DE JUNHO DE 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/67d066b2b25629c48325736b004d3ead?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.526</a>, DE 4 DE OUTUBRO DE 2007; REVOGTA DISPOSITIVOS DAS <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/71b6e1bb1bcf02b4032569fa0068436e?OpenDocument" target="LEGBR - Atos\11 - Por Data">LEIS N°S 8.829</a>, DE 22 DE DEZEMBRO DE 1993, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/4698b09c51ac7533032569fa006958e1?OpenDocument" target="LEGBR - Atos\11 - Por Data">9.028</a>, DE 12 DE ABRIL DE 1995, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/e6b641075d90f13a032569fa006bd0ec?OpenDocument" target="LEGBR - Atos\11 - Por Data">9.657</a>, DE 3 DE JUNHO DE 1998, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/a10c54d955388fbe03256be90067366f?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.479</a>, DE 28 DE JUNHO DE 2002, 10.484, DE 3 DE JULHO DE 2002, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8082a7bb70b8e2bf03256c710049fe61?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.551</a>, DE 13 DE NOVEMBRO DE 2002, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8509a776f08e754b03256eb0004672e3?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.882</a>, DE 9 DE JUNHO DE 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/241695b03aa720b203256ed600490bd4?OpenDocument" target="LEGBR - Atos\11 - Por Data">10.907</a>, DE 15 DE JULHO DE 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/4444d0f837fba5cf03256f78003d8a6a?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.046</a>, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/fcb8d2729ea4afb4032569fa007708bb?OpenDocument" target="LEGBR - Atos\11 - Por Data">&bull;</a>DE 27 DE DEZEMBRO DE 2004, <a href="http://legislacao.planalto.gov.br/legisla/Legislacao.nsf/b110756561cd26fd03256ff500612662/8cd2b0c09e3767a70325705000405644?OpenDocument" target="LEGBR - Atos\11 - Por Data">11.156</a>, DE 29 DE JULHO DE 2005, 11.171, DE 2 DE SETEMBRO DE 2005, 11.319, DE 6 DE JULHO DE 2006, 11.344, DE 8 DE SETEMBRO DE 2006, 11.355, DE 19 DE OUTUBRO DE 2006, 11.357, DE 19 DE OUTUBRO DE 2006; E DÁ OUTRAS PROVIDÊNCIAS.</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=11907&ano=2009&data=02/02/2009&ato=e77ATVE90dVpWT500" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2009/lei/l11907.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/leis/l8742.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 8.742 de 07 de dezembro de 1993<span class="badge badge-info ml-2">Veto Parcial</span>
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">DISPÕE SOBRE A ORGANIZAÇÃO DA ASSISTÊNCIA SOCIAL E DÁ OUTRAS PROVIDÊNCIAS.</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=8742&ano=1993&data=07/12/1993&ato=1d9UTVq5ENFpWT0e3" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/leis/l8742.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                            <div class="card p-2 pr-3 pl-3 w-100" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+
+                                    <div class="card-header p-0 col-12 border-0" style="border-bottom: 0px !important;">
+                                    	<h4 class="card-title " style="margin-bottom: .1rem; ">
+
+                                    		                                    		    	<a href="https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm" target="_blank" style=" color: #0050cb !important;" >
+
+                                        			Lei nº 8.213 de 24 de julho de 1991<span class="badge badge-info ml-2">Veto Parcial</span>
+                                                                                		    </a>
+
+
+                                        </h4>
+
+                                    	<p class="card-category text-muted pt-0 mt-0 mb-2" style="font-weight: 200 !important;">Não consta revogação expressa</p>
+
+                                        <p class="pt-2">DISPÕE SOBRE OS PLANOS DE BENEFÍCIOS DA PREVIDÊNCIA SOCIAL E DÁ OUTRAS  PROVIDÊNCIAS.</p>
+
+                                        <ul class="list-inline p-0 m-0">
+                                              <li class="list-inline-item mb-2">
+                                              		<a href="https://legislacao.presidencia.gov.br/atos?tipo=LEI&numero=8213&ano=1991&data=24/07/1991&ato=9ecETSE9UMFpWT829" target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-eye pr-1"></i>
+                                                        Ficha
+                                                    </a>
+                                              </li>
+                                                                                            <li class="list-inline-item  mb-2">
+                                              		<a href="https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm"  target="_blank" class="btn btn-warning btn-border btn-round btn-xs" >
+                                                    	<i class="ti-new-window pr-1"></i>
+                                                        Texto Integral
+                                                    </a>
+                                              </li>
+                                                                                                                                    </ul>
+
+                                    </div>
+
+                              </div>
+
+                                          </div>
+                </div>
+
+	</div>
+  	<div class="resumo-filtros-selecionados d-none d-sm-block ml-4"  style="max-width: 35%" ">
+
+			<h4 class="pb-2 fw-bold">Filtro(s) selecionado(s)</h4>
+
+
+			<div class="card p-2 pr-3 pl-3 w-100 container-filtros" style="border: 1px solid #eaeaea;-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow: none;">
+                		<div class="card-body p-0" >
+
+                        		                                		    <div class="card-title text-muted text-center text-nowrap pb-0" style="font-size: 0.7em; min-width: 200px;" >
+
+                                    		   	<div class="d-flex justify-content-between mt-2">
+                                                    <div class="">Termo</div>
+                                                    <div class="text-info cursor-link limpar-todos" onclick="limparCampo('termo');pesquisaLegislacao('0');">Limpar</div>
+                                                </div>
+
+                                		    </div>
+                                		    <ul class="nav nav-pills nav-secondary nav-pills-no-bd nav-sm pb-2" id="pills-tab" role="tablist">
+                                		                                    		        	<li class="nav-item mr-2 text-truncate" style="margin-left: 0px !important;padding-right:0px !important; padding-left: 0px !important;">
+                                						<a class="nav-link tag-filtro" href="#" onclick="limparCampo('termo');pesquisaLegislacao('0');">telemedicina<i class="pl-2 icon ti-close"></i></a>
+                                					</li>
+
+                            		                                            			</ul>
+
+                        </div>
+            	</div>
+
+
+	</div>
 </div>
-</body>
-</html>
+
+
+        <nav class="navbar navbar-header fixed-bottom p-2 " style="background-color:#F9FBFD;  min-height: 50px;">
+
+                <div class="container-fluid">
+
+                			<div class="d-flex justify-content-center align-middle w-100 text-white">
+
+
+                        		<div class="box-footer clearfix" style="text-align: center">
+                        		      <ul class="pagination m-0 float-right">
+
+
+                        				                        					<li class="page-item active"><a href="javascript:void(0);" class="page-link"><strong>1</strong></a></li>
+                        				                        					<li class="page-item" onclick="pesquisaLegislacao('1', '10');"><a href="javascript:void(0);" class="page-link">2</a></li>
+
+
+                                        </ul>
+
+                                    </div>
+
+
+
+                 			</div>
+
+            			</div>
+
+        </nav>
+
+<script>
+
+	var height_container = $(".container-resultado").height();
+
+	$(".no-reults").css("min-height", (height_container));
+	$(".container-filtros").css("min-height", (height_container));
+
+
+</script>
