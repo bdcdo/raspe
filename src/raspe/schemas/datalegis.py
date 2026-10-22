@@ -20,8 +20,11 @@ class OutputDatalegis(OutputBase):
     """Atos normativos dos portais ANSLegis e ANVISALegis."""
 
     url: str = Field(
-        description="Endereço do texto do ato.",
-        examples=["https://anslegis.datalegis.net/acao/abrirTextoAto.php?id=12345"],
+        description="Endereço do texto do ato, no domínio do portal do órgão.",
+        examples=[
+            "https://anslegis.datalegis.net/acao/abrirTextoAto.php?id=12345",
+            "https://anvisalegis.datalegis.net/acao/abrirTextoAto.php?id=12345",
+        ],
     )
     titulo: str = Field(description="Tipo e número do ato.", examples=["RESOLUÇÃO NORMATIVA Nº 500/2024"])
     descricao: str | None = Field(
