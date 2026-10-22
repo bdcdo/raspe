@@ -1,0 +1,105 @@
+name: Release
+
+# Publica no PyPI quando uma tag vX.Y.Z chega ao GitHub. O job build roda sem
+# credencial nenhuma; só o job publish, que depende dele, recebe o token OIDC do
+# Trusted Publishing, e só depois de a tag, a suíte e os pacotes passarem.
+# Um upload ao PyPI não se desfaz e o número da versão não pode ser reusado, por
+# isso toda conferência acontece antes dele.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  build:
+    name: Conferir, testar e construir
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Baixar o código da tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Instalar uv e Python 3.11
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.12.11"
+          python-version: "3.11"
+          # Sem cache: um cache gravado por outro workflow seria uma entrada que
+          # este job não controla, e o que sai daqui vai para o PyPI.
+          enable-cache: false
+
+      - name: Conferir a tag contra a versão do pyproject.toml
+        run: |
+          versao="$(uv run --no-project python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          if [ "$GITHUB_REF_NAME" != "v$versao" ]; then
+            echo "::error::A tag $GITHUB_REF_NAME não corresponde à versão $versao do pyproject.toml; a tag esperada é v$versao."
+            exit 1
+          fi
+          echo "Tag $GITHUB_REF_NAME confere com a versão $versao."
+
+      - name: Rodar a suíte offline
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+          .venv/bin/pytest
+
+      - name: Construir sdist e wheel
+        run: uv build
+
+      - name: Conferir os metadados dos pacotes
+        run: uvx twine==7.0.0 check --strict dist/*
+
+      # A suíte roda sobre o código-fonte; este passo pega o que só aparece no
+      # pacote, como módulo que ficou fora da wheel ou versão diferente da tag.
+      - name: Importar todos os módulos a partir da wheel numa venv limpa
+        run: |
+          uv venv "$RUNNER_TEMP/fumaca"
+          uv pip install --python "$RUNNER_TEMP/fumaca/bin/python" dist/*.whl
+          "$RUNNER_TEMP/fumaca/bin/python" -I - <<'EOF'
+          import importlib
+          import os
+          import pkgutil
+          import sys
+
+          import raspe
+
+          assert raspe.__file__.startswith(sys.prefix), raspe.__file__
+          assert "v" + raspe.__version__ == os.environ["GITHUB_REF_NAME"], raspe.__version__
+          modulos = [m.name for m in pkgutil.walk_packages(raspe.__path__, "raspe.")]
+          for nome in modulos:
+              importlib.import_module(nome)
+          print(f"raspe {raspe.__version__}: {len(modulos)} módulos importados de {raspe.__file__}")
+          EOF
+
+      - name: Guardar os pacotes para o job de publicação
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publicar no PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # O Trusted Publisher do PyPI aceita só este environment, e é nele que o
+    # GitHub aplica a aprovação manual, se ela estiver configurada.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/raspe/
+    permissions:
+      id-token: write # token OIDC que o PyPI troca por credencial de upload de curta duração
+    steps:
+      - name: Baixar os pacotes construídos
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publicar por Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
