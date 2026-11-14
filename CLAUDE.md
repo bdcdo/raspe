@@ -45,11 +45,64 @@ Novos scrapers devem:
 ## Desenvolvimento
 
 - Python >= 3.11, gerenciador `uv`
-- Instalar deps de dev: `uv pip install -e ".[dev]"`
+- Criar o ambiente e instalar tudo (dev + browser; o pyright precisa do
+  Playwright instalado para resolver os imports de `playwright_scraper.py`):
+
+  ```bash
+  uv venv -p 3.11 .venv
+  uv pip install -e ".[all]"
+  source .venv/bin/activate
+  ```
+
+- Os hooks locais (mypy, pyright, pytest) chamam `.venv/bin/...`, então o
+  ambiente precisa estar em `.venv/` na raiz do repo.
 - Ativar hooks: `pre-commit install`
-- Hooks rodam em cada commit: trailing whitespace, isort, pylint, flake8, mypy, pyright
+- Hooks rodam em cada commit: trailing whitespace, isort, pylint, flake8, mypy, pyright e pytest
+  (suíte offline, ~15 s)
 - Comprimento máximo de linha: 120
 - Para rodar todos os hooks manualmente: `pre-commit run --all-files`
+- Comandos isolados (use o hook, não o binário solto: `flake8` e `pylint`
+  rodados direto do `.venv` ignoram os args do `.pre-commit-config.yaml` e
+  acusam falsos positivos):
+
+  ```bash
+  pytest                                   # testes + gate de cobertura (fail_under=80)
+  pre-commit run isort --all-files         # lint
+  pre-commit run pylint --all-files        # lint (só src/)
+  pre-commit run flake8 --all-files        # lint
+  pre-commit run mypy --all-files          # typecheck
+  pre-commit run pyright --all-files       # typecheck (warnings não falham; erros sim)
+  ```
+
+- Os testes de Playwright não abrem navegador; não é preciso `playwright install`.
+
+## Estrutura do repositório
+
+```
+src/raspe/
+  __init__.py            # API pública: funções de conveniência por fonte
+  abstract_scraper.py    # interface mínima
+  base_scraper.py        # BaseScraper: paginação, retry, montagem do DataFrame
+  html_scraper.py        # HTMLScraper: helpers de parsing com BeautifulSoup
+  playwright_scraper.py  # base async para fontes que exigem navegador
+  scraper_manager.py     # registro/despacho dos scrapers
+  exceptions.py          # ScraperError e derivadas
+  utils.py
+  scrapers/<fonte>.py    # um arquivo por fonte (presidencia, camara, senado, ipea, capes, ...)
+tests/
+  <scraper>/test_raspar_contract.py   # contratos offline
+  <scraper>/samples/                  # respostas reais commitadas
+  fixtures/capture/<scraper>.py       # scripts de captura de samples
+  test_<modulo>.py                    # testes dos módulos core
+notebooks/               # exemplos de uso por fonte (não são testados)
+```
+
+## Git e PRs
+
+- Branch por mudança; nada de push direto na `main`. PRs entram por squash,
+  com o número do PR no título do commit.
+- Mensagens no estilo Conventional Commits em português:
+  `feat: adiciona scraper X`, `fix(base_scraper): ...`, `test(scrapers): ...`, `chore: ...`.
 
 ## Testes
 

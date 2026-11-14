@@ -48,3 +48,10 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: pytest
+        name: pytest (contratos offline, < 30 s)
+        entry: .venv/bin/pytest
+        language: system
+        files: ^(src|tests)/
+        pass_filenames: false
+        args: ["-q", "-p", "no:cacheprovider"]
