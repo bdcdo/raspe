@@ -74,6 +74,8 @@ Novos scrapers devem:
   pre-commit run pyright --all-files       # typecheck (warnings não falham; erros sim)
   ```
 
+- CI: `.github/workflows/ci.yml` roda `pre-commit run --all-files` (ou seja,
+  os mesmos hooks acima) em todo PR e em push na `main`. Sem deploy e sem segredos.
 - Os testes de Playwright não abrem navegador; não é preciso `playwright install`.
 
 ## Estrutura do repositório
