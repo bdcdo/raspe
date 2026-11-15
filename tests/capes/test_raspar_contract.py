@@ -6,14 +6,13 @@ público do Portal de Periódicos da CAPES
 usando ``requests`` com User-Agent realista. O HTML é Joomla! server-rendered
 com cards ``div.col-md-12.br-item[id^="conteudo-"]``.
 
-- ``page_01.html``: busca "natjus" (20 resultados → 1 página).
-- ``page_02.html``: busca "saude", página 2 (30 resultados).
-- ``single_page.html``: hoje é cópia bit-a-bit de ``page_01`` (mesma busca
-  "natjus" que já cabe em 1 página). Idealmente regenerar com termo
-  diferente para detectar drift independente — rodar
-  ``tests/fixtures/capture/capes.py`` quando o site não estiver
-  rate-limitando.
+- ``page_01.html`` e ``page_02.html``: páginas 1 e 2 da busca
+  "natjus OR nat-jus" (41 resultados: 30 + 11).
+- ``single_page.html``: busca "natjus saude judicializacao" (17 resultados,
+  1 página).
 - ``no_results.html``: termo absurdo, sem ``nav.br-pagination``.
+
+Para recapturar: ``python -m tests.fixtures.capture.capes``.
 """
 
 import pytest
@@ -39,48 +38,31 @@ def scraper():
 class TestRasparContract:
     @responses.activate
     def test_typical_paginacao(self, scraper, mocker):
-        """Page_02 (data-total ~29M) como resposta inicial → range(1,3) sem cap.
-
-        Resultado: page_01 (20 itens) + page_02 (12 itens trimados) = 32 linhas.
-        Page_02 trimado para 12 cards (de 30) para ficar abaixo do limite
-        de 500KB do pre-commit `check-added-large-files`.
-        """
+        """Página 1 dá a contagem (41 em cards de 30 → 2 páginas); raspar() baixa as duas."""
         mocker.patch("time.sleep")
 
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/page_02.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/page_01.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/page_02.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
+        query = {"q": "all:contains(natjus OR nat-jus)", "mode": "advanced", "source": "all"}
+        # A requisição da contagem vai sem "page"; depois vêm as páginas 1 e 2.
+        for sample, pagina in (("page_01", {}), ("page_01", {"page": "1"}), ("page_02", {"page": "2"})):
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("capes", f"raspar/{sample}.html"),
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({**query, **pagina})],
+            )
 
-        df = scraper.raspar(pesquisa="saude", paginas=range(1, 3))
+        df = scraper.raspar(pesquisa="natjus OR nat-jus")
 
-        assert not df.empty
         assert list(df.columns) == COLUNAS
-        # page_01 contribui com 20 cards; page_02 foi trimada para 12
-        # (ver docstring), mas qualquer regeneração pode mudar o trim.
-        # Validamos só o limite inferior: page_01 cheia + ≥10 da page_02.
-        assert len(df) >= 30
-        assert df["link"].iloc[0].startswith("https://www.periodicos.capes.gov.br")
-        assert "termo_busca" in df.columns
-        assert (df["termo_busca"] == "saude").all()
+        assert len(df) == 41
+        assert df["id"].is_unique
+        assert df["link"].str.startswith("https://www.periodicos.capes.gov.br").all()
+        assert (df["termo_busca"] == "natjus OR nat-jus").all()
 
     @responses.activate
     def test_single_page(self, scraper, mocker):
-        """1 página → 20 resultados, todos os campos extraídos."""
+        """1 página → 17 resultados, todos os campos extraídos."""
         mocker.patch("time.sleep")
 
         responses.add(
@@ -96,15 +78,15 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="natjus")
+        df = scraper.raspar(pesquisa="natjus saude judicializacao")
 
-        assert len(df) == 20
+        assert len(df) == 17
         assert list(df.columns) == COLUNAS
         assert df["id"].str.match(r"^W\d+$").all()
         assert df["titulo"].str.len().min() > 0
         # Tolerância de 2 cards sem ano de 4 dígitos (ex.: "no prelo",
         # "in press" ou registros do OpenAlex sem ano publicado).
-        assert (df["ano"].str.match(r"^\d{4}$")).sum() >= 18
+        assert (df["ano"].str.match(r"^\d{4}$")).sum() >= 15
 
     @responses.activate
     def test_no_results(self, scraper, mocker):

@@ -16,19 +16,16 @@ As requisições saem da sessão e da query do próprio ``ScraperCapes``.
 
 Cenários capturados:
 
-- ``page_01.html`` — busca ``natjus`` (≈20 resultados, 1 página).
-- ``page_02.html`` — busca ``saude``, página 2, cortada nos primeiros
-  ``CARDS_PAGE_02`` cards (``_cortar_cards``) para ficar abaixo do limite
-  de 500 KB do hook ``check-added-large-files``. O teste
-  ``test_typical_paginacao`` espera que page_02 contribua com ao menos
-  10 cards.
-- ``single_page.html`` — busca ``natjus_brasil`` (termo composto pouco
-  comum, costuma retornar 1 página). Caso retorne 0 ou >1, troque por
-  outro termo restritivo (ex.: ``natjus saude judicializacao``).
+- ``page_01.html`` e ``page_02.html`` — páginas 1 e 2 da busca
+  ``natjus OR nat-jus`` (41 resultados em 15/11/2026: 30 + 11). Termo
+  escolhido por dar duas páginas pequenas o bastante para o limite de
+  500 KB do hook ``check-added-large-files``, sem corte.
+- ``single_page.html`` — busca ``natjus saude judicializacao`` (17
+  resultados em 15/11/2026, 1 página). Se passar de 30 resultados ou
+  zerar, troque por outro termo restritivo.
 - ``no_results.html`` — termo absurdo, sem paginação.
 """
 
-import time
 from pathlib import Path
 
 from raspe.scrapers.capes import ScraperCapes
@@ -36,44 +33,20 @@ from tests.fixtures.capture._util import capturar_cenarios, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "capes" / "samples" / "raspar"
 
-# (arquivo de saída, parâmetros de raspar, página do raspe). Estes vão
-# para o disco inteiros; a page_02 tem chamada própria, com corte.
+TERMO_PAGINADO = "natjus OR nat-jus"
+
+# (arquivo de saída, parâmetros de raspar, página do raspe)
 CENARIOS = (
-    ("page_01.html", {"pesquisa": "natjus"}, 1),
-    ("single_page.html", {"pesquisa": "natjus_brasil"}, 1),
+    ("page_01.html", {"pesquisa": TERMO_PAGINADO}, 1),
+    ("page_02.html", {"pesquisa": TERMO_PAGINADO}, 2),
+    ("single_page.html", {"pesquisa": "natjus saude judicializacao"}, 1),
     ("no_results.html", {"pesquisa": "termo_inexistente_xyz12345abc"}, 1),
 )
-CENARIO_PAGE_02 = ("page_02.html", {"pesquisa": "saude"}, 2)
-CARDS_PAGE_02 = 12
-
-
-def _cortar_cards(html: bytes) -> bytes:
-    """Mantém só os primeiros ``CARDS_PAGE_02`` cards da página.
-
-    A página 2 de "saude" traz 30 cards e passa do limite de tamanho do
-    repositório. O ``_find_n_pags`` lê a resposta inteira antes do corte.
-
-    Args:
-        html: Body cru da resposta.
-
-    Returns:
-        A página com os cards além do limite removidos, em UTF-8.
-    """
-    from bs4 import BeautifulSoup
-
-    soup = BeautifulSoup(html, "html.parser")
-    for card in soup.select(ScraperCapes._SELETOR_CARD)[CARDS_PAGE_02:]:
-        card.decompose()
-    return str(soup).encode("utf-8")
 
 
 def main() -> None:
     saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
-    scraper = ScraperCapes(debug=False)
-    capturar_cenarios(scraper, CENARIOS, saida)
-    # Mesmo intervalo que capturar_cenarios põe entre os cenários.
-    time.sleep(scraper.sleep_time)
-    capturar_cenarios(scraper, [CENARIO_PAGE_02], saida, enxugar=_cortar_cards)
+    capturar_cenarios(ScraperCapes(debug=False), CENARIOS, saida)
 
 
 if __name__ == "__main__":
