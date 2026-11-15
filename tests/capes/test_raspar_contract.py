@@ -62,21 +62,18 @@ class TestRasparContract:
 
     @responses.activate
     def test_single_page(self, scraper, mocker):
-        """1 página → 17 resultados, todos os campos extraídos."""
+        """1 página → 17 resultados, com id, título e ano extraídos."""
         mocker.patch("time.sleep")
 
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
+        query = {"q": "all:contains(natjus saude judicializacao)", "mode": "advanced", "source": "all"}
+        for pagina in ({}, {"page": "1"}):
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("capes", "raspar/single_page.html"),
+                status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({**query, **pagina})],
+            )
 
         df = scraper.raspar(pesquisa="natjus saude judicializacao")
 
@@ -122,12 +119,12 @@ class TestRasparContract:
 
     @responses.activate
     def test_query_params_corretos(self, scraper, mocker):
-        """A query base deve usar a sintaxe 'all:contains({termo})'."""
+        """A query usa 'all:contains({termo})', e paginas=range(1, 2) baixa só a página 1 de 2."""
         mocker.patch("time.sleep")
 
         responses.add(
             responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/single_page.html"),
+            body=load_sample_bytes("capes", "raspar/page_01.html"),
             status=200,
             content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher({
@@ -139,13 +136,13 @@ class TestRasparContract:
         )
         responses.add(
             responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/single_page.html"),
+            body=load_sample_bytes("capes", "raspar/page_01.html"),
             status=200,
             content_type="text/html; charset=utf-8",
         )
 
         df = scraper.raspar(pesquisa="saude", paginas=range(1, 2))
-        assert not df.empty
+        assert len(df) == 30
 
 
 class TestFindNPags:

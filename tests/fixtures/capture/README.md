@@ -36,7 +36,7 @@ demais para o limite de 500 KB do hook `check-added-large-files` passam por
 `enxugar_html` (em `_util.py`), que tira `<script>`, `<style>`, `<svg>`,
 comentários e o excesso de `<option>` e mantém o resto como o site devolveu. A exceção é o
 `ipea.py`, que só esvazia os `<select>` (`_esvaziar_selects`) e grava o resto byte a byte, e o `capes.py`, que
-corta a `page_02.html` nos primeiros cards (`_cortar_cards`). Os samples
+grava as páginas inteiras e fica abaixo do limite pela escolha dos termos de busca. Os samples
 ficam **commitados no repositório**, fora do `.gitignore`.
 
 ## Quando re-rodar
