@@ -106,7 +106,7 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
             ScraperError: Se o formulário mudou de formato ou se não há solução
                 dentro de ``MAX_TENTATIVAS_DESAFIO``.
         """
-        campos = {i['name']: i.get('value', '') for i in form.find_all('input') if i.get('name')}
+        campos = {str(i['name']): str(i.get('value', '')) for i in form.find_all('input') if i.get('name')}
         try:
             prefixo = '0' * int(campos['diff'])
             inicio = hashlib.sha256(f"{campos['ip']};{urlparse(url_pagina).hostname};{campos['ts']};".encode())

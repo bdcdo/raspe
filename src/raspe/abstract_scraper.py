@@ -97,7 +97,8 @@ class _LoggerDaInstancia(logging.LoggerAdapter):
         Returns:
             int: Nível efetivo.
         """
-        return max(self.level, self.logger.getEffectiveLevel())
+        efetivo: int = self.logger.getEffectiveLevel()
+        return max(self.level, efetivo)
 
     def setLevel(self, level: int | str) -> None:
         """Muda o nível só desta instância (o ``LoggerAdapter`` mudaria o logger compartilhado).
@@ -256,9 +257,10 @@ class AbstractScraper(ABC):
             path: Pasta criada por ``_create_download_dir``.
         """
         shutil.rmtree(path)
-        if self._download_path != self._raiz_temporaria:
+        raiz = self._raiz_temporaria
+        if raiz is None or self._download_path != raiz:
             return
-        for pasta in (os.path.dirname(path), self._download_path):
+        for pasta in (os.path.dirname(path), raiz):
             try:
                 os.rmdir(pasta)
             except OSError:

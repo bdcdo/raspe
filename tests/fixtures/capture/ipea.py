@@ -17,7 +17,8 @@ from pathlib import Path
 import requests
 
 from raspe.scrapers.ipea import ScraperIpea
-from tests.fixtures.capture._util import attach_capture_hook, capturar_busca_vazia as _capturar  # noqa: E402
+from tests.fixtures.capture._util import attach_capture_hook
+from tests.fixtures.capture._util import capturar_busca_vazia as _capturar  # noqa: E402
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "ipea" / "samples" / "raspar"
 API_URL = (

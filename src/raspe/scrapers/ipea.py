@@ -1,5 +1,6 @@
 import sys
 import warnings
+from types import FrameType
 from typing import Any, Literal
 
 import pandas as pd
@@ -16,7 +17,8 @@ def _nivel_do_chamador() -> int:
     ``DeprecationWarning`` do ``__main__``, não o esconde. Com Python 3.12 como
     mínimo, dá para trocar por ``warnings.warn(..., skip_file_prefixes=...)``.
     """
-    nivel, quadro = 1, sys._getframe(1)  # pylint: disable=protected-access
+    nivel = 1
+    quadro: FrameType | None = sys._getframe(1)  # pylint: disable=protected-access
     while quadro is not None and quadro.f_globals.get("__name__", "").split(".")[0] == "raspe":
         nivel, quadro = nivel + 1, quadro.f_back
     return nivel
