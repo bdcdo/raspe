@@ -65,20 +65,18 @@ class TestFactoriesPlaywright:
         assert isinstance(raspe.anvisa(), ScraperANVISA)
 
 
-@pytest.mark.parametrize("fabrica", [
-    "presidencia", "ipea", "senado", "camara", "cfm", "folha", "capes",
-    "saudelegis", "ans", "anvisa",
+@pytest.mark.parametrize("fabrica, extra", [
+    *[(nome, {}) for nome in (
+        "presidencia", "ipea", "senado", "camara", "cfm", "folha", "capes",
+        "saudelegis", "ans", "anvisa",
+    )],
+    ("nyt", {"api_key": "chave-de-teste"}),
 ])
-def test_fabricas_aceitam_debug(fabrica):
+def test_fabricas_aceitam_debug(fabrica, extra):
     """``raspe.<fonte>(debug=False)`` desliga o modo de depuração já na construção."""
-    raspador = getattr(raspe, fabrica)(debug=False)
+    raspador = getattr(raspe, fabrica)(debug=False, **extra)
     assert raspador.debug is False
     assert raspador.logger.level == logging.INFO
-
-
-def test_nyt_aceita_debug():
-    raspador = raspe.nyt(api_key="chave-de-teste", debug=False)
-    assert raspador.debug is False
 
 
 class TestExports:
