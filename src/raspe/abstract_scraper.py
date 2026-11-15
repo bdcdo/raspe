@@ -346,6 +346,9 @@ class AbstractScraper(ABC):
         todos os arquivos correspondentes a 'self.type' dentro do diretório (recursivamente)
         serão processados.
 
+        A mensagem do erro e a do aviso trazem, para cada página sem linhas, a
+        exceção que :meth:`_parse_page` levantou, se houve uma.
+
         Args:
             path: Caminho para o arquivo ou diretório contendo os dados a serem analisados.
 
@@ -365,7 +368,10 @@ class AbstractScraper(ABC):
         self.logger.debug(f"Analisando dados de: {path}")
 
         result = []
-        sem_linhas = []
+        # Página sem linhas -> o erro que a leitura levantou ("" se só veio vazia). Guarda o
+        # texto, não a exceção, cujo traceback seguraria a página inteira na memória.
+        sem_linhas: dict[str, str] = {}
+        primeiro_erro: Exception | None = None
         arquivos = glob.glob(f"{path}/**/*.{self.type.lower()}", recursive=True)
         arquivos = sorted(f for f in arquivos if os.path.isfile(f))
         if not arquivos:
@@ -375,26 +381,33 @@ class AbstractScraper(ABC):
             try:
                 single_result = self._parse_page(file)
             except Exception as e:
-                self.logger.error(f"Erro ao processar {file}: {e}")
-                sem_linhas.append(file)
+                self.logger.error(f"Erro ao processar {file}: {e!r}")
+                sem_linhas[file] = f" ({type(e).__name__}: {e})"
+                primeiro_erro = primeiro_erro or e
                 continue
 
             if single_result is None or single_result.empty:
-                sem_linhas.append(file)
+                sem_linhas[file] = ""
             else:
                 result.append(single_result)
 
+        # A mensagem leva o erro de cada página, para não ficar só no log, até um limite
+        # que não afogue o traceback numa busca longa.
+        limite = 5
+        paginas = "; ".join(os.path.basename(f) + erro for f, erro in list(sem_linhas.items())[:limite])
+        if len(sem_linhas) > limite:
+            paginas += f"; e mais {len(sem_linhas) - limite}"
         if not result:
             raise ScraperError(
                 f"{self.nome_buscador}: nenhuma das {len(arquivos)} páginas baixadas rendeu resultados, "
                 "embora a contagem indicasse que havia. O site pode ter mudado de layout ou devolvido "
-                f"páginas de bloqueio. {self._onde_ficam_os_arquivos(path)}"
-            )
+                f"páginas de bloqueio. Páginas: {paginas}. {self._onde_ficam_os_arquivos(path)}"
+            ) from primeiro_erro
         if sem_linhas:
             warnings.warn(
                 f"{self.nome_buscador}: {len(sem_linhas)} de {len(arquivos)} páginas baixadas não renderam "
                 "resultados (erro de leitura, página de bloqueio ou layout novo), e o resultado pode estar "
-                f"incompleto. Páginas: {', '.join(os.path.basename(f) for f in sem_linhas)}.",
+                f"incompleto. Páginas: {paginas}.",
                 stacklevel=nivel_de_pilha_fora_do_pacote(),
             )
 

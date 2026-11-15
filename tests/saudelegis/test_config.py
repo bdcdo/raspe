@@ -67,6 +67,7 @@ class TestParsePage:
             "tipo_norma", "numero", "data_pub", "origem", "ementa", "link_url",
         }
 
-    def test_arquivo_inexistente_retorna_df_vazio(self, scraper):
-        df = scraper._parse_page("/tmp/inexistente-zzzzz.html")
-        assert df.empty
+    def test_arquivo_inexistente_levanta(self, scraper, tmp_path):
+        """O erro sobe para o ``_parse_data``, que o põe na mensagem, em vez de virar página vazia."""
+        with pytest.raises(FileNotFoundError):
+            scraper._parse_page(str(tmp_path / "inexistente.html"))

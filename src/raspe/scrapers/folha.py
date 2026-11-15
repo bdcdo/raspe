@@ -188,47 +188,42 @@ class ScraperFolha(BaseScraper, HTMLScraper):
         Returns:
             DataFrame com as colunas de ``self.colunas``.
         """
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
+        with open(path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
 
-            soup = self.soup_it(html_content)
+        soup = self.soup_it(html_content)
 
-            # Estrutura: ol.u-list-unstyled.c-search > li (cada notícia)
-            lista_noticias = soup.find("ol", class_="u-list-unstyled c-search")
-            if not lista_noticias:
-                self.logger.warning(f"Lista de notícias não encontrada em {path}")
-                return pd.DataFrame(columns=self.colunas)
-
-            noticias = lista_noticias.find_all("li")
-
-            infos = []
-            for noticia in noticias:
-                try:
-                    # Link
-                    link_tag = noticia.find("a")
-                    link = link_tag["href"] if link_tag and link_tag.has_attr("href") else "N/A"
-
-                    # Título
-                    h2_tag = noticia.find("h2")
-                    titulo = h2_tag.text.strip() if h2_tag else "N/A"
-
-                    # Resumo
-                    p_tag = noticia.find("p")
-                    resumo = p_tag.text.strip() if p_tag else "N/A"
-
-                    # Data
-                    time_tag = noticia.find("time")
-                    data = time_tag.text.strip() if time_tag else "N/A"
-
-                    infos.append([link, titulo, resumo, data])
-
-                except Exception as e:
-                    self.logger.warning(f"Erro ao processar notícia: {e}")
-                    continue
-
-            return pd.DataFrame(infos, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Erro ao analisar página {path}: {e}")
+        # Estrutura: ol.u-list-unstyled.c-search > li (cada notícia)
+        lista_noticias = soup.find("ol", class_="u-list-unstyled c-search")
+        if not lista_noticias:
+            self.logger.warning(f"Lista de notícias não encontrada em {path}")
             return pd.DataFrame(columns=self.colunas)
+
+        noticias = lista_noticias.find_all("li")
+
+        infos = []
+        for noticia in noticias:
+            try:
+                # Link
+                link_tag = noticia.find("a")
+                link = link_tag["href"] if link_tag and link_tag.has_attr("href") else "N/A"
+
+                # Título
+                h2_tag = noticia.find("h2")
+                titulo = h2_tag.text.strip() if h2_tag else "N/A"
+
+                # Resumo
+                p_tag = noticia.find("p")
+                resumo = p_tag.text.strip() if p_tag else "N/A"
+
+                # Data
+                time_tag = noticia.find("time")
+                data = time_tag.text.strip() if time_tag else "N/A"
+
+                infos.append([link, titulo, resumo, data])
+
+            except Exception as e:
+                self.logger.warning(f"Erro ao processar notícia: {e}")
+                continue
+
+        return pd.DataFrame(infos, columns=self.colunas)

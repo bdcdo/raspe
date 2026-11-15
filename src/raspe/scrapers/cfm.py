@@ -199,43 +199,38 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         Returns:
             pd.DataFrame: DataFrame com as normas extraídas
         """
-        try:
-            with open(path, 'r', encoding='utf-8') as file:
-                html_content = file.read()
+        with open(path, 'r', encoding='utf-8') as file:
+            html_content = file.read()
 
-            soup = BeautifulSoup(html_content, 'html.parser')
-            results_div = soup.find('div', attrs={'id': 'resultsNormas'})
+        soup = BeautifulSoup(html_content, 'html.parser')
+        results_div = soup.find('div', attrs={'id': 'resultsNormas'})
 
-            if not results_div:
-                self.logger.debug(f"Div 'resultsNormas' não encontrada em {path}")
-                return pd.DataFrame(columns=self.colunas)
-
-            articles = results_div.find_all('article')
-
-            if not articles:
-                self.logger.debug(f"Nenhum artigo encontrado em {path}")
-                return pd.DataFrame(columns=self.colunas)
-
-            rotulos = {strong.text.strip() for strong in results_div.select('div.card-header li strong')}
-            rotulos_desconhecidos = rotulos - _COLUNA_POR_ROTULO.keys()
-            parsed_articles = []
-
-            for article in articles:
-                try:
-                    article_data = self._parse_article(article)
-                    if article_data:
-                        parsed_articles.append(article_data)
-                except Exception as e:
-                    self.logger.warning(f"Erro ao processar artigo em {path}: {e}")
-                    continue
-
-            df = pd.DataFrame(parsed_articles, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Erro ao analisar página {path}: {e}")
+        if not results_div:
+            self.logger.debug(f"Div 'resultsNormas' não encontrada em {path}")
             return pd.DataFrame(columns=self.colunas)
 
-        # Fora dos try: com warnings virando erro, o aviso não pode descartar os cards.
+        articles = results_div.find_all('article')
+
+        if not articles:
+            self.logger.debug(f"Nenhum artigo encontrado em {path}")
+            return pd.DataFrame(columns=self.colunas)
+
+        rotulos = {strong.text.strip() for strong in results_div.select('div.card-header li strong')}
+        rotulos_desconhecidos = rotulos - _COLUNA_POR_ROTULO.keys()
+        parsed_articles = []
+
+        for article in articles:
+            try:
+                article_data = self._parse_article(article)
+                if article_data:
+                    parsed_articles.append(article_data)
+            except Exception as e:
+                self.logger.warning(f"Erro ao processar artigo em {path}: {e}")
+                continue
+
+        df = pd.DataFrame(parsed_articles, columns=self.colunas)
+
+        # Fora do try de cada artigo, para o aviso (erro, com warnings virando erro) não descartar um card.
         if rotulos_desconhecidos:
             warnings.warn(
                 f"CFM: os cards trazem rótulos que o raspe não conhece, e os valores deles ficaram fora do "

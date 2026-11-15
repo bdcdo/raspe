@@ -148,26 +148,21 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         return (total + per_page - 1) // per_page
 
     def _parse_page(self, path: str) -> pd.DataFrame:
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
+        with open(path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
 
-            soup = self.soup_it(html_content)
-            cards = soup.select(self._SELETOR_CARD)
+        soup = self.soup_it(html_content)
+        cards = soup.select(self._SELETOR_CARD)
 
-            registros = []
-            for card in cards:
-                try:
-                    registros.append(self._parse_card(card))
-                except Exception as e:
-                    self.logger.warning(f"Erro parseando card em {path}: {e}")
-                    continue
+        registros = []
+        for card in cards:
+            try:
+                registros.append(self._parse_card(card))
+            except Exception as e:
+                self.logger.warning(f"Erro parseando card em {path}: {e}")
+                continue
 
-            return pd.DataFrame(registros, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Erro parseando página {path}: {e}")
-            return pd.DataFrame(columns=self.colunas)
+        return pd.DataFrame(registros, columns=self.colunas)
 
     def _parse_card(self, card) -> dict[str, Any]:
         out: dict[str, Any] = {}

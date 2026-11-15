@@ -172,82 +172,77 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        try:
-            with open(path, 'r', encoding='utf-8') as file:
-                html_content = file.read()
+        with open(path, 'r', encoding='utf-8') as file:
+            html_content = file.read()
 
-            lista_infos = []
+        lista_infos = []
 
-            soup = BeautifulSoup(html_content, 'html.parser')
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-            container = soup.find('div', class_='col-xs-12 col-md-12 sf-busca-resultados')
-            itens = container.find_all('div', class_='sf-busca-resultados-item') if container else []
+        container = soup.find('div', class_='col-xs-12 col-md-12 sf-busca-resultados')
+        itens = container.find_all('div', class_='sf-busca-resultados-item') if container else []
 
-            for idx, item in enumerate(itens, 1):
-                try:
-                    # Extrair informações passo a passo para identificar onde falha
-                    h3_element = item.find('h3')
-                    if not h3_element:
-                        raise ValueError("Elemento h3 não encontrado")
+        for idx, item in enumerate(itens, 1):
+            try:
+                # Extrair informações passo a passo para identificar onde falha
+                h3_element = item.find('h3')
+                if not h3_element:
+                    raise ValueError("Elemento h3 não encontrado")
 
-                    # Verificar links dentro do h3
-                    links_h3 = h3_element.find_all('a')
-                    if len(links_h3) < 1:
-                        raise ValueError("Nenhum link encontrado no h3")
+                # Verificar links dentro do h3
+                links_h3 = h3_element.find_all('a')
+                if len(links_h3) < 1:
+                    raise ValueError("Nenhum link encontrado no h3")
 
-                    titulo = links_h3[0].text.strip()
-                    link_norma = links_h3[0]['href']
-                    # Se há apenas 1 link, usar o mesmo para ambos os campos
-                    link_detalhes = links_h3[1]['href'] if len(links_h3) > 1 else 'NA'
+                titulo = links_h3[0].text.strip()
+                link_norma = links_h3[0]['href']
+                # Se há apenas 1 link, usar o mesmo para ambos os campos
+                link_detalhes = links_h3[1]['href'] if len(links_h3) > 1 else 'NA'
 
-                    # Verificar elementos p
-                    p_elements = item.find_all('p')
-                    if len(p_elements) < 3:
-                        raise ValueError(f"Esperados pelo menos 3 elementos p, encontrados {len(p_elements)}")
+                # Verificar elementos p
+                p_elements = item.find_all('p')
+                if len(p_elements) < 3:
+                    raise ValueError(f"Esperados pelo menos 3 elementos p, encontrados {len(p_elements)}")
 
-                    # Tentar diferentes estruturas para descrição
+                # Tentar diferentes estruturas para descrição
+                # Estrutura original: p[0] é a descrição
+                # Estrutura nova: p[1] é a descrição (quando p[0] é "Legislação")
+                first_p_text = p_elements[0].text.strip()
+                if first_p_text == "Legislação" and len(p_elements) > 1:
+                    # Nova estrutura: p[1] é a descrição
+                    descricao = p_elements[1].text.strip()
+                else:
                     # Estrutura original: p[0] é a descrição
-                    # Estrutura nova: p[1] é a descrição (quando p[0] é "Legislação")
-                    first_p_text = p_elements[0].text.strip()
-                    if first_p_text == "Legislação" and len(p_elements) > 1:
-                        # Nova estrutura: p[1] é a descrição
-                        descricao = p_elements[1].text.strip()
-                    else:
-                        # Estrutura original: p[0] é a descrição
-                        descricao = first_p_text
+                    descricao = first_p_text
 
-                    trecho_descricao = p_elements[2].text.strip()
+                trecho_descricao = p_elements[2].text.strip()
 
-                    lista_infos.append([titulo, link_norma, link_detalhes, descricao, trecho_descricao])
-                except Exception as e:
-                    # Coletar informações diagnósticas detalhadas
-                    h3_diag = item.find('h3')
-                    links_diag = list(h3_diag.find_all('a')) if h3_diag else []
-                    p_diag = list(item.find_all('p'))
+                lista_infos.append([titulo, link_norma, link_detalhes, descricao, trecho_descricao])
+            except Exception as e:
+                # Coletar informações diagnósticas detalhadas
+                h3_diag = item.find('h3')
+                links_diag = list(h3_diag.find_all('a')) if h3_diag else []
+                p_diag = list(item.find_all('p'))
 
-                    item_info = {
-                        'has_h3': bool(h3_diag),
-                        'links_in_h3': len(links_diag),
-                        'links_h3_details': [
-                            {'text': a.text.strip()[:50], 'has_href': 'href' in a.attrs}
-                            for a in links_diag
-                        ],
-                        'p_count': len(p_diag),
-                        'p_elements_details': [
-                            {'text': p.text.strip()[:50], 'class': str(p.get('class', ''))}
-                            for p in p_diag
-                        ],
-                        'item_class': str(item.get('class', '')) if hasattr(item, 'get') else 'unknown'
-                    }
+                item_info = {
+                    'has_h3': bool(h3_diag),
+                    'links_in_h3': len(links_diag),
+                    'links_h3_details': [
+                        {'text': a.text.strip()[:50], 'has_href': 'href' in a.attrs}
+                        for a in links_diag
+                    ],
+                    'p_count': len(p_diag),
+                    'p_elements_details': [
+                        {'text': p.text.strip()[:50], 'class': str(p.get('class', ''))}
+                        for p in p_diag
+                    ],
+                    'item_class': str(item.get('class', '')) if hasattr(item, 'get') else 'unknown'
+                }
 
-                    self.logger.warning(
-                        f"Erro ao processar item {idx} de {len(itens)} em {path}: {e}. "
-                        f"Diagnóstico detalhado: {item_info}"
-                    )
-                    continue
+                self.logger.warning(
+                    f"Erro ao processar item {idx} de {len(itens)} em {path}: {e}. "
+                    f"Diagnóstico detalhado: {item_info}"
+                )
+                continue
 
-            return pd.DataFrame(lista_infos, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Error parsing page {path}: {e}")
-            return pd.DataFrame(columns=self.colunas)
+        return pd.DataFrame(lista_infos, columns=self.colunas)

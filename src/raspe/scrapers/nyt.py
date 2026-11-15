@@ -264,54 +264,49 @@ class ScraperNYT(BaseScraper):
         Returns:
             DataFrame com as colunas de ``self.colunas``.
         """
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
 
-            docs = data.get('response', {}).get('docs', [])
+        docs = data.get('response', {}).get('docs', [])
 
-            if not docs:
-                return pd.DataFrame(columns=self.colunas)
-
-            articles = []
-            for doc in docs:
-                # Extrair imagem da lista multimedia
-                # A API retorna objetos com 'url', 'type', 'subtype', etc.
-                imagem_url = ''
-                multimedia = doc.get('multimedia', [])
-                if multimedia and isinstance(multimedia, list):
-                    for media in multimedia:
-                        # Prioriza imagens maiores (xlarge > large > thumbnail)
-                        subtype = media.get('subtype', '')
-                        if subtype in ('xlarge', 'superJumbo', 'articleLarge'):
-                            imagem_url = f"https://www.nytimes.com/{media.get('url', '')}"
-                            break
-                    # Fallback para qualquer imagem disponível
-                    if not imagem_url and multimedia:
-                        first_media = multimedia[0]
-                        if first_media.get('url'):
-                            imagem_url = f"https://www.nytimes.com/{first_media['url']}"
-
-                # Extrair autor
-                byline = doc.get('byline', {})
-                autor = byline.get('original', '') if byline else ''
-
-                article = {
-                    'titulo': doc.get('headline', {}).get('main', ''),
-                    'url': doc.get('web_url', ''),
-                    'data_publicacao': doc.get('pub_date', ''),
-                    'secao': doc.get('section_name', ''),
-                    'desk': doc.get('desk', ''),
-                    'tipo': doc.get('type_of_material', ''),
-                    'resumo': doc.get('snippet', ''),
-                    'autor': autor,
-                    'palavras': doc.get('word_count', 0),
-                    'imagem_url': imagem_url,
-                }
-                articles.append(article)
-
-            return pd.DataFrame(articles, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Erro ao processar {path}: {e}")
+        if not docs:
             return pd.DataFrame(columns=self.colunas)
+
+        articles = []
+        for doc in docs:
+            # Extrair imagem da lista multimedia
+            # A API retorna objetos com 'url', 'type', 'subtype', etc.
+            imagem_url = ''
+            multimedia = doc.get('multimedia', [])
+            if multimedia and isinstance(multimedia, list):
+                for media in multimedia:
+                    # Prioriza imagens maiores (xlarge > large > thumbnail)
+                    subtype = media.get('subtype', '')
+                    if subtype in ('xlarge', 'superJumbo', 'articleLarge'):
+                        imagem_url = f"https://www.nytimes.com/{media.get('url', '')}"
+                        break
+                # Fallback para qualquer imagem disponível
+                if not imagem_url and multimedia:
+                    first_media = multimedia[0]
+                    if first_media.get('url'):
+                        imagem_url = f"https://www.nytimes.com/{first_media['url']}"
+
+            # Extrair autor
+            byline = doc.get('byline', {})
+            autor = byline.get('original', '') if byline else ''
+
+            article = {
+                'titulo': doc.get('headline', {}).get('main', ''),
+                'url': doc.get('web_url', ''),
+                'data_publicacao': doc.get('pub_date', ''),
+                'secao': doc.get('section_name', ''),
+                'desk': doc.get('desk', ''),
+                'tipo': doc.get('type_of_material', ''),
+                'resumo': doc.get('snippet', ''),
+                'autor': autor,
+                'palavras': doc.get('word_count', 0),
+                'imagem_url': imagem_url,
+            }
+            articles.append(article)
+
+        return pd.DataFrame(articles, columns=self.colunas)

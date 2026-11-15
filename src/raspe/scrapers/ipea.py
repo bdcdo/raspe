@@ -108,61 +108,52 @@ class ScraperIpea(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        try:
-            with open(path, 'r', encoding='utf-8') as file:
-                html_content = file.read()
+        with open(path, 'r', encoding='utf-8') as file:
+            html_content = file.read()
 
-            lista_infos = []
+        lista_infos = []
 
-            soup = BeautifulSoup(html_content, 'html.parser')
-            card_body = soup.find('div', class_='lista-publicacoes')
+        soup = BeautifulSoup(html_content, 'html.parser')
+        card_body = soup.find('div', class_='lista-publicacoes')
 
-            if not card_body:
-                # Return empty pandas DataFrame
-                return pd.DataFrame(columns=self.colunas)
+        if not card_body:
+            return pd.DataFrame(columns=self.colunas)
 
-            container = card_body.find('div')
-            if not container:
-                # Return empty pandas DataFrame
-                return pd.DataFrame(columns=self.colunas)
+        container = card_body.find('div')
+        if not container:
+            return pd.DataFrame(columns=self.colunas)
 
-            itens = container.find_all('div', class_="row")
+        itens = container.find_all('div', class_="row")
 
-            for original_item in itens:
-                try:
-                    item = original_item.find('div', class_='publi-conteudo')
-                    if not item:
-                        continue
-
-                    h3 = item.find('h3')
-                    if not h3:
-                        continue
-                    anchor = h3.find('a')
-                    if not anchor:
-                        continue
-
-                    autores_div = item.find('div', class_='autores')
-                    assuntos_div = item.find('div', class_='assuntos')
-                    p_element = item.find('p')
-
-                    link = 'https://www.ipea.gov.br' + str(anchor.get('href', ''))
-                    titulo = anchor.text.strip()
-                    autores = autores_div.text.strip() if autores_div else ''
-                    data = p_element.text.strip() if p_element else ''
-                    assuntos = self._limpar_assuntos(assuntos_div.get_text()) if assuntos_div else ''
-
-                    lista_infos.append([titulo, link, autores, data, assuntos])
-                except Exception as e:
-                    self.logger.warning(f"Error parsing item in {path}: {e}")
+        for original_item in itens:
+            try:
+                item = original_item.find('div', class_='publi-conteudo')
+                if not item:
                     continue
 
-            # Directly create a pandas DataFrame since the base scraper expects pandas
-            return pd.DataFrame(lista_infos, columns=self.colunas)
+                h3 = item.find('h3')
+                if not h3:
+                    continue
+                anchor = h3.find('a')
+                if not anchor:
+                    continue
 
-        except Exception as e:
-            self.logger.error(f"Error parsing page {path}: {e}")
-            # Return empty pandas DataFrame
-            return pd.DataFrame(columns=self.colunas)
+                autores_div = item.find('div', class_='autores')
+                assuntos_div = item.find('div', class_='assuntos')
+                p_element = item.find('p')
+
+                link = 'https://www.ipea.gov.br' + str(anchor.get('href', ''))
+                titulo = anchor.text.strip()
+                autores = autores_div.text.strip() if autores_div else ''
+                data = p_element.text.strip() if p_element else ''
+                assuntos = self._limpar_assuntos(assuntos_div.get_text()) if assuntos_div else ''
+
+                lista_infos.append([titulo, link, autores, data, assuntos])
+            except Exception as e:
+                self.logger.warning(f"Erro ao processar item em {path}: {e}")
+                continue
+
+        return pd.DataFrame(lista_infos, columns=self.colunas)
 
     @staticmethod
     def _limpar_assuntos(texto: str) -> str:
