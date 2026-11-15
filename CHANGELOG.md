@@ -35,6 +35,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   para todos os raspadores menos Câmara e Senado, que aguardam a reescrita sobre as APIs oficiais.
 - Adicionado `docs/colunas.md`, com coluna, tipo, descrição e exemplo de cada fonte, gerado dos schemas por
   `python -m raspe.schemas.documentacao`.
+- Adicionados ao README tipo, descrição e exemplo de cada coluna da Câmara e do Senado, que ficam fora de
+  `docs/colunas.md` por ainda não terem schema de saída.
 - Adicionada a dependência `pydantic>=2.4`.
 - Adicionada a coluna `rotulo` à `presidencia()`, depois de `descricao`, com o selo que o portal põe ao lado do
   nome do ato, como "Veto Parcial"; vazia quando não há.
