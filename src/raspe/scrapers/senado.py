@@ -71,14 +71,13 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
         r0.raise_for_status()
 
         r0s = self.soup_it(r0.content)
-        num_text = '0'
-        if r0s:
-            a_tag = r0s.find('a', attrs={"data-click-type": "dynnav.colecao.Legislação Federal"})
-            if a_tag:
-                match = re.search(r'\d+', a_tag.text)
-                if match:
-                    num_text = match.group()
-                    self.logger.debug(f"Found a text: '{num_text}'")
+        a_tag = r0s.find('a', attrs={"data-click-type": "dynnav.colecao.Legislação Federal"})
+        match = re.search(r'\d+', a_tag.text) if a_tag else None
+        if not match:
+            # A busca sem resultados não traz o link da coleção, só o aviso.
+            return self._confirmar_busca_vazia(r0s)
+        num_text = match.group()
+        self.logger.debug(f"Found a text: '{num_text}'")
 
         num = int(num_text)
 

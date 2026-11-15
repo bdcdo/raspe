@@ -39,6 +39,11 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
 - Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
+- `raspar()` passa a levantar `RateLimitError` ou `APIError` quando a requisição inicial esbarra em 429 ou 5xx
+  persistentes. Antes devolvia um `DataFrame` vazio, como se a busca não tivesse resultados.
+- Os raspadores da Presidência, do Senado e da CAPES passam a levantar `ScraperError` quando a resposta inicial
+  não traz a contagem de resultados nem o aviso de busca vazia (página de manutenção ou verificação anti-robô).
+  Antes devolviam 0 resultados em silêncio.
 
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`

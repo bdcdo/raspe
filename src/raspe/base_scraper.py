@@ -117,6 +117,10 @@ class BaseScraper(AbstractScraper):
         Raises:
             ValueError: Se múltiplos parâmetros forem fornecidos como listas/tuplas.
             ValidationError: Se algum parâmetro for inválido.
+            RateLimitError: Se a requisição inicial esbarrar em rate limit (429) persistente.
+            APIError: Se a requisição inicial esbarrar em erro de servidor (5xx) persistente.
+            ScraperError: Se a resposta inicial não for uma página de resultados
+                (manutenção ou verificação anti-robô, nos raspadores que detectam isso).
         """
 
         # Valida parâmetros antes de iniciar
@@ -229,15 +233,14 @@ class BaseScraper(AbstractScraper):
 
         Returns:
             int: Número total de páginas encontradas para a consulta.
-                 Retorna 0 em caso de erro.
+
+        Raises:
+            RateLimitError: Se o rate limit (429) persistir após todas as tentativas.
+            APIError: Se o erro de servidor (5xx) persistir após todas as tentativas.
         """
         self.logger.debug("Enviando requisição inicial com retry automático")
 
-        try:
-            r0 = self._request_with_retry(query_inicial)
-        except (RateLimitError, APIError) as e:
-            self.logger.error(f"Erro na requisição inicial: {e}")
-            return 0
+        r0 = self._request_with_retry(query_inicial)
 
         self.logger.debug(f"Encontrando n_pags (status: {r0.status_code})")
         contagem = self._find_n_pags(r0)

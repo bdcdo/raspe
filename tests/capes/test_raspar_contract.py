@@ -20,6 +20,7 @@ import pytest
 import responses
 from responses import matchers
 
+from raspe.exceptions import ScraperError
 from raspe.scrapers.capes import ScraperCapes
 from tests._helpers import load_sample_bytes
 
@@ -120,6 +121,22 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyz123")
         assert df.empty
+
+    @responses.activate
+    def test_pagina_sem_paginacao_nem_aviso_levanta_erro(self, scraper, mocker):
+        """Sem paginação e sem o aviso de busca vazia (manutenção, anti-robô) → erro, não 0."""
+        mocker.patch("time.sleep")
+
+        responses.add(
+            responses.GET, API_URL,
+            body="<html><head><title>Portal em manutenção</title></head>"
+                 "<body><h1>Voltamos em breve</h1></body></html>",
+            status=200,
+            content_type="text/html; charset=utf-8",
+        )
+
+        with pytest.raises(ScraperError, match="Portal em manutenção"):
+            scraper.raspar(pesquisa="saude")
 
     @responses.activate
     def test_query_params_corretos(self, scraper, mocker):

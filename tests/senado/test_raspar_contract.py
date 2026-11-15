@@ -1,9 +1,17 @@
-"""Contrato offline para ``ScraperSenadoFederal.raspar``."""
+"""Contrato offline para ``ScraperSenadoFederal.raspar``.
+
+``no_results.html`` e ``anti_robo.html`` são reais (2026-11-14). A busca sem
+resultados não traz o link da coleção com a contagem, só o aviso "Nenhum
+resultado encontrado" (capturada com navegador, porque o ``requests`` cai na
+verificação anti-robô). ``anti_robo.html`` é essa verificação, servida com
+HTTP 200; o IP do cliente foi trocado por um IP de documentação.
+"""
 
 import pytest
 import responses
 from responses import registries
 
+from raspe.exceptions import ScraperError
 from raspe.scrapers.senado import ScraperSenadoFederal
 from tests._helpers import load_sample_bytes
 
@@ -70,6 +78,18 @@ class TestRasparContract:
         )
         df = scraper.raspar(pesquisa="xxxxxx_inexistente")
         assert df.empty
+
+    @responses.activate
+    def test_verificacao_anti_robo_levanta_erro(self, scraper, mocker):
+        """A verificação anti-robô (HTTP 200) não pode virar 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("senado", "raspar/anti_robo.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        with pytest.raises(ScraperError, match="Verificação de segurança"):
+            scraper.raspar(pesquisa="meio ambiente")
 
     @responses.activate
     def test_query_inclui_filtros_opcionais(self, scraper, mocker):
