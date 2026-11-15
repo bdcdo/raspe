@@ -43,6 +43,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado o notebook `notebooks/13_anvisa.ipynb`, com exemplos do raspador da ANVISA executados ao vivo.
 
 ### Modificado
+- Os avisos de que a busca passou do teto da fonte na `camara()` (10.000 resultados) e na `folha()` (10.000) passaram
+  de mensagem de log para `UserWarning`, como os demais avisos de resultado incompleto.
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
   `max_retry_after` dos raspadores HTTP.
 - Os logs dos raspadores saem pelo logger `raspe.<FONTE>` (antes, `<FONTE>`), filho de `raspe`, que tem o handler de
@@ -107,6 +109,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   anterior de novo: agora espera o rodapé da tabela mostrar os registros da página nova.
 - Corrigidos todos os raspadores, que com `debug=False` deixavam a pasta de download para trás quando a raspagem
   levantava erro: agora ela é apagada também nesse caso.
+- Corrigidos `nyt()`, `ans()`, `anvisa()` e `saudelegis()`, que paravam em silêncio no teto de páginas (100 no NYT e
+  no Datalegis, 50 no SaudeLegis): agora avisam com `UserWarning` que o resultado pode ficar incompleto.
 - Corrigidos todos os raspadores, que, quando a leitura de uma página baixada falhava, a tratavam como página vazia e
   deixavam o erro só no log: agora o aviso de página sem linhas e o `ScraperError` de nenhuma página lida trazem a
   exceção original de cada página.

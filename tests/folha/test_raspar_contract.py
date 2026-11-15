@@ -192,6 +192,18 @@ class TestRasparContract:
         assert len(responses.calls) == 1
 
 
+class TestTetoDeResultados:
+    def test_contagem_no_limite_de_10000_avisa(self, scraper, mocker):
+        """A busca da Folha para em 10.000 resultados, e a contagem também."""
+        r0 = mocker.Mock(content=b'<div class="c-search__result">10000 Resultados para x</div>')
+        with pytest.warns(UserWarning, match="10,000 resultados, mas o limite é 10,000"):
+            assert scraper._find_n_pags(r0) == 400
+
+    def test_abaixo_do_limite_nao_avisa(self, scraper, mocker):
+        r0 = mocker.Mock(content=b'<div class="c-search__result">386 Resultados para x</div>')
+        assert scraper._find_n_pags(r0) == 16
+
+
 class TestValidacao:
     def test_site_invalido_levanta_validation_error(self, scraper):
         with pytest.raises(ValidationError, match="site"):

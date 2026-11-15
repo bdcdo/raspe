@@ -164,8 +164,7 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
 
         self.logger.debug(f"Extracted number of results: {num}")
 
-        # Convert results to pages (assuming 10 results per page)
-        pages = (num + 9) // 10  # Round up division
+        pages = self._paginas_para(num, 10)
         self.logger.debug(f"Calculated pages: {pages}")
         return pages
 

@@ -98,14 +98,11 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         num = int(numeros[-1])
         self.logger.debug(f"Extracted number of results: {num}")
 
-        pages = (num + self.RESULTADOS_POR_PAGINA - 1) // self.RESULTADOS_POR_PAGINA
-        if pages > self.LIMITE_PAGINAS:
-            self.logger.warning(
-                f"Busca retornou {num:,} resultados, mas o portal da Câmara só exibe os "
-                f"{self.LIMITE_PAGINAS * self.RESULTADOS_POR_PAGINA:,} primeiros. "
-                "Divida a busca (por ano ou tipo de matéria, por exemplo) para coletar o restante."
-            )
-            pages = self.LIMITE_PAGINAS
+        # O portal só exibe os 10.000 primeiros (500 páginas de 20).
+        pages = self._paginas_para(
+            num, self.RESULTADOS_POR_PAGINA, self.LIMITE_PAGINAS * self.RESULTADOS_POR_PAGINA,
+            dica="por ano ou tipo de matéria, por exemplo",
+        )
         self.logger.debug(f"Calculated pages: {pages}")
         return pages
 

@@ -24,6 +24,9 @@ from raspe.exceptions import ScraperError
 from raspe.schemas.base import InputBase, OutputBase, conferir_saida, validar_entrada
 from raspe.utils import nivel_de_pilha_fora_do_pacote, validar_intervalo_datas
 
+# Como dividir uma busca que passa do teto da fonte, no aviso de _avisar_teto.
+_DICA_PADRAO = "por período, por exemplo"
+
 # Fora da classe porque, dentro dela, o nome 'type' é a propriedade abstrata
 # declarada mais abaixo, e o pylint lê 'type[...]' como uso antes da definição.
 _SchemaEntrada = type[InputBase] | None
@@ -299,6 +302,54 @@ class AbstractScraper(ABC):
                 os.rmdir(pasta)
             except OSError:
                 break
+
+    def _paginas_para(
+        self, total: int, por_pagina: int, max_resultados: int | None = None, dica: str = _DICA_PADRAO
+    ) -> int:
+        """Calcula quantas páginas cobrem ``total`` resultados, com ``por_pagina`` por página.
+
+        Se a fonte só entrega os ``max_resultados`` primeiros, conta só as
+        páginas deles e avisa com :meth:`_avisar_teto`.
+
+        Args:
+            total: Total de resultados que a fonte informa.
+            por_pagina: Resultados por página.
+            max_resultados: Quantos resultados a fonte entrega, no máximo. ``None``
+                sem teto.
+            dica: Como dividir a busca, para o aviso.
+
+        Returns:
+            int: Número de páginas (0 sem resultados).
+
+        Warns:
+            UserWarning: Se ``total`` passa de ``max_resultados``.
+        """
+        if not total:
+            return 0
+        if max_resultados is not None and total > max_resultados:
+            self._avisar_teto(total, max_resultados, dica=dica)
+            total = max_resultados
+        return (total + por_pagina - 1) // por_pagina
+
+    def _avisar_teto(
+        self, total: int, maximo: int, unidade: str = "resultados", dica: str = _DICA_PADRAO
+    ) -> None:
+        """Avisa que a busca passou do teto que a fonte (ou o raspador) coleta.
+
+        Args:
+            total: Total que a fonte informa, em ``unidade``.
+            maximo: Quanto pode ser coletado, no máximo, em ``unidade``.
+            unidade: "resultados" ou "páginas de resultados".
+            dica: Como dividir a busca.
+
+        Warns:
+            UserWarning: Sempre.
+        """
+        warnings.warn(
+            f"{self.nome_buscador}: a busca deu {total:,} {unidade}, mas o limite é {maximo:,}; o resultado "
+            f"pode ficar incompleto. Divida a busca ({dica}) para coletar o restante.",
+            stacklevel=nivel_de_pilha_fora_do_pacote(),
+        )
 
     def _apagar_sem_debug(self, path: str) -> None:
         """Apaga a pasta da busca, a não ser com ``debug=True``.

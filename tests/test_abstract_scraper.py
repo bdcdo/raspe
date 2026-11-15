@@ -277,6 +277,25 @@ class TestParseData:
         assert "p5.html" not in str(erro.value)
 
 
+class TestPaginasPara:
+    @pytest.mark.parametrize("total, paginas", [(0, 0), (1, 1), (10, 1), (11, 2), (101, 11)])
+    def test_arredonda_para_cima(self, total, paginas):
+        assert _DummyScraper("pp1")._paginas_para(total, 10) == paginas
+
+    def test_total_zero_com_zero_por_pagina_da_zero(self):
+        """A contagem "Mostrando 0 a 0 de 0" dá tamanho de página 0, e a conta não pode dividir por ele."""
+        assert _DummyScraper("pp4")._paginas_para(0, 0, 0) == 0
+
+    def test_no_teto_corta_e_avisa(self):
+        with pytest.warns(UserWarning, match="PP2: a busca deu 1,500 resultados, mas o limite é 1,000") as avisos:
+            assert _DummyScraper("PP2")._paginas_para(1500, 10, 1000) == 100
+        assert avisos[0].filename == __file__
+
+    def test_no_teto_exato_nao_avisa(self):
+        """Com a contagem exata (Câmara, NYT), chegar ao teto ainda é o resultado completo."""
+        assert _DummyScraper("pp3")._paginas_para(1000, 10, 1000) == 100
+
+
 class TestScrapeAlias:
     def test_scrape_chama_raspar(self, mocker):
         s = _DummyScraper("alias")
