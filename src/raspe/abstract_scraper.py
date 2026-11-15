@@ -9,6 +9,7 @@ scrapers baseados em Selenium (SeleniumScraper).
 import glob
 import logging
 import os
+import shutil
 import sys
 import tempfile
 import warnings
@@ -131,7 +132,8 @@ class AbstractScraper(ABC):
 
     Atributos:
         nome_buscador: Nome identificador do scraper.
-        download_path: Diretório base para arquivos temporários.
+        download_path: Diretório base para arquivos temporários. Por padrão, uma
+            pasta do ``tempfile.mkdtemp()``, criada na primeira busca.
         debug: Flag para modo de depuração.
         exclude_cols_from_dedup: Colunas a excluir na deduplicação.
         logger: Logger da instância (``logging.LoggerAdapter`` sobre ``raspe.<nome_buscador>``),
@@ -145,7 +147,8 @@ class AbstractScraper(ABC):
     def __init__(self, nome_buscador: str, debug: bool = True):
         """Inicializa o AbstractScraper com configuração comum."""
         self.nome_buscador: str = nome_buscador
-        self.download_path: str = tempfile.mkdtemp()
+        self._download_path: str | None = None
+        self._raiz_temporaria: str | None = None
         self.debug: bool = debug
         self.exclude_cols_from_dedup: list[str] = []
 
@@ -229,6 +232,37 @@ class AbstractScraper(ABC):
         os.makedirs(path)
         self.logger.debug(f"Criando diretório de download em {path}")
         return path
+
+    @property
+    def download_path(self) -> str:
+        """Diretório base dos arquivos baixados (por padrão, criado com ``tempfile.mkdtemp()``)."""
+        if self._download_path is None:
+            self._download_path = self._raiz_temporaria = tempfile.mkdtemp()
+        return self._download_path
+
+    @download_path.setter
+    def download_path(self, valor: str) -> None:
+        self._download_path = valor
+
+    def _limpar_download(self, path: str) -> None:
+        """Apaga a pasta de uma busca e, se for a do raspe, a raiz temporária vazia.
+
+        Remove ``path`` (``{download_path}/{nome_buscador}/{timestamp}``). Se o
+        ``download_path`` é a raiz criada pelo ``mkdtemp()``, remove também a
+        pasta da fonte e a raiz, quando ficam vazias. Numa pasta escolhida pelo
+        usuário, só a pasta da busca sai.
+
+        Args:
+            path: Pasta criada por ``_create_download_dir``.
+        """
+        shutil.rmtree(path)
+        if self._download_path != self._raiz_temporaria:
+            return
+        for pasta in (os.path.dirname(path), self._download_path):
+            try:
+                os.rmdir(pasta)
+            except OSError:
+                break
 
     def _parse_data(self, path: str) -> pd.DataFrame:
         """Analisa os dados de um arquivo ou diretório e os consolida em um DataFrame.

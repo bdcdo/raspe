@@ -48,6 +48,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
 - Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
 
+### Descontinuado
+- Descontinuado o parâmetro `download_path` de `ScraperIpea`, que sempre foi ignorado: agora emite
+  `DeprecationWarning`. Para mudar a pasta dos arquivos baixados, atribua `raspador.download_path`.
+
 ### Removido
 - Removido scraper CNJ (`comunicaCNJ`); migrado para `jtrecenti/juscraper`
   como agregador `comunica_cnj`. Quem dependia de `raspe.cnj()` deve usar
@@ -84,6 +88,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigida a paginação da CAPES, que lia 20 itens por página do atributo `data-per-page` (o portal serve 30) e pedia
   páginas vazias no fim: o tamanho da página agora vem dos itens da própria página 1.
 - Corrigido o timeout do CFM, cujo portal leva mais de um minuto para responder: o de leitura passou de 30 s para 120 s.
+- Corrigida a pasta temporária que ficava para trás depois de `raspar()` bem-sucedido com `debug=False`: além da
+  pasta da busca, saem a da fonte e a raiz criada pelo `mkdtemp()`. A raiz só é criada na primeira busca. Numa
+  pasta escolhida pelo usuário (`raspador.download_path = ...`), só a pasta da busca sai, como antes.
 - Corrigido o raspador do Senado, que sem navegador caía sempre na verificação anti-robô do site: agora resolve
   a prova de trabalho dessa verificação (a mesma conta que o navegador faz) e repete a busca.
 - Corrigida a paginação da Câmara, que supunha 10 resultados por página (o portal exibe 20) e pedia páginas além
