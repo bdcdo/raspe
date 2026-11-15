@@ -29,7 +29,7 @@ Schema: `OutputCapes`.
 | `autores` | texto | Autores separados por `; `. | Ronaldo Portela; Daniel Marques Mota; Paulo José Gonçalves Ferreira |
 | `ano` | texto | Ano de publicação, com quatro dígitos, ou vazio. | 2023 |
 | `revista` | texto | Periódico em que o registro saiu. | Cadernos de Saúde Pública |
-| `instituicao` | texto | Instituição informada no card. | Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz |
+| `instituicao` | texto | Instituição informada no card, ou vazio quando o card não traz instituição. | Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz |
 | `topicos` | texto | Tópico de pesquisa atribuído ao registro. | Cannabis and Cannabinoid Research |
 | `resumo` | texto | Trechos do resumo que o buscador destaca, não o resumo inteiro. | ... the Center for Technical Support of the Judiciary |
 | `doi` | texto | DOI, sem o prefixo `https://doi.org/`. | 10.1590/0102-311xpt024723 |

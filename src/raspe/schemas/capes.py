@@ -35,7 +35,7 @@ class OutputCapes(OutputBase):
     ano: str = Field(description="Ano de publicação, com quatro dígitos, ou vazio.", examples=["2023"])
     revista: str = Field(description="Periódico em que o registro saiu.", examples=["Cadernos de Saúde Pública"])
     instituicao: str = Field(
-        description="Instituição informada no card.",
+        description="Instituição informada no card, ou vazio quando o card não traz instituição.",
         examples=["Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz"],
     )
     topicos: str = Field(

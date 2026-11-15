@@ -225,10 +225,14 @@ class ScraperCapes(BaseScraper, HTMLScraper):
             ano_text = bs[0].get_text(strip=True).rstrip(' -').strip()
             if re.fullmatch(r'\d{4}', ano_text):
                 out['ano'] = ano_text
-            if len(bs) >= 2:
-                out['instituicao'] = _texto_exibido(bs[1]).rstrip('|').strip()
-            if len(bs) >= 3:
-                out['revista'] = _texto_exibido(bs[2]).lstrip('|').strip()
+            # Depois do ano vêm instituição e revista, e a revista vem marcada
+            # pelo ``|`` inicial: o card sem instituição traz só ano e revista.
+            for b in bs[1:3]:
+                texto = _texto_exibido(b)
+                if texto.startswith('|'):
+                    out['revista'] = texto[1:].strip()
+                else:
+                    out['instituicao'] = texto
 
         out['doi'] = ''
         out['link_editor'] = ''

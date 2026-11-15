@@ -141,6 +141,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   agora saem `e-NatJus` e `(NatJus)`) e mantinha quebras de linha do HTML. `<br>` e mudança de parágrafo viram espaço.
   Na instituição, o destaque colava palavras (`MINISTÉRIO DASAÚDE`), e a revista trazia só o termo destacado (`SAÚDE`
   no lugar de `Epidemiologia e Serviços de Saúde`) (#40).
+- Corrigido o card de `raspe.capes()` sem instituição, que punha a revista em `instituicao` (`| Revista de
+  Epidemiologia e Saúde Pública - RESP`) e deixava `revista` vazia: agora a revista vai para `revista` e `instituicao`
+  fica vazia.
 
 ## [0.1.0] - 2025-05-15
 
