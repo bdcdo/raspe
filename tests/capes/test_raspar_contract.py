@@ -24,17 +24,18 @@ API_URL = "https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html"
 COLUNAS = OutputCapes.colunas()
 
 
-def _registrar(termo: str, *amostras: str) -> None:
+def _registrar(termo: str, *amostras: str | bytes) -> None:
     """Registra as respostas de uma busca: a contagem, sem ``page``, e uma por página.
 
     A contagem recebe a amostra da página 1, como no portal. Cada resposta só
-    casa com a query completa daquela requisição.
+    casa com a query completa daquela requisição. Cada amostra é o nome de um
+    sample (``str``) ou o próprio corpo da resposta (``bytes``).
     """
     query = {"q": f"all:contains({termo})", "mode": "advanced", "source": "all"}
     for pagina, amostra in [(None, amostras[0]), *enumerate(amostras, start=1)]:
         responses.add(
             responses.GET, API_URL,
-            body=load_sample_bytes("capes", f"raspar/{amostra}.html"),
+            body=amostra if isinstance(amostra, bytes) else load_sample_bytes("capes", f"raspar/{amostra}.html"),
             status=200,
             content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher(query if pagina is None else {**query, "page": str(pagina)})],
@@ -132,19 +133,8 @@ class TestFindNPags:
 
 
 def _coluna_por_id(scraper, html: str, coluna: str) -> dict[str, str]:
-    """Raspa uma página com ``html`` e devolve ``{id: valor da coluna}``.
-
-    A primeira resposta serve a ``_find_n_pags`` e a segunda ao download da
-    página 1, por isso o mesmo corpo entra duas vezes. O termo da busca não
-    entra no parse: o que vale é a página servida.
-    """
-    for _ in range(2):
-        responses.add(
-            responses.GET, API_URL,
-            body=html.encode("utf-8"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
+    """Raspa só a página 1 servindo ``html`` e devolve ``{id: valor da coluna}``."""
+    _registrar("natjus", html.encode("utf-8"))
     df = scraper.raspar(pesquisa="natjus", paginas=range(1, 2))
     return dict(zip(df["id"], df[coluna]))
 
