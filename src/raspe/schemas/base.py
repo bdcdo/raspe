@@ -180,12 +180,7 @@ class AnoMixin(InputBase):
     @field_validator("ano")
     @classmethod
     def _ano_com_quatro_digitos(cls, ano: int | None) -> int | None:
-        """Recusa ano fora de 1000 a 9999.
-
-        No NYT, ``ano=24`` virava a data ``24-01-01`` e caía num erro de formato
-        de data, e ``ano=0`` desligava o filtro em silêncio. No CFM, os dois iam
-        ao portal como estão.
-        """
+        """Recusa ano fora de 1000 a 9999, que nenhuma fonte entende como ano."""
         if ano is not None and not 1000 <= ano <= 9999:
             raise ValueError(f"'ano' precisa ter quatro dígitos (ex.: 2024); veio {ano}.")
         return ano
