@@ -35,7 +35,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   para todos os raspadores menos Câmara e Senado, que aguardam a reescrita sobre as APIs oficiais.
 - Adicionado `docs/colunas.md`, com coluna, tipo, descrição e exemplo de cada fonte, gerado dos schemas por
   `python -m raspe.schemas.documentacao`.
-- Adicionada a dependência `pydantic>=2`.
+- Adicionada a dependência `pydantic>=2.4`.
 
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
