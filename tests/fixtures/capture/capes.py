@@ -12,79 +12,71 @@ rodado como arquivo, o Python não põe a raiz do repositório no
 ``tests/capes/samples/raspar/`` e sobrescrevem os commitados; devem ser
 re-commitados quando o HTML do Portal de Periódicos da CAPES mudar.
 
+As requisições saem da sessão e da query do próprio ``ScraperCapes``.
+A linha impressa por cenário traz o ``_find_n_pags`` da resposta: se
+``single_page`` não der 1 ou ``no_results`` não der 0, troque o termo.
+
 Cenários capturados:
 
 - ``page_01.html`` — busca ``natjus`` (≈20 resultados, 1 página).
-- ``page_02.html`` — busca ``saude``, página 2. **Após a captura, abra o
-  arquivo e remova manualmente os últimos cards** (``div.col-md-12.br-item``)
-  para deixar ~12, ficando abaixo do limite de 500KB do hook
-  ``check-added-large-files``. O teste ``test_typical_paginacao``
-  espera apenas que page_02 contribua com ao menos 10 cards.
-- ``single_page.html`` — busca ``natjus_brasil`` (termo composto pouco
-  comum, costuma retornar 1 página). Caso retorne 0 ou >1, troque por
-  outro termo restritivo (ex.: ``natjus saude judicializacao``).
+- ``page_02.html`` — busca ``saude``, página 2, cortada nos primeiros
+  ``CARDS_PAGE_02`` cards (``_cortar_cards``) para ficar abaixo do limite
+  de 500 KB do hook ``check-added-large-files``. O teste
+  ``test_typical_paginacao`` espera que page_02 contribua com ao menos
+  10 cards.
+- ``single_page.html`` — busca ``natjus saude judicializacao`` (17
+  resultados, 1 página, em 15/11/2026; ``natjus_brasil``, o termo
+  anterior, passou a não achar nada). Caso retorne 0 ou >1, troque por
+  outro termo restritivo.
 - ``no_results.html`` — termo absurdo, sem paginação.
 """
 
+import time
 from pathlib import Path
 
-import requests
-
-from tests.fixtures.capture._util import attach_capture_hook, dump_response, pasta_saida
+from raspe.scrapers.capes import ScraperCapes
+from tests.fixtures.capture._util import capturar_cenarios, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "capes" / "samples" / "raspar"
-API_URL = "https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html"
 
-_HEADERS = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "pt-BR,en-US;q=0.7,en;q=0.3",
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:139.0) Gecko/20100101 Firefox/139.0",
-}
-
-
-def _make_session() -> requests.Session:
-    session = requests.Session()
-    session.headers.update(_HEADERS)
-    return session
+# (arquivo de saída, parâmetros de raspar, página do raspe). Estes vão
+# para o disco inteiros; a page_02 tem chamada própria, com corte.
+CENARIOS = (
+    ("page_01.html", {"pesquisa": "natjus"}, 1),
+    ("single_page.html", {"pesquisa": "natjus saude judicializacao"}, 1),
+    ("no_results.html", {"pesquisa": "termo_inexistente_xyz12345abc"}, 1),
+)
+CENARIO_PAGE_02 = ("page_02.html", {"pesquisa": "saude"}, 2)
+CARDS_PAGE_02 = 12
 
 
-def _get(session: requests.Session, pesquisa: str, page: int = 1) -> requests.Response:
-    return session.get(
-        API_URL,
-        params={
-            "q": f"all:contains({pesquisa})",
-            "mode": "advanced",
-            "source": "all",
-            "page": page,
-        },
-        timeout=60,
-    )
+def _cortar_cards(html: bytes) -> bytes:
+    """Mantém só os primeiros ``CARDS_PAGE_02`` cards da página.
+
+    A página 2 de "saude" traz 30 cards e passa do limite de tamanho do
+    repositório. O ``_find_n_pags`` lê a resposta inteira antes do corte.
+
+    Args:
+        html: Body cru da resposta.
+
+    Returns:
+        A página com os cards além do limite removidos, em UTF-8.
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    for card in soup.select(ScraperCapes._SELETOR_CARD)[CARDS_PAGE_02:]:
+        card.decompose()
+    return str(soup).encode("utf-8")
 
 
 def main() -> None:
     saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
-    saida.mkdir(parents=True, exist_ok=True)
-
-    # page_01.html — typical primeira página (busca "natjus", ~20 resultados)
-    session = _make_session()
-    detach = attach_capture_hook(session, saida, prefix="page", extension="html")
-    _get(session, "natjus", page=1)
-    detach()
-
-    # page_02.html — segunda página de uma busca genérica
-    # (busca "saude" gera ~29M resultados; pegamos a página 2 cheia e
-    # depois trimamos manualmente para ~12 cards no arquivo). O hook já foi
-    # removido acima, então a página 2 é gravada explicitamente.
-    resp = _get(session, "saude", page=2)
-    dump_response(resp, saida / "page_02.html")
-
-    # single_page.html — termo restritivo que costuma retornar 1 página
-    resp = _get(_make_session(), "natjus_brasil", page=1)
-    dump_response(resp, saida / "single_page.html")
-
-    # no_results.html — termo absurdo, sem nav.br-pagination
-    resp = _get(_make_session(), "termo_inexistente_xyz12345abc", page=1)
-    dump_response(resp, saida / "no_results.html")
+    scraper = ScraperCapes(debug=False)
+    capturar_cenarios(scraper, CENARIOS, saida)
+    # Mesmo intervalo que capturar_cenarios põe entre os cenários.
+    time.sleep(scraper.sleep_time)
+    capturar_cenarios(scraper, [CENARIO_PAGE_02], saida, enxugar=_cortar_cards)
 
 
 if __name__ == "__main__":
