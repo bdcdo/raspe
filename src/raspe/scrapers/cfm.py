@@ -127,14 +127,13 @@ class ScraperCFM(BaseScraper, HTMLScraper):
 
         # Buscar total de registros no texto da página
         all_text = soup.get_text()
-        records_match = re.search(r'(\d+)\s+registros encontrados', all_text)
+        records_match = re.search(r'(\d+)\s+registros?\s+encontrados?', all_text)
 
-        if records_match:
-            total_records = int(records_match.group(1))
-            self.logger.debug(f"Total de registros encontrados: {total_records}")
-        else:
-            self.logger.warning("Não foi possível extrair o número de registros")
-            return 0
+        if not records_match:
+            # A busca vazia traz só o aviso "Não há resultados para esses parâmetros de busca."
+            return self._confirmar_busca_vazia(soup)
+        total_records = int(records_match.group(1))
+        self.logger.debug(f"Total de registros encontrados: {total_records}")
 
         # Buscar informação de paginação
         pagination_info = {}

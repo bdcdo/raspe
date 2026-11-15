@@ -185,34 +185,20 @@ class ScraperFolha(BaseScraper, HTMLScraper):
 
         soup = self.soup_it(r0.content)
 
-        # Procurar pela div que contém a contagem de resultados
-        # Exemplo: "386 resultados"
+        # Contagem de resultados, como "386 Resultados para <termo>". A busca vazia
+        # também traz a contagem ("0 Resultados para <termo>").
         result_div = soup.find("div", class_=re.compile(r"c-search__result"))
+        # Fallback: qualquer elemento com o texto de resultados
+        texto = result_div.get_text() if result_div else soup.find(string=re.compile(r'\d+\s+resultado'))
+        match = re.search(r'\d+', str(texto)) if texto else None
+        if not match:
+            return self._confirmar_busca_vazia(soup)
 
-        if not result_div:
-            # Fallback: procurar em qualquer elemento com o texto de resultados
-            result_text = soup.find(string=re.compile(r'\d+\s+resultado'))
-            if result_text:
-                match = re.search(r'(\d+)', str(result_text))
-                if match:
-                    num_results = int(match.group(1))
-                    self._verificar_limite_resultados(num_results)
-                    pages = (num_results + 24) // 25
-                    self.logger.debug(f"Encontrados {num_results} resultados, {pages} páginas")
-                    return pages
-
-        if result_div:
-            text = result_div.get_text()
-            match = re.search(r'(\d+)', text)
-            if match:
-                num_results = int(match.group(1))
-                self._verificar_limite_resultados(num_results)
-                pages = (num_results + 24) // 25
-                self.logger.debug(f"Encontrados {num_results} resultados, {pages} páginas")
-                return pages
-
-        self.logger.warning("Não foi possível encontrar o número de resultados")
-        return 0
+        num_results = int(match.group())
+        self._verificar_limite_resultados(num_results)
+        pages = (num_results + 24) // 25
+        self.logger.debug(f"Encontrados {num_results} resultados, {pages} páginas")
+        return pages
 
     def _parse_page(self, path: str) -> pd.DataFrame:
         """Analisa uma página de resultados da Folha.

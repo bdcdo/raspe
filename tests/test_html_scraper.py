@@ -42,7 +42,8 @@ class TestConfirmarBuscaVazia:
     def test_aviso_de_busca_vazia_devolve_zero(self):
         client = _DummyHTMLClient()
         for aviso in ("Nenhum resultado encontrado", "Nenhum registro encontrado",
-                      "Nenhuma legislação encontrada", "Nenhum resultado foi encontrado"):
+                      "Nenhuma legislação encontrada", "Nenhum resultado foi encontrado",
+                      "Não há resultados para esses parâmetros de busca."):
             soup = client.soup_it(f"<html><body><h2>&nbsp;{aviso}</h2></body></html>")
             assert client._confirmar_busca_vazia(soup) == 0
 

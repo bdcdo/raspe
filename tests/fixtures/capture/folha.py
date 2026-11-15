@@ -15,7 +15,8 @@ from pathlib import Path
 
 import requests
 
-from tests.fixtures.capture._util import attach_capture_hook  # noqa: E402
+from raspe.scrapers.folha import ScraperFolha
+from tests.fixtures.capture._util import attach_capture_hook, capturar_busca_vazia as _capturar  # noqa: E402
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "folha" / "samples" / "raspar"
 API_URL = "https://search.folha.uol.com.br/search"
@@ -32,18 +33,13 @@ def main() -> None:
         timeout=30,
     )
 
-    # Cenário no_results: termo improvável
-    session.get(
-        API_URL,
-        params={
-            "q": "zzzzzzz_termo_inexistente_xyzabc",
-            "site": "todos",
-            "periodo": "todos",
-            "sr": "1",
-        },
-        timeout=30,
-    )
+
+def capturar_busca_vazia() -> None:
+    """Grava ``no_results.html``: busca real sem resultados, feita pelo próprio raspador."""
+    raspador = ScraperFolha(debug=False)
+    _capturar(raspador, SAMPLES_DIR / "no_results.html", pesquisa="xqzwvkjh")
 
 
 if __name__ == "__main__":
     main()
+    capturar_busca_vazia()

@@ -11,6 +11,7 @@ import pytest
 import responses
 from responses import matchers, registries
 
+from raspe.exceptions import ScraperError
 from raspe.scrapers.ipea import IpeaScraper
 from tests._helpers import load_sample_bytes
 
@@ -83,7 +84,7 @@ class TestRasparContract:
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
-        """0 resultados → 0 páginas → DataFrame vazio."""
+        """Busca real sem resultados: "Resultado de 0 a 0 de 0" → DataFrame vazio."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -95,6 +96,18 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+
+    @responses.activate
+    def test_pagina_que_nao_e_de_resultados_levanta_erro(self, scraper, mocker):
+        """Sem a contagem e sem o aviso de busca vazia (manutenção, anti-robô), não vira 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("presidencia", "raspar/manutencao.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        with pytest.raises(ScraperError, match="indispon"):
+            scraper.raspar(pesquisa="educação")
 
     @responses.activate
     def test_query_params_obrigatorios(self, scraper, mocker):
