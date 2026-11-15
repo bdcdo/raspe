@@ -1,7 +1,9 @@
 """Paridade entre o schema de saída e o que o parser extrai das amostras.
 
-Duas conferências por raspador registrado em ``ESPERADOS``:
+Três conferências por raspador registrado em ``ESPERADOS``:
 
+- o atributo de classe ``colunas`` (que o parser e a busca sem resultados
+  usam), mais ``termo_busca``, é ``Output.colunas()``, na mesma ordem;
 - as colunas que ``_parse_page`` tira da amostra ``typical``, mais
   ``termo_busca`` (que ``raspar()`` acrescenta), são as colunas de
   ``Output.colunas()``, na mesma ordem;
@@ -34,6 +36,11 @@ def _aparece(exemplo: object, valores: list[object]) -> bool:
         if isinstance(exemplo, str) and isinstance(valor, str) and exemplo in valor:
             return True
     return False
+
+
+@pytest.mark.parametrize("classe", list(ESPERADOS), ids=lambda classe: classe.__name__)
+def test_atributo_colunas_e_o_do_schema(classe):
+    assert [*classe.colunas, "termo_busca"] == ESPERADOS[classe].saida.colunas()
 
 
 @pytest.mark.parametrize("classe", list(ESPERADOS), ids=lambda classe: classe.__name__)
