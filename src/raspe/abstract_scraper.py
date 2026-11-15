@@ -300,6 +300,45 @@ class AbstractScraper(ABC):
             except OSError:
                 break
 
+    def _apagar_sem_debug(self, path: str) -> None:
+        """Apaga a pasta da busca, a não ser com ``debug=True``.
+
+        Args:
+            path: Pasta criada por ``_create_download_dir``.
+        """
+        if not self.debug:
+            self._limpar_download(path)
+
+    def _ler_e_limpar(self, path: str) -> pd.DataFrame:
+        """Lê a pasta da busca com :meth:`_parse_data` e depois, sem ``debug``, a apaga.
+
+        A pasta sai também quando a leitura levanta erro.
+
+        Args:
+            path: Pasta criada por ``_create_download_dir``.
+
+        Returns:
+            pd.DataFrame: O resultado de :meth:`_parse_data`.
+        """
+        try:
+            return self._parse_data(path)
+        finally:
+            self._apagar_sem_debug(path)
+
+    def _onde_ficam_os_arquivos(self, path: str) -> str:
+        """Diz, para uma mensagem de erro, onde ver as páginas baixadas.
+
+        Args:
+            path: Pasta criada por ``_create_download_dir``.
+
+        Returns:
+            str: A pasta, com ``debug=True``; sem ele, a pasta é apagada, e a
+            frase sugere ``debug=True``.
+        """
+        if self.debug:
+            return f"Os arquivos ficam em {path}."
+        return "Rode com debug=True para guardar os arquivos baixados."
+
     def _parse_data(self, path: str) -> pd.DataFrame:
         """Analisa os dados de um arquivo ou diretório e os consolida em um DataFrame.
 
@@ -349,7 +388,7 @@ class AbstractScraper(ABC):
             raise ScraperError(
                 f"{self.nome_buscador}: nenhuma das {len(arquivos)} páginas baixadas rendeu resultados, "
                 "embora a contagem indicasse que havia. O site pode ter mudado de layout ou devolvido "
-                f"páginas de bloqueio; os arquivos ficam em {path}."
+                f"páginas de bloqueio. {self._onde_ficam_os_arquivos(path)}"
             )
         if sem_linhas:
             warnings.warn(
@@ -411,8 +450,9 @@ class AbstractScraper(ABC):
             requests.RequestException: Nos raspadores HTTP, se uma página falhar
                 com outro erro HTTP ou de rede.
             ScraperError: Se a resposta inicial não for uma página de resultados
-                (manutenção ou verificação anti-robô, nos raspadores que detectam isso)
-                ou se nenhuma página baixada render resultados.
+                (manutenção ou verificação anti-robô, nos raspadores que detectam isso),
+                se nenhuma página baixada render resultados ou, nos raspadores com
+                navegador, se uma das páginas da contagem não abrir.
 
         Warns:
             UserWarning: Se parte das páginas baixadas não render linhas. Nos

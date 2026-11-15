@@ -33,6 +33,8 @@ from typing import Any, Callable
 import requests
 
 from raspe.base_scraper import BaseScraper
+from raspe.exceptions import ScraperError
+from raspe.playwright_scraper import PlaywrightScraper
 
 
 def dump_response(resp: requests.Response, path: Path) -> None:
@@ -165,3 +167,41 @@ def enxugar_html(html: bytes, max_opcoes: int = 5) -> bytes:
         for opcao in select.find_all("option")[max_opcoes:]:
             opcao.decompose()
     return str(soup).encode("utf-8")
+
+
+def capturar_paginas_lidas(scraper: PlaywrightScraper, pesquisa: str, arquivos: tuple[str, ...], saida: Path) -> None:
+    """Faz a busca com um raspador com navegador e grava as páginas que ele lê.
+
+    Grava as páginas de resultados que o raspador salva ou, sem resultados, a
+    página que a contagem lê. Um ``ScraperError`` (como acesso recusado) conta
+    como sem resultados. O HTML passa por ``enxugar_html``.
+
+    Args:
+        scraper: Raspador real, de uma subclasse de ``PlaywrightScraper``.
+        pesquisa: Termo de busca.
+        arquivos: Nomes dos arquivos, um por página.
+        saida: Pasta onde gravar.
+
+    Raises:
+        RuntimeError: Se o número de páginas lidas não bate com ``arquivos``.
+    """
+    obter_html = scraper._obter_html
+    lidas: list[str] = []
+
+    async def _obter_e_guardar() -> str:
+        lidas.append(await obter_html())
+        return lidas[-1]
+
+    scraper._obter_html = _obter_e_guardar  # type: ignore[method-assign]
+    try:
+        linhas = len(scraper.raspar(pesquisa=pesquisa))
+    except ScraperError as e:
+        print(f"'{pesquisa}': {e}")
+        linhas = 0
+    # A primeira leitura é a da contagem; as seguintes, as páginas salvas.
+    paginas = lidas[1:] if linhas else lidas[:1]
+    if len(paginas) != len(arquivos):
+        raise RuntimeError(f"'{pesquisa}': {len(paginas)} páginas, esperadas {len(arquivos)}")
+    for arquivo, html in zip(arquivos, paginas):
+        (saida / arquivo).write_bytes(enxugar_html(html.encode()))
+    print(f"'{pesquisa}': {linhas} linhas, {len(paginas)} páginas gravadas")

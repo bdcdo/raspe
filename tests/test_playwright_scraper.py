@@ -73,6 +73,22 @@ class TestRasparSemResultados:
         assert os.listdir(raspador.download_path)
 
 
+class TestPastaDeDownloadComErro:
+    def test_sem_debug_apaga_a_pasta_quando_a_raspagem_falha(self, mocker):
+        raspador = _raspador(mocker)
+        raspador.pagina_falsa.content.return_value = load_sample("datalegis", "raspar/acesso_negado.html")
+        with pytest.raises(ScraperError):
+            raspador.raspar(assunto="x")
+        assert not os.path.exists(raspador.download_path)
+
+    def test_com_debug_mantem_a_pasta_quando_a_raspagem_falha(self, mocker, tmp_path):
+        raspador = _raspador(mocker, tmp_path, debug=True)
+        raspador.pagina_falsa.content.return_value = load_sample("datalegis", "raspar/acesso_negado.html")
+        with pytest.raises(ScraperError):
+            raspador.raspar(assunto="x")
+        assert os.listdir(tmp_path / "DUMMY_PW")
+
+
 class TestBuscaVaziaConfirmada:
     """Zero páginas só vira DataFrame vazio se a página traz o aviso de busca vazia."""
 

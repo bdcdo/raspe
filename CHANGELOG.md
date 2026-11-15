@@ -99,6 +99,14 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   ("Mostrando 1 a 10 de 14 registros") e percorre todas, até o limite de 50.
 - Corrigido o notebook `09_saudelegis.ipynb`, que mandava instalar o Selenium (o raspador usa Playwright); agora
   traz as saídas de uma execução ao vivo.
+- Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que devolviam só as páginas já lidas quando não conseguiam abrir
+  a página seguinte: agora levantam `ScraperError`, como os raspadores HTTP com página que falha.
+- Corrigidos `ans()` e `anvisa()`, que liam uma página só quando a contagem de páginas falhava: agora contam pela
+  linha "1 - 50 de 62 itens" e, sem ela, conferem o aviso de busca vazia (sem ele, `ScraperError`).
+- Corrigido `saudelegis()`, que esperava 3 s fixos depois de clicar na página seguinte e podia salvar a página
+  anterior de novo: agora espera o rodapé da tabela mostrar os registros da página nova.
+- Corrigidos todos os raspadores, que com `debug=False` deixavam a pasta de download para trás quando a raspagem
+  levantava erro: agora ela é apagada também nesse caso.
 - `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros

@@ -11,7 +11,6 @@ Exemplo:
 """
 
 import asyncio
-import math
 import re
 from typing import TYPE_CHECKING
 
@@ -23,7 +22,8 @@ from raspe.schemas.saudelegis import InputSaudeLegis, OutputSaudeLegis
 if TYPE_CHECKING:
     from bs4 import BeautifulSoup
 
-_CONTAGEM = re.compile(r'Mostrando\s+\d+\s+a\s+(\d+)\s+de\s+(\d+)\s+registro')
+# "Mostrando 1 a 10 de 14 registros."; o ponto, se vier, é separador de milhar.
+_CONTAGEM = re.compile(r'Mostrando\s+[\d.]+\s+a\s+([\d.]+)\s+de\s+([\d.]+)\s+registro')
 
 
 class ScraperSaudeLegis(PlaywrightScraper):
@@ -113,9 +113,7 @@ class ScraperSaudeLegis(PlaywrightScraper):
         contagem = _CONTAGEM.search(rodape.get_text(' ')) if rodape else None
         if not contagem:
             return 0
-        # Lido na primeira página, o "a 10" é o tamanho da página.
-        fim, total = (int(n) for n in contagem.groups())
-        return math.ceil(total / fim) if total else 0
+        return self._paginas_pela_contagem(*contagem.groups())
 
     def _confirmar_busca_vazia(self, soup: "BeautifulSoup") -> int:
         """Confirma a busca vazia sem a tabela de origens, escondida em toda página.
@@ -138,29 +136,33 @@ class ScraperSaudeLegis(PlaywrightScraper):
         return super()._confirmar_busca_vazia(soup)
 
     async def _paginar_por_numero(self, numero: int) -> bool:
-        """Navega para página específica via link numerado.
+        """Clica no link numerado da página e espera o rodapé mostrar a página nova.
 
-        Sobrescreve o método base para usar seletor específico do SaudeLegis.
+        O paginador troca a tabela por AJAX, sem recarregar a página. O fim da
+        troca é o rodapé da tabela passar a dizer "Mostrando 11 a ..." (na
+        página 2 com 10 por página).
 
         Args:
             numero: Número da página destino.
 
         Returns:
-            bool: True se navegou com sucesso.
+            bool: True se a página nova carregou; False se o link não apareceu
+            ou se o rodapé não mudou dentro de ``wait_timeout``.
         """
         pw = self._ensure_playwright()
+        inicio = self._inicio_da_pagina(numero)
 
         try:
-            # Seletor específico do SaudeLegis
             selector = f"a[id*='form:']:text-is('{numero}')"
             await self._page.wait_for_selector(selector, timeout=5000)
             await self._page.click(selector)
-
-            await asyncio.sleep(self.between_pages_wait)
+            await self._page.wait_for_selector(
+                f"div.dataTables_info:has-text('Mostrando {inicio} a ')", timeout=self.wait_timeout * 1000
+            )
             return True
 
         except pw['PlaywrightTimeout']:
-            self.logger.debug(f"Link página {numero} não encontrado")
+            self.logger.debug(f"Página {numero} não carregou (link ou rodapé 'Mostrando {inicio} a')")
             return False
 
     def _parse_page(self, path: str) -> pd.DataFrame:

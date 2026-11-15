@@ -14,7 +14,7 @@ import pytest
 from raspe.exceptions import ScraperError
 from raspe.schemas.saudelegis import OutputSaudeLegis
 from raspe.scrapers.saudelegis import ScraperSaudeLegis
-from tests._helpers import load_sample, navegador_falso
+from tests._helpers import PlaywrightTimeoutFalso, load_sample, navegador_falso
 
 
 def _sample(nome: str) -> str:
@@ -42,6 +42,21 @@ class TestRaspar:
         assert df["link_url"].str.startswith("http").all()
         cliques = [c.args[0] for c in raspador.pagina_falsa.click.await_args_list]
         assert cliques == ['input[type="submit"][value="Consultar"]', "a[id*='form:']:text-is('2')"]
+        # A página 2 só é salva depois que o rodapé passa a mostrar os registros dela.
+        espera = raspador.pagina_falsa.wait_for_selector.await_args_list[-1]
+        assert espera.args == ("div.dataTables_info:has-text('Mostrando 11 a ')",)
+
+    def test_pagina_2_que_nao_carrega_levanta_scraper_error(self, mocker):
+        """Se o rodapé não muda, a raspagem para com erro em vez de devolver só a página 1."""
+        raspador = _raspador(mocker, _sample("page_01.html"), _sample("page_01.html"))
+
+        async def _espera(seletor, **_):
+            if "Mostrando" in seletor:
+                raise PlaywrightTimeoutFalso(seletor)
+
+        raspador.pagina_falsa.wait_for_selector.side_effect = _espera
+        with pytest.raises(ScraperError, match="página 2 de 2"):
+            raspador.raspar(pesquisa="doença rara")
 
     def test_single_page(self, mocker):
         raspador = _raspador(mocker, _sample("single_page.html"), _sample("single_page.html"))
@@ -71,3 +86,10 @@ def test_contagem_pelo_rodape_da_tabela(mocker, arquivo, paginas):
     raspador = _raspador(mocker, _sample(arquivo))
     raspador._page = raspador.pagina_falsa
     assert asyncio.run(raspador._encontrar_total_paginas()) == paginas
+
+
+def test_contagem_com_separador_de_milhar(mocker):
+    html = _sample("page_01.html").replace("de 14 registros", "de 1.234 registros")
+    raspador = _raspador(mocker, html)
+    raspador._page = raspador.pagina_falsa
+    assert asyncio.run(raspador._encontrar_total_paginas()) == 124
