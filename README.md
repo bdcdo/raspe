@@ -235,7 +235,7 @@ df = raspe.camara().raspar(pesquisa="saúde", ano=2023, tipo_materia="Lei Ordin�
 df = raspe.senado().raspar(pesquisa="saúde", ano=2023)
 ```
 
-A Câmara e o Senado ainda não têm schema de saída, então as colunas deles ficam aqui, e não em `docs/colunas.md`. Os exemplos saem de uma busca real por "doenças raras" em 15/11/2026. Todas as colunas são texto.
+A Câmara e o Senado ainda não têm schema de saída, então as colunas deles ficam aqui, e não em `docs/colunas.md`. Os exemplos saem de uma busca real por "doenças raras" em 15/11/2026.
 
 Colunas de `raspe.camara()`:
 
