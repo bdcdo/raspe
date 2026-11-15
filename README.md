@@ -145,7 +145,7 @@ Após executar o código, você terá um **DataFrame** (uma tabela) com os dados
 - **Ver quantas linhas:** `print(len(dados))` - mostra o número total de registros
 - **Ver as colunas:** `print(dados.columns)` - mostra quais informações foram coletadas
 
-O que cada coluna significa, fonte por fonte, com tipo, descrição e exemplo, está em [`docs/colunas.md`](docs/colunas.md). A busca sem resultado devolve uma tabela vazia com as mesmas colunas.
+O que cada coluna significa, fonte por fonte, com tipo, descrição e exemplo, está em [`docs/colunas.md`](docs/colunas.md); as da Câmara e do Senado, na [seção dessas fontes](#presidência-câmara-senado-e-ipea). A busca sem resultado devolve uma tabela vazia com as mesmas colunas.
 
 ---
 
@@ -235,12 +235,28 @@ df = raspe.camara().raspar(pesquisa="saúde", ano=2023, tipo_materia="Lei Ordin�
 df = raspe.senado().raspar(pesquisa="saúde", ano=2023)
 ```
 
-As colunas da Câmara e do Senado, que ainda não estão em `docs/colunas.md`:
+A Câmara e o Senado ainda não têm schema de saída, então as colunas deles ficam aqui, e não em `docs/colunas.md`. Os exemplos saem de uma busca real por "doenças raras" em 15/11/2026. Todas as colunas são texto.
 
-| Fonte | Colunas |
-|-------|---------|
-| Câmara | `link`, `titulo`, `descricao`, `ementa`, `termo_busca` |
-| Senado | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao`, `termo_busca` |
+Colunas de `raspe.camara()`:
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `link` | texto | Endereço da norma no portal da Câmara. | https://www2.camara.leg.br/legin/fed/decret/1910-1919/decreto-8332-3-novembro-1910-498462-norma-pe.html |
+| `titulo` | texto | Tipo, número e data da norma. | Decreto nº 8.332, de 3 de Novembro de 1910 |
+| `descricao` | texto | Ementa da norma, precedida de `Ementa: `, como o site a mostra. | Ementa: Approva o Codigo do Processo Civil e Commercial do Distrito Federal |
+| `ementa` | texto | Apesar do nome, a situação da norma, precedida de `Situação:`, de uma quebra de linha e de espaços, como o site a mostra. A ementa está em `descricao`. | `'Situação:\n' + ' ' * 40 + 'Revogada'` |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | doenças raras |
+
+Colunas de `raspe.senado()`:
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `titulo` | texto | Tipo, número e data da norma, com a versão do texto entre parênteses. | Decreto nº 10.558 de 03/12/2020 (Publicação Original) |
+| `link_norma` | texto | Endereço do texto da norma nessa versão. | https://legis.senado.leg.br/norma/32956034/publicacao/32957954 |
+| `link_detalhes` | texto | Endereço da ficha da norma, ou o texto `NA` quando o resultado traz um link só. | https://legis.senado.leg.br/norma/32956034 |
+| `descricao` | texto | Ementa da norma. | Institui o Comitê Interministerial de Doenças Raras. |
+| `trecho_descricao` | texto | Data da norma, ` - `, uma quebra de linha e o trecho do texto em que a busca achou o termo. | `'03/12/2020 - \nInstitui o Comitê Interministerial de Doenças Raras. ... DECRETA: Art. 1º Fica  instituído o Comitê Interministerial de Doenças Raras no âmbito do Ministério  da Mulher, da Família e dos Direitos Humanos. Art. ...'` |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | doenças raras |
 
 ### CAPES (Portal de Periódicos)
 
