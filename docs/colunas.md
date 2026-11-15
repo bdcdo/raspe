@@ -75,7 +75,7 @@ Schema: `OutputIpea`.
 | `link` | texto | Endereço da publicação no portal do IPEA. | https://www.ipea.gov.br/portal/publicacao-item?id=61d484f0-c674-4e16-a421-3e7a22e842d7 |
 | `autores` | texto | Autores, como o portal os lista; vazio quando o portal deixa o campo em branco. |  |
 | `data` | texto | Data de publicação, como o portal a mostra: mês abreviado e ano, ou só o ano. | Jun-2015 |
-| `assuntos` | texto | Assuntos, separados por vírgula. | Economia da Saúde |
+| `assuntos` | texto | Assuntos, cada um uma vez, separados por vírgula. | Economia da Saúde |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
 ## `raspe.nyt()`
@@ -104,9 +104,10 @@ Schema: `OutputPresidencia`.
 | --- | --- | --- | --- |
 | `nome` | texto | Nome do ato, com tipo, número e ano. | Decreto nº 12.725 de 18 de novembro de 2025 |
 | `link` | texto | Endereço do texto do ato, como o portal o devolve. | https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12725.htm |
-| `ficha` | texto | Endereço da ficha do ato no portal. | https://legislacao.presidencia.gov.br/atos?tipo=DEC&numero=12725&ano=2025&data=18/11/2025&ato=499cXVU9UNZpWT45a |
+| `ficha` | texto | Endereço da ficha do ato, do botão "Ficha"; vazio, com `UserWarning`, se o card não o traz. | https://legislacao.presidencia.gov.br/atos?tipo=DEC&numero=12725&ano=2025&data=18/11/2025&ato=499cXVU9UNZpWT45a |
 | `revogacao` | texto | Situação de revogação informada pelo portal. | Não consta revogação expressa |
 | `descricao` | texto | Ementa do ato. | Aprova a Política Nacional de Defesa, a Estratégia Nacional de Defesa e o Livro Branco de Defesa Nacional. |
+| `rotulo` | texto | Selo que o portal põe ao lado do nome, como "Veto Parcial"; vazio quando não há. | Veto Parcial |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
 ## `raspe.saudelegis()`

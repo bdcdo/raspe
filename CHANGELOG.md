@@ -36,6 +36,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado `docs/colunas.md`, com coluna, tipo, descrição e exemplo de cada fonte, gerado dos schemas por
   `python -m raspe.schemas.documentacao`.
 - Adicionada a dependência `pydantic>=2.4`.
+- Adicionada a coluna `rotulo` à `presidencia()`, depois de `descricao`, com o selo que o portal põe ao lado do
+  nome do ato, como "Veto Parcial"; vazia quando não há.
 
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
@@ -127,6 +129,12 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigido o `ano` de `nyt()` e `cfm()` fora de quatro dígitos: no `nyt()`, `ano=24` dava erro de formato de
   data e `ano=0` desligava o filtro em silêncio; no `cfm()`, os dois iam ao portal. Agora levantam
   `ValidationError` dizendo que o ano precisa ter quatro dígitos.
+- Corrigida a coluna `ficha` da `presidencia()`, que trazia o link do primeiro ato citado na ementa quando havia
+  um: agora vem do botão "Ficha" do próprio ato. Card sem esse botão deixa a coluna vazia, com `UserWarning`.
+- Corrigido o `nome` da `presidencia()`, que trazia o selo "Veto Parcial" grudado ao nome do ato: o selo agora
+  vai para a coluna `rotulo`.
+- Corrigida a coluna `assuntos` do `ipea()`, que vinha com "Temas:", quebras de linha e temas repetidos: agora
+  traz cada tema uma vez, separado por vírgula.
 
 ## [0.1.0] - 2025-05-15
 

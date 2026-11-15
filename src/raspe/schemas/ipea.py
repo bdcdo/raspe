@@ -27,4 +27,6 @@ class OutputIpea(OutputBase):
         description="Data de publicação, como o portal a mostra: mês abreviado e ano, ou só o ano.",
         examples=["Jun-2015", "2022"],
     )
-    assuntos: str = Field(description="Assuntos, separados por vírgula.", examples=["Economia da Saúde"])
+    assuntos: str = Field(
+        description="Assuntos, cada um uma vez, separados por vírgula.", examples=["Economia da Saúde"]
+    )

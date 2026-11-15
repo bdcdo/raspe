@@ -20,6 +20,9 @@ real) — testamos apenas essa configuração isoladamente; o ``responses``
 mock não verifica TLS.
 """
 
+import re
+
+import pandas as pd
 import pytest
 import responses
 from responses import matchers, registries
@@ -27,7 +30,7 @@ from responses import matchers, registries
 from raspe.exceptions import ScraperError
 from raspe.schemas.presidencia import OutputPresidencia
 from raspe.scrapers.presidencia import ScraperPresidencia
-from tests._helpers import load_sample_bytes
+from tests._helpers import load_sample, load_sample_bytes
 
 API_URL = (
     "https://legislacao.presidencia.gov.br/pesquisa/ajax/"
@@ -189,6 +192,76 @@ class TestRasparContract:
         )
 
         scraper.raspar(pesquisa="fenilcetonúria")
+
+
+def _parse(scraper, tmp_path, html):
+    """Grava ``html`` em ``tmp_path`` e devolve o que ``_parse_page`` tira dele."""
+    pagina = tmp_path / "pagina.html"
+    pagina.write_text(html, encoding="utf-8")
+    return scraper._parse_page(str(pagina))
+
+
+class TestParsePage:
+    """Campos de cada ato, lidos dos samples reais da busca "telemedicina"."""
+
+    @pytest.fixture
+    def atos(self, scraper, tmp_path):
+        return pd.concat(
+            [_parse(scraper, tmp_path, load_sample("presidencia", f"raspar/{sample}"))
+             for sample in ("page_01.html", "page_02.html")],
+            ignore_index=True,
+        )
+
+    def test_ficha_e_a_do_proprio_ato(self, atos):
+        """A ficha vem do botão "Ficha", não do primeiro link da ementa.
+
+        Em 9 dos 10 atos de ``page_01.html`` a ementa cita outra lei com link
+        para a ficha dela. O número na ficha tem de ser o do nome do ato.
+        """
+        assert len(atos) == 19
+        for nome, ficha in zip(atos["nome"], atos["ficha"]):
+            numero = re.search(r"nº ([\d.]+)", nome).group(1).replace(".", "")
+            assert f"&numero={numero}&" in ficha, (nome, ficha)
+
+    def test_ficha_do_primeiro_ato(self, atos):
+        assert atos["ficha"][0] == (
+            "https://legislacao.presidencia.gov.br/atos"
+            "?tipo=LEI&numero=15367&ano=2026&data=30/03/2026&ato=ac7g3Z610djpWTbc2"
+        )
+
+    def test_rotulo_veto_parcial_sai_do_nome(self, atos):
+        """O selo "Veto Parcial" do portal vai para ``rotulo``, e ``nome`` fica só com o ato."""
+        assert not atos["nome"].str.contains("Veto").any()
+        lei = atos[atos["nome"] == "Lei nº 14.724 de 14 de novembro de 2023"]
+        assert lei["rotulo"].tolist() == ["Veto Parcial"]
+        # 1 ato com o selo em page_01 e 6 em page_02; os outros 12 vêm sem rótulo.
+        assert (atos["rotulo"] == "Veto Parcial").sum() == 7
+        assert (atos["rotulo"] == "").sum() == 12
+
+    def test_card_sem_botao_ficha_avisa(self, scraper, tmp_path):
+        """Sem o botão "Ficha", a coluna fica vazia e o raspador avisa, em vez de pegar outro link."""
+        html = load_sample("presidencia", "raspar/single_page.html")
+        assert html.count("Ficha") == 2, "o sample single_page.html mudou; ajuste a troca"
+
+        with pytest.warns(UserWarning, match="1 ato\\(s\\) sem o botão"):
+            df = _parse(scraper, tmp_path, html.replace("Ficha", "Detalhes", 1))
+
+        assert len(df) == 2
+        assert df["ficha"].tolist()[0] == ""
+        assert df["ficha"].tolist()[1].startswith("https://legislacao.presidencia.gov.br/atos?")
+
+    def test_selo_fora_do_link_tambem_vai_para_rotulo(self, scraper, tmp_path):
+        """Se o portal tirar o selo de dentro do ``<a>`` e deixá-lo no ``<h4>``, ele segue em ``rotulo``."""
+        html = load_sample("presidencia", "raspar/page_01.html")
+        nome = "Lei nº 14.724 de 14 de novembro de 2023"
+        selo = '<span class="badge badge-info ml-2">Veto Parcial</span>'
+        assert nome + selo in html, "o sample page_01.html mudou; ajuste o trecho trocado"
+        antes, depois = html.split(nome + selo, 1)
+
+        df = _parse(scraper, tmp_path, antes + nome + depois.replace("</a>", "</a>" + selo, 1))
+
+        lei = df[df["nome"] == "Lei nº 14.724 de 14 de novembro de 2023"]
+        assert lei["rotulo"].tolist() == ["Veto Parcial"]
 
 
 class TestConfiguracao:

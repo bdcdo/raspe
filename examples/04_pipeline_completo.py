@@ -155,8 +155,8 @@ def converter_data(texto: str) -> tuple[int | None, int | None]:
 def separar_temas(texto: str) -> str:
     """Transforma a coluna assuntos do IPEA numa lista de temas sem repetição.
 
-    O IPEA publica os temas como "Temas:" seguido de nomes separados por vírgula, com
-    quebras de linha e o mesmo tema repetido mais de uma vez.
+    A coluna assuntos traz os temas separados por vírgula. Até o raspe 0.1.0 ela vinha com
+    "Temas:", quebras de linha e o mesmo tema repetido; a função aceita os dois formatos.
 
     Args:
         texto: Conteúdo da coluna assuntos.
