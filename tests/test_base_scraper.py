@@ -247,6 +247,45 @@ class TestRasparBuscaUnica:
         assert df.empty
 
     @responses.activate
+    @pytest.mark.parametrize("termo", ["x", ["x", "y"]])
+    def test_sem_debug_nao_deixa_a_pasta_temporaria(self, mocker, termo):
+        """Com debug=False, nada fica para trás, nem a raiz criada pelo mkdtemp()."""
+        import os
+
+        mocker.patch("time.sleep")
+        termos = [termo] if isinstance(termo, str) else termo
+        for t in termos:
+            _termo_ok(t)
+        scraper = _DummyHTTPScraper(debug=False)
+        df = scraper.raspar(termo=termo)
+        assert len(df) == len(termos)
+        assert not os.path.exists(scraper.download_path)
+
+    @responses.activate
+    def test_sem_debug_preserva_o_resto_de_uma_pasta_do_usuario(self, mocker, tmp_path):
+        """Se o usuário apontou download_path para uma pasta sua, só a pasta da busca sai."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, "http://example.com/api",
+            body="<total>0</total>", status=200, content_type="text/html; charset=utf-8",
+        )
+        (tmp_path / "meu_arquivo.txt").write_text("não apagar", encoding="utf-8")
+        vazia = tmp_path / "vazia"
+        vazia.mkdir()
+        for pasta in (tmp_path, vazia):
+            scraper = _DummyHTTPScraper(debug=False)
+            scraper.download_path = str(pasta)
+            scraper.raspar(termo="x")
+        assert sorted(p.name for p in tmp_path.iterdir()) == ["DUMMY", "meu_arquivo.txt", "vazia"]
+        assert vazia.is_dir()
+
+    def test_sem_busca_nao_cria_pasta_temporaria(self, mocker):
+        """A raiz do mkdtemp() só nasce quando uma busca precisa dela."""
+        criar = mocker.patch("tempfile.mkdtemp")
+        _DummyHTTPScraper(debug=False)
+        criar.assert_not_called()
+
+    @responses.activate
     def test_debug_true_preserva_download_dir(self, mocker):
         """Com debug=True, o diretório de download não é removido após raspar()."""
         import os

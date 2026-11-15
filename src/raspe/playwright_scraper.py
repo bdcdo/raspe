@@ -584,8 +584,6 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         Returns:
             pd.DataFrame: Dados raspados consolidados.
         """
-        import shutil
-
         # Valida parâmetros
         kwargs = self._validar_parametros(**kwargs)
         self.logger.info(f"Iniciando raspagem Playwright: {kwargs}")
@@ -649,7 +647,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
         # Limpa diretório se não estiver em modo debug
         if not self.debug:
-            shutil.rmtree(download_dir)
+            self._limpar_download(download_dir)
 
         self.logger.info(f"Raspagem concluída: {len(result)} registros")
         return result

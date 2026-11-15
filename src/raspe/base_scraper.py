@@ -24,7 +24,6 @@ Exemplo de uso:
             ...
 """
 
-import shutil
 import time
 import warnings
 from abc import abstractmethod
@@ -168,7 +167,7 @@ class BaseScraper(AbstractScraper):
 
                 dfs.append(df)
                 if self.debug is False:
-                    shutil.rmtree(path_result)
+                    self._limpar_download(path_result)
             if erros:
                 if not dfs:
                     # Nenhum termo foi coletado: não há resultado parcial a preservar.
@@ -200,7 +199,7 @@ class BaseScraper(AbstractScraper):
 
             self.logger.info(f"Raspagem finalizada, limpando diretório {path_result}")
             if self.debug is False:
-                shutil.rmtree(path_result)
+                self._limpar_download(path_result)
 
             return result
 

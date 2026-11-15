@@ -1,3 +1,5 @@
+import sys
+import warnings
 from typing import Any, Literal
 
 import pandas as pd
@@ -6,11 +8,39 @@ from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
 
 
+def _nivel_do_chamador() -> int:
+    """``stacklevel`` que aponta para o primeiro quadro fora do pacote raspe.
+
+    Assim o aviso sai atribuído ao código do usuário tanto em ``ScraperIpea(...)``
+    quanto em ``raspe.ipea(...)``, e o filtro padrão do Python, que só mostra
+    ``DeprecationWarning`` do ``__main__``, não o esconde. Com Python 3.12 como
+    mínimo, dá para trocar por ``warnings.warn(..., skip_file_prefixes=...)``.
+    """
+    nivel, quadro = 1, sys._getframe(1)  # pylint: disable=protected-access
+    while quadro is not None and quadro.f_globals.get("__name__", "").split(".")[0] == "raspe":
+        nivel, quadro = nivel + 1, quadro.f_back
+    return nivel
+
+
 class ScraperIpea(BaseScraper, HTMLScraper):
     colunas = ['titulo', 'link', 'autores', 'data', 'assuntos']
 
-    def __init__(self, download_path=None, debug: bool = True):
+    def __init__(self, download_path: str | None = None, debug: bool = True):
+        """Inicializa o raspador do IPEA.
+
+        Args:
+            download_path: Descontinuado e ignorado. Para mudar a pasta dos
+                arquivos baixados, atribua ``raspador.download_path``.
+            debug: Se True, ativa logs de depuração e mantém arquivos baixados.
+        """
         super().__init__("IPEA", debug)
+        if download_path is not None:
+            warnings.warn(
+                "O parâmetro `download_path` de ScraperIpea é ignorado e será removido. Para mudar a pasta "
+                "dos arquivos baixados, atribua `raspador.download_path` depois de criar o raspador.",
+                DeprecationWarning,
+                stacklevel=_nivel_do_chamador(),
+            )
 
         self._api_base = "https://www.ipea.gov.br/portal/coluna-5/central-de-conteudo/busca-publicacoes"
         self._api_method: Literal['GET'] = 'GET'

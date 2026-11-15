@@ -137,3 +137,22 @@ class TestRasparContract:
         )
 
         scraper.raspar(pesquisa="economia")
+
+
+class TestDownloadPathDescontinuado:
+    def test_download_path_emite_deprecation_warning(self):
+        with pytest.warns(DeprecationWarning, match="download_path") as avisos:
+            IpeaScraper(download_path="/tmp/qualquer")
+        assert avisos[0].filename == __file__
+
+    def test_aviso_pela_fabrica_aponta_para_o_codigo_do_usuario(self):
+        """Atribuído a ``raspe/__init__.py``, o filtro padrão do Python esconderia o aviso."""
+        import raspe
+
+        with pytest.warns(DeprecationWarning, match="download_path") as avisos:
+            raspe.ipea(download_path="/tmp/qualquer")
+        assert avisos[0].filename == __file__
+
+    def test_sem_download_path_nao_avisa(self):
+        """O ``filterwarnings = error`` da suíte transformaria qualquer aviso em falha."""
+        IpeaScraper()
