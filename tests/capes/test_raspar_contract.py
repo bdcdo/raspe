@@ -216,27 +216,31 @@ class TestTitulo:
         )
 
 
+# innerText do Chromium para o resumo do card real W3032714479 (page_01.html).
+RESUMO_W3032714479 = (
+    "... e a possibilidade do uso da ferramenta e-NatJus como elemento de suporte técnico aos "
+    "magistrados nessas ... y la posibilidad de utilizar la herramienta e-NatJus como elemento de "
+    "apoyo técnico para los jueces ... Brazil and the possibility of using the e-NatJus tool as "
+    "technical support for judges in these ..."
+)
+
+
 class TestResumo:
     """O resumo sai como o navegador exibe o ``blockquote.blockquote-busca`` (issue #40).
 
-    O resumo tem o mesmo destaque com ``<b>`` do título, vem dentro de um
-    ``<p>`` e pode trazer quebra de linha no meio do texto. Os resumos
-    esperados são o ``innerText`` do Chromium para a mesma página, com o
-    espaço em branco normalizado. Cada caso confere antes que o trecho ainda
-    existe no sample.
+    O resumo tem o mesmo destaque com ``<b>`` do título e vem dentro de um
+    ``<p>``. Os resumos esperados são o ``innerText`` do Chromium para a mesma
+    página, com o espaço em branco normalizado. Cada caso confere antes que o
+    trecho ainda existe no sample.
     """
 
-    @pytest.mark.parametrize(("sample", "id_card", "trecho_html", "resumo_esperado"), [
+    @pytest.mark.parametrize(("id_card", "trecho_html", "resumo_esperado"), [
         pytest.param(
-            "raspar/page_01.html", "W3032714479", "ferramenta e-<b>NatJus</b> como",
-            "... e a possibilidade do uso da ferramenta e-NatJus como elemento de suporte técnico aos "
-            "magistrados nessas ... y la posibilidad de utilizar la herramienta e-NatJus como elemento de "
-            "apoyo técnico para los jueces ... Brazil and the possibility of using the e-NatJus tool as "
-            "technical support for judges in these ...",
+            "W3032714479", "ferramenta e-<b>NatJus</b> como", RESUMO_W3032714479,
             id="sem-espaco-antes-do-b",
         ),
         pytest.param(
-            "raspar/page_01.html", "W4387465478", "Judiciary (<b>NatJus</b>), which",
+            "W4387465478", "Judiciary (<b>NatJus</b>), which",
             "... the Center for Technical Support of the Judiciary (NatJus), which supports judicial "
             "decisions. The data were obtained from the e-NatJus system, of the Brazilian Ministry of "
             "Justice, using ... accordance with scientific evidence, denoting the importance of NatJus in the "
@@ -245,32 +249,31 @@ class TestResumo:
             "e-NatJus, do Ministério da Justiça, utilizando técnicas de web ...",
             id="sem-espaco-em-volta-do-b",
         ),
-        pytest.param(
-            "raspar/page_02.html", "GB180388631349", "Original Color\nBook.",
-            "Original Color Book.",
-            id="quebra-de-linha-no-texto",
-        ),
     ])
     @responses.activate
-    def test_resumo(self, scraper, mocker, sample, id_card, trecho_html, resumo_esperado):
+    def test_resumo(self, scraper, mocker, id_card, trecho_html, resumo_esperado):
         mocker.patch("time.sleep")
-        html = load_sample("capes", sample)
+        html = load_sample("capes", "raspar/page_01.html")
         assert trecho_html in html, f"Trecho {trecho_html!r} sumiu do sample; recapturar e rever o caso."
 
         assert _coluna_por_id(scraper, html, "resumo")[id_card] == resumo_esperado
 
+    @pytest.mark.parametrize("substituto", [
+        pytest.param("suporte\n                    técnico", id="quebra-de-linha-no-texto"),
+        pytest.param('suporte</p><p class="mb-0 small">técnico', id="paragrafos-colados"),
+    ])
     @responses.activate
-    def test_resumo_com_paragrafos_colados(self, scraper, mocker):
-        """Entre dois ``<p>`` o navegador quebra a linha mesmo sem espaço no HTML.
+    def test_resumo_com_quebra_de_linha(self, scraper, mocker, substituto):
+        """Quebra de linha no HTML vira espaço, e ``</p><p>`` colados não colam as palavras.
 
-        Nenhuma captura tem mais de um ``<p>`` no resumo; o caso deriva do card
-        real ``GB180388631349`` partindo o parágrafo em dois, sem espaço entre
-        ``</p>`` e ``<p>``.
+        Nenhuma captura atual tem quebra de linha nem mais de um ``<p>`` no
+        resumo; os casos derivam do card real ``W3032714479`` trocando o espaço
+        entre ``suporte`` e ``técnico``.
         """
         mocker.patch("time.sleep")
-        html = load_sample("capes", "raspar/page_02.html")
-        trecho = "Original Color\nBook."
+        html = load_sample("capes", "raspar/page_01.html")
+        trecho = "suporte técnico aos"
         assert html.count(trecho) == 1, f"Trecho {trecho!r} sumiu do sample; recapturar e rever o caso."
-        html = html.replace(trecho, 'Original Color</p><p class="mb-0 small">Book.')
+        html = html.replace("suporte técnico aos", substituto + " aos")
 
-        assert _coluna_por_id(scraper, html, "resumo")["GB180388631349"] == "Original Color Book."
+        assert _coluna_por_id(scraper, html, "resumo")["W3032714479"] == RESUMO_W3032714479
