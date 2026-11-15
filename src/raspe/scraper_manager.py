@@ -32,7 +32,7 @@ _MAPPING: dict[str, Type[AbstractScraper]] = {
     "CFM": ScraperCFM,
     "FOLHA": ScraperFolha,
     "NYT": ScraperNYT,
-    # Raspadores Playwright (requerem `pip install raspe[browser]` para rodar)
+    # Raspadores Playwright (requerem o extra `browser` para rodar)
     "SAUDELEGIS": ScraperSaudeLegis,
     "ANS": ScraperANS,
     "ANVISA": ScraperANVISA,
@@ -55,7 +55,7 @@ def scraper(nome_buscador: str, **kwargs) -> AbstractScraper:
         ValueError: Se a fonte não for suportada.
 
     Examples:
-        >>> scraper("CFM").raspar(texto="doença rara")  # doctest: +SKIP
+        >>> scraper("CFM").raspar(pesquisa="doença rara")  # doctest: +SKIP
         >>> scraper("ans", headless=False)  # doctest: +SKIP
     """
 
