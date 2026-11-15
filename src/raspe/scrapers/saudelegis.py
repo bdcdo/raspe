@@ -41,7 +41,6 @@ class ScraperSaudeLegis(PlaywrightScraper):
     ``DeprecationWarning``.
     """
 
-    colunas = OutputSaudeLegis.colunas_da_fonte()
     schema_entrada = InputSaudeLegis
     schema_saida = OutputSaudeLegis
 

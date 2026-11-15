@@ -42,8 +42,6 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     SITES_VALIDOS: tuple[str, ...] = get_args(SiteFolha)
     LIMITE_MAX_RESULTADOS = 10000
 
-    colunas = OutputFolha.colunas_da_fonte()
-
     def __init__(self, debug: bool = True):
         super().__init__("FOLHA", debug)
 

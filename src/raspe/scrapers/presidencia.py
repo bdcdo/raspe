@@ -10,7 +10,6 @@ from ..schemas.presidencia import InputPresidencia, OutputPresidencia
 
 
 class ScraperPresidencia(BaseScraper, HTMLScraper):
-    colunas = OutputPresidencia.colunas_da_fonte()
     schema_entrada = InputPresidencia
     schema_saida = OutputPresidencia
 

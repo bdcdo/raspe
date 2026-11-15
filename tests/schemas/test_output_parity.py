@@ -1,9 +1,7 @@
 """Paridade entre o schema de saída e o que o parser extrai das amostras.
 
-Três conferências por raspador registrado em ``ESPERADOS``:
+Duas conferências por raspador registrado em ``ESPERADOS``:
 
-- o atributo de classe ``colunas`` (que o parser e a busca sem resultados
-  usam), mais ``termo_busca``, é ``Output.colunas()`` do schema registrado;
 - as colunas que ``_parse_page`` tira da amostra ``typical``, mais
   ``termo_busca`` (que ``raspar()`` acrescenta), são as colunas de
   ``Output.colunas()``, na mesma ordem;
@@ -12,6 +10,7 @@ Três conferências por raspador registrado em ``ESPERADOS``:
   ``termo_busca`` fica de fora, porque o valor dele vem de quem chama.
 """
 
+import functools
 from pathlib import Path
 
 import pandas as pd
@@ -23,7 +22,12 @@ _TESTES = Path(__file__).resolve().parents[1]
 
 
 def extrair(registro: Registro, amostra: str) -> pd.DataFrame:
-    """Roda o parser do raspador sobre uma amostra versionada."""
+    """Roda o parser do raspador sobre uma amostra versionada (uma vez por par, com cache)."""
+    return _extrair(registro, amostra).copy()
+
+
+@functools.cache
+def _extrair(registro: Registro, amostra: str) -> pd.DataFrame:
     caminho = _TESTES / registro.pasta / "samples" / amostra
     return registro.construir()._parse_page(str(caminho))  # pylint: disable=protected-access
 
@@ -36,11 +40,6 @@ def _aparece(exemplo: object, valores: list[object]) -> bool:
         if isinstance(exemplo, str) and isinstance(valor, str) and exemplo in valor:
             return True
     return False
-
-
-@pytest.mark.parametrize("classe", list(ESPERADOS), ids=lambda classe: classe.__name__)
-def test_atributo_colunas_e_o_do_schema(classe):
-    assert [*classe.colunas, "termo_busca"] == ESPERADOS[classe].saida.colunas()
 
 
 @pytest.mark.parametrize("classe", list(ESPERADOS), ids=lambda classe: classe.__name__)

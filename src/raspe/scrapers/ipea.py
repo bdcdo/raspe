@@ -10,7 +10,6 @@ from ..schemas.ipea import InputIpea, OutputIpea
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
-    colunas = OutputIpea.colunas_da_fonte()
     schema_entrada = InputIpea
     schema_saida = OutputIpea
 

@@ -47,8 +47,6 @@ class ScraperDatalegis(PlaywrightScraper):
     _cod_modulo: str = ""
     _cod_menu: str = ""
 
-    colunas = OutputDatalegis.colunas_da_fonte()
-
     def __init__(
         self,
         nome_buscador: str,

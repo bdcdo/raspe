@@ -36,7 +36,6 @@ class ScraperCFM(BaseScraper, HTMLScraper):
     ``DeprecationWarning``.
     """
 
-    colunas = OutputCFM.colunas_da_fonte()
     schema_entrada = InputCFM
     schema_saida = OutputCFM
 

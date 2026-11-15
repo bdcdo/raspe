@@ -154,13 +154,19 @@ class AbstractScraper(ABC):
             emite ``DeprecationWarning``. ``None`` mantém o comportamento antigo,
             sem validação dos nomes.
         schema_saida: Schema pydantic das colunas do DataFrame de ``raspar()``,
-            conferido em :meth:`_conferir_saida`. Os raspadores com schema tiram
-            ``colunas`` dele, com ``OutputXx.colunas_da_fonte()``.
+            conferido em :meth:`_conferir_saida`. Com ele, ``colunas`` sai do
+            schema (``OutputXx.colunas_da_fonte()``) e não precisa ser declarado.
     """
 
     colunas: ClassVar[list[str]] = []
     schema_entrada: ClassVar[_SchemaEntrada] = None
     schema_saida: ClassVar[_SchemaSaida] = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Tira ``colunas`` do ``schema_saida``, quando a subclasse não as declara."""
+        super().__init_subclass__(**kwargs)
+        if cls.schema_saida is not None and 'colunas' not in cls.__dict__:
+            cls.colunas = cls.schema_saida.colunas_da_fonte()
 
     def __init__(self, nome_buscador: str, debug: bool = True):
         """Inicializa o AbstractScraper com configuração comum."""

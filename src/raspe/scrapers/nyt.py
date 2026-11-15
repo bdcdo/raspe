@@ -55,8 +55,6 @@ class ScraperNYT(BaseScraper):
     RESULTS_PER_PAGE = 10
     MAX_PAGES = 100
 
-    colunas = OutputNYT.colunas_da_fonte()
-
     def __init__(self, api_key: str | None = None, debug: bool = True):
         """Inicializa o raspador do NYT.
 
