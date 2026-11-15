@@ -161,7 +161,7 @@ Três notebooks explicam esses exemplos célula por célula:
 - [`11_multiplas_fontes.ipynb`](notebooks/11_multiplas_fontes.ipynb): a mesma busca na Presidência, na Câmara e no Senado, comparadas;
 - [`12_analise_longitudinal.ipynb`](notebooks/12_analise_longitudinal.ipynb): a produção acadêmica sobre judicialização de medicamentos ano a ano.
 
-Há também um notebook por fonte, de [`01_presidencia.ipynb`](notebooks/01_presidencia.ipynb) a [`09_saudelegis.ipynb`](notebooks/09_saudelegis.ipynb), para nove das 11 fontes (ANS e ANVISA ainda não têm).
+Há também um notebook por fonte, de [`01_presidencia.ipynb`](notebooks/01_presidencia.ipynb) a [`09_saudelegis.ipynb`](notebooks/09_saudelegis.ipynb), mais [`13_anvisa.ipynb`](notebooks/13_anvisa.ipynb), para dez das 11 fontes (a ANS ainda não tem).
 
 ### Passo 1: Criar um arquivo Python
 

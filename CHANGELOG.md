@@ -40,6 +40,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionada a dependência `pydantic>=2.4`.
 - Adicionada a coluna `rotulo` à `presidencia()`, depois de `descricao`, com o selo que o portal põe ao lado do
   nome do ato, como "Veto Parcial"; vazia quando não há.
+- Adicionado o notebook `notebooks/13_anvisa.ipynb`, com exemplos do raspador da ANVISA executados ao vivo.
 
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
@@ -87,6 +88,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
 
 ### Corrigido
+- Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que no Jupyter e no Colab falhavam com `RuntimeError`
+  ("asyncio.run() cannot be called from a running event loop"): com um loop do asyncio já ativo, o navegador roda
+  em outra thread.
 - `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros

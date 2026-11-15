@@ -37,6 +37,7 @@ import asyncio
 import os
 import time
 from abc import abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum
@@ -632,6 +633,26 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
         return download_dir
 
+    def _rodar_async(self, **kwargs) -> str:
+        """Roda :meth:`_baixar_async` até o fim, com ou sem loop do asyncio já ativo.
+
+        No Jupyter e no Colab a célula roda dentro de um loop, e ``asyncio.run``
+        recusa outro loop na mesma thread. Nesse caso o download roda num loop
+        próprio em outra thread, e esta espera o resultado.
+
+        Args:
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
+
+        Returns:
+            str: Pasta com as páginas salvas.
+        """
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self._baixar_async(**kwargs))
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            return executor.submit(lambda: asyncio.run(self._baixar_async(**kwargs))).result()
+
     def _raspar(self, **kwargs) -> pd.DataFrame:
         """Baixa as páginas num loop do asyncio e as lê depois que ele termina.
 
@@ -644,7 +665,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         Returns:
             pd.DataFrame: Dados raspados consolidados.
         """
-        download_dir = asyncio.run(self._baixar_async(**kwargs))
+        download_dir = self._rodar_async(**kwargs)
         result = self._parse_data(download_dir)
 
         # Adiciona termo de busca se disponível

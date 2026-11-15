@@ -6,6 +6,7 @@ Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``raspar``
 (busca, contagem, pasta de download, ``_parse_data``, ``termo_busca``) sem rede.
 """
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -107,3 +108,28 @@ class TestAvisoDePaginaSemLinhas:
         assert len(df) == 1
         [aviso] = [a for a in avisos if "1 de 2 páginas" in str(a.message)]
         assert aviso.filename == __file__
+
+
+def _raspar_dentro_de_um_loop(raspador: _DummyPlaywright, **kwargs) -> pd.DataFrame:
+    """Chama ``raspar()`` como numa célula do Jupyter ou do Colab, com um loop do asyncio já rodando."""
+
+    async def _celula_do_notebook() -> pd.DataFrame:
+        return raspador.raspar(**kwargs)
+
+    return asyncio.run(_celula_do_notebook())
+
+
+class TestRasparComLoopAtivo:
+    def test_funciona_dentro_de_um_loop_do_asyncio(self, mocker):
+        raspador = _raspador(mocker)
+        df = _raspar_dentro_de_um_loop(raspador, assunto="x")
+        assert df.empty
+        assert raspador.buscas == [{"assunto": "x"}]
+
+    def test_erro_do_navegador_chega_a_quem_chamou(self, mocker):
+        """O erro levantado na thread do navegador sobe em ``raspar()``, e o contexto do navegador fecha."""
+        raspador = _raspador(mocker)
+        raspador.pagina_falsa.goto.side_effect = TimeoutError("portal fora do ar")
+        with pytest.raises(TimeoutError, match="portal fora do ar"):
+            _raspar_dentro_de_um_loop(raspador, assunto="x")
+        assert raspador._page is None
