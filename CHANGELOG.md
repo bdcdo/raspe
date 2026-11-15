@@ -122,6 +122,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `ano=2024, data_fim="2023-06-01"` ia invertido à API. Agora levanta `ValidationError`.
 - Corrigido o `cfm()`, que descartava em silêncio o valor de um rótulo de card desconhecido: agora emite
   `UserWarning` com o rótulo, porque ele indica mudança de layout do portal.
+- Corrigido o aviso de páginas sem linhas nos raspadores com navegador, que saía atribuído ao asyncio: agora aponta
+  para a linha de quem chamou `raspar()`, como nos demais raspadores.
 
 ## [0.1.0] - 2025-05-15
 

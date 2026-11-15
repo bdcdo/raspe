@@ -15,8 +15,6 @@ reprova schema concreto que declare um desses nomes com outro tipo.
 """
 
 import difflib
-import inspect
-import os
 import types
 import warnings
 from datetime import date
@@ -28,10 +26,7 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 
 from raspe.exceptions import ValidationError
-
-# Diretório do pacote ``raspe``, com separador no fim para que um pacote vizinho
-# de nome parecido (``raspe_extra``) não seja confundido com ele.
-_DIRETORIO_PACOTE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + os.sep
+from raspe.utils import nivel_de_pilha_fora_do_pacote
 
 _DESCRICAO_PESQUISA = (
     "Termo de busca. Uma lista dispara uma busca por item, e a coluna "
@@ -220,30 +215,6 @@ class OutputBase(BaseModel):
         return [nome for nome in cls.model_fields if nome not in OutputBase.model_fields]
 
 
-def _nivel_de_pilha_fora_do_pacote() -> int:
-    """Calcula o ``stacklevel`` que atribui um warning ao código de quem usa o raspe.
-
-    O Python só mostra ``DeprecationWarning`` por padrão quando o warning é
-    atribuído ao módulo ``__main__`` (ou à célula do notebook). Atribuído a um
-    arquivo interno do raspe, ele sumiria. A pilha até aqui varia (``raspar``,
-    ``scrape``, raspadores com navegador), por isso o nível é contado subindo
-    os frames até o primeiro fora do pacote, como faz o ``skip_file_prefixes``
-    do Python 3.12.
-
-    Returns:
-        Valor de ``stacklevel`` para o ``warnings.warn`` chamado pela função que
-        chamou esta.
-    """
-    frame = inspect.currentframe()
-    # O primeiro frame é o desta função; o seguinte é o de quem vai chamar warn.
-    frame = frame.f_back if frame is not None else None
-    nivel = 1
-    while frame is not None and frame.f_code.co_filename.startswith(_DIRETORIO_PACOTE):
-        frame = frame.f_back
-        nivel += 1
-    return nivel
-
-
 def _resolver_aliases(schema: type[InputBase], parametros: dict[str, Any]) -> dict[str, Any]:
     """Troca nomes deprecados pelo canônico, avisando com ``DeprecationWarning``.
 
@@ -270,7 +241,7 @@ def _resolver_aliases(schema: type[InputBase], parametros: dict[str, Any]) -> di
         warnings.warn(
             f"O parâmetro '{antigo}' está descontinuado e será removido. Use '{canonico}'.",
             DeprecationWarning,
-            stacklevel=_nivel_de_pilha_fora_do_pacote(),
+            stacklevel=nivel_de_pilha_fora_do_pacote(),
         )
     return resolvidos
 
@@ -410,6 +381,6 @@ def conferir_saida(df: pd.DataFrame, schema: type[OutputBase], metodo: str) -> p
         f"(faltando: {faltando}; sobrando: {sobrando}). Isso é defeito do raspe; "
         "os dados foram mantidos como vieram.",
         UserWarning,
-        stacklevel=_nivel_de_pilha_fora_do_pacote(),
+        stacklevel=nivel_de_pilha_fora_do_pacote(),
     )
     return df

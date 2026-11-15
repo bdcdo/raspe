@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
-from ..schemas.base import _nivel_de_pilha_fora_do_pacote
 from ..schemas.cfm import InputCFM, OutputCFM
+from ..utils import nivel_de_pilha_fora_do_pacote
 
 # Rótulo do cabeçalho do card no portal -> coluna canônica do DataFrame.
 # Rótulo fora deste mapa fica fora do DataFrame, que só leva as colunas de ScraperCFM.colunas,
@@ -241,7 +241,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
                 f"CFM: os cards trazem rótulos que o raspe não conhece, e os valores deles ficaram fora do "
                 f"resultado: {sorted(rotulos_desconhecidos)}. O portal pode ter mudado de layout.",
                 UserWarning,
-                stacklevel=_nivel_de_pilha_fora_do_pacote(),
+                stacklevel=nivel_de_pilha_fora_do_pacote(),
             )
         return df
 

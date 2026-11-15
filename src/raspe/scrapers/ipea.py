@@ -5,8 +5,8 @@ import pandas as pd
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
-from ..schemas.base import _nivel_de_pilha_fora_do_pacote
 from ..schemas.ipea import InputIpea, OutputIpea
+from ..utils import nivel_de_pilha_fora_do_pacote
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
@@ -27,7 +27,7 @@ class ScraperIpea(BaseScraper, HTMLScraper):
                 "O parâmetro `download_path` de ScraperIpea é ignorado e será removido. Para mudar a pasta "
                 "dos arquivos baixados, atribua `raspador.download_path` depois de criar o raspador.",
                 DeprecationWarning,
-                stacklevel=_nivel_de_pilha_fora_do_pacote(),
+                stacklevel=nivel_de_pilha_fora_do_pacote(),
             )
 
         self._api_base = "https://www.ipea.gov.br/portal/coluna-5/central-de-conteudo/busca-publicacoes"

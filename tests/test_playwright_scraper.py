@@ -38,9 +38,9 @@ class _DummyPlaywright(PlaywrightScraper):
         raise AssertionError("sem resultados, nenhuma página deveria ser lida")
 
 
-def _raspador(mocker, pasta=None, debug: bool = False) -> _DummyPlaywright:
+def _raspador(mocker, pasta=None, debug: bool = False, classe=_DummyPlaywright) -> _DummyPlaywright:
     """Raspador com navegador falso; ``pasta`` troca o ``download_path`` (padrão: mkdtemp)."""
-    r = _DummyPlaywright(debug=debug)
+    r = classe(debug=debug)
     if pasta is not None:
         r.download_path = str(pasta)
     r.page_load_wait = r.between_pages_wait = 0
@@ -78,3 +78,31 @@ class TestRasparSemResultados:
         raspador = _raspador(mocker, tmp_path, debug=True)
         raspador.raspar(assunto="x")
         assert os.listdir(raspador.download_path)
+
+
+class _DuasPaginas(_DummyPlaywright):
+    """Duas páginas: a primeira rende uma linha, a segunda vem vazia."""
+
+    async def _encontrar_total_paginas(self) -> int:
+        return 2
+
+    async def _navegar_proxima_pagina(self, pagina_atual: int) -> bool:
+        self.pagina_falsa.content.return_value = "vazia"
+        return True
+
+    def _parse_page(self, path: str) -> pd.DataFrame:
+        with open(path, encoding="utf-8") as f:
+            if f.read() == "vazia":
+                return pd.DataFrame(columns=self.colunas)
+        return pd.DataFrame([{"titulo": "t", "link": "l"}])
+
+
+class TestAvisoDePaginaSemLinhas:
+    def test_aviso_aponta_para_quem_chamou_raspar(self, mocker):
+        """O ``_parse_data`` roda dentro do loop do asyncio; o aviso não pode ficar com o asyncio."""
+        raspador = _raspador(mocker, classe=_DuasPaginas)
+        raspador.pagina_falsa.content.return_value = "cheia"
+        with pytest.warns(UserWarning, match="1 de 2 páginas") as avisos:
+            df = raspador.raspar(assunto="x")
+        assert len(df) == 1
+        assert avisos[0].filename == __file__
