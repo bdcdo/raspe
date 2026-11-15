@@ -9,8 +9,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperPresidencia(BaseScraper, HTMLScraper):
-    def __init__(self):
-        super().__init__("PRESIDENCIA")
+    def __init__(self, debug: bool = True):
+        super().__init__("PRESIDENCIA", debug)
 
         # Workaround: O servidor da Presidência tem cadeia de certificados SSL incompleta.
         # Desabilita verificação SSL para evitar SSLError.

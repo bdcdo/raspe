@@ -43,6 +43,9 @@ def presidencia(**kwargs):
     """
     Cria um raspador para dados da Presidência da República.
 
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
+
     Returns:
         ScraperPresidencia: Instância configurada do raspador.
     """
@@ -52,6 +55,9 @@ def presidencia(**kwargs):
 def ipea(**kwargs):
     """
     Cria um raspador para dados do IPEA (Instituto de Pesquisa Econômica Aplicada).
+
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
 
     Returns:
         ScraperIpea: Instância configurada do raspador.
@@ -63,6 +69,9 @@ def senado(**kwargs):
     """
     Cria um raspador para dados do Senado Federal.
 
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
+
     Returns:
         ScraperSenadoFederal: Instância configurada do raspador.
     """
@@ -73,6 +82,9 @@ def camara(**kwargs):
     """
     Cria um raspador para dados da Câmara dos Deputados.
 
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
+
     Returns:
         ScraperCamaraDeputados: Instância configurada do raspador.
     """
@@ -82,6 +94,9 @@ def camara(**kwargs):
 def cfm(**kwargs):
     """
     Cria um raspador para normas do CFM (Conselho Federal de Medicina).
+
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
 
     Returns:
         ScraperCFM: Instância configurada do raspador.
@@ -98,6 +113,7 @@ def nyt(api_key: str | None = None, **kwargs):
     Args:
         api_key: Chave de API do NYT Developer Portal.
                  Também pode ser configurada via variável de ambiente NYT_API_KEY.
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
 
     Returns:
         ScraperNYT: Instância configurada do raspador.
@@ -117,6 +133,7 @@ def folha(**kwargs):
         site: 'todos', 'online' ou 'jornal' (default: 'todos').
         data_inicio: Data inicial no formato YYYY-MM-DD.
         data_fim: Data final no formato YYYY-MM-DD.
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
 
     Returns:
         ScraperFolha: Instância configurada do raspador.
@@ -133,6 +150,7 @@ def capes(**kwargs):
 
     Args:
         pesquisa: Termo de busca.
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
 
     Returns:
         ScraperCapes: Instância configurada do raspador.

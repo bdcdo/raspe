@@ -29,6 +29,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   do Playwright).
 - Adicionada a pasta `examples/` com quatro scripts reproduzíveis (busca básica, múltiplas fontes, análise temporal e pipeline completo com tratamento de erro), um README com tempo e número de requisições de cada um e, em `examples/datasets/`, as tabelas que eles geraram numa execução real.
 - Adicionados os notebooks `10_pipeline_completo.ipynb`, `11_multiplas_fontes.ipynb` e `12_analise_longitudinal.ipynb`, que reaproveitam as funções de `examples/` e explicam cada etapa.
+- Adicionado o parâmetro `debug` aos raspadores da Presidência, do Senado, da Câmara, da CAPES, do CFM, da Folha,
+  do IPEA e do NYT, que também passa pelas funções `raspe.<fonte>()`: `raspe.ipea(debug=False)`.
 
 ### Modificado
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
@@ -50,6 +52,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
   (paralelização, cache, uso de `old_page_name`).
+- Corrigidas as mensagens de log repetidas ao criar mais de um raspador da mesma fonte: cada instância
+  acrescentava mais um handler ao logger compartilhado.
 - Corrigido `raspar()` devolvendo `DataFrame` vazio quando a requisição inicial esbarra em 429 ou 5xx
   persistentes: agora levanta `RateLimitError` ou `APIError`.
 - Corrigidos os raspadores da Presidência, do Senado e da CAPES, que tratavam página de manutenção ou de

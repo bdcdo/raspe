@@ -20,6 +20,10 @@ from tqdm import tqdm
 from raspe.utils import validar_intervalo_datas
 
 
+class _HandlerRaspe(logging.StreamHandler):
+    """Handler de console que o raspe põe no logger de cada fonte."""
+
+
 class AbstractScraper(ABC):
     """Classe abstrata base para todos os tipos de scrapers.
 
@@ -58,11 +62,18 @@ class AbstractScraper(ABC):
         ...
 
     def _start_logger(self) -> None:
-        """Configura o logger para o scraper."""
+        """Configura o logger para o scraper.
+
+        O logger é compartilhado por todas as instâncias com o mesmo
+        ``nome_buscador``. Cada nova instância troca o handler do raspe em vez
+        de acrescentar outro, para as mensagens não saírem repetidas; trocar
+        (em vez de reaproveitar) mantém a saída no ``sys.stderr`` atual.
+        """
         self.logger = logging.getLogger(self.nome_buscador)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
+        for antigo in [h for h in self.logger.handlers if isinstance(h, _HandlerRaspe)]:
+            self.logger.removeHandler(antigo)
+        handler = _HandlerRaspe()
+        handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         self.logger.addHandler(handler)
         self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)

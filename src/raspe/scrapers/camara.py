@@ -11,8 +11,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
-    def __init__(self):
-        super().__init__("CAMARA")
+    def __init__(self, debug: bool = True):
+        super().__init__("CAMARA", debug)
         self.session.headers.update({
             'User-Agent': (
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '

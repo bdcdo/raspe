@@ -56,6 +56,24 @@ class TestInit:
         s = _DummyScraper("propagate_test")
         assert s.logger.propagate is False
 
+    def test_logger_nao_empilha_handler_por_instancia(self):
+        """Instâncias com o mesmo nome compartilham o logger; cada mensagem sai uma vez só."""
+        primeiro = _DummyScraper("handler_unico", debug=False)
+        segundo = _DummyScraper("handler_unico", debug=True)
+        assert primeiro.logger is segundo.logger
+        assert len(segundo.logger.handlers) == 1
+        assert segundo.logger.level == logging.DEBUG
+
+    def test_logger_mantem_handler_do_usuario_e_usa_stderr_atual(self, capsys):
+        """Um handler alheio no logger não suprime o do raspe, e a saída vai para o stderr atual."""
+        alheio = logging.NullHandler()
+        logging.getLogger("handler_alheio").addHandler(alheio)
+        s = _DummyScraper("handler_alheio", debug=False)
+        s.logger.warning("aviso único")
+        assert alheio in s.logger.handlers
+        assert len(s.logger.handlers) == 2
+        assert capsys.readouterr().err.count("aviso único") == 1
+
 
 class TestValidarParametros:
     def test_passa_kwargs_sem_datas(self):

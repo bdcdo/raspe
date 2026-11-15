@@ -8,8 +8,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperSenadoFederal(BaseScraper, HTMLScraper):
-    def __init__(self):
-        super().__init__("SENADO")
+    def __init__(self, debug: bool = True):
+        super().__init__("SENADO", debug)
         self.session.headers.update({
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Connection": "keep-alive",

@@ -30,12 +30,11 @@ PASTA_DADOS = PASTA_EXEMPLOS / "datasets"
 
 def main() -> None:
     """Executa a busca, mostra os primeiros resultados e salva os arquivos."""
-    raspador = raspe.presidencia()
     # Por padrão o raspador imprime cada passo da coleta e guarda as páginas baixadas numa
-    # pasta temporária. As duas linhas abaixo deixam na tela só avisos e erros e apagam as
-    # páginas baixadas ao fim da busca.
+    # pasta temporária. Com debug=False ele apaga as páginas baixadas ao fim da busca, e a
+    # linha seguinte deixa na tela só avisos e erros.
+    raspador = raspe.presidencia(debug=False)
     raspador.logger.setLevel(logging.WARNING)
-    raspador.debug = False
 
     normas = raspador.raspar(pesquisa=TERMO, paginas=PAGINAS)
 
