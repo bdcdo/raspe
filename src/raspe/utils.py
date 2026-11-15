@@ -1,3 +1,5 @@
+import inspect
+import os
 import re
 import time
 from datetime import datetime
@@ -7,6 +9,34 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 from raspe.exceptions import ValidationError
+
+# Diretório do pacote ``raspe``, com separador no fim para que um pacote vizinho
+# de nome parecido (``raspe_extra``) não seja confundido com ele.
+_DIRETORIO_PACOTE = os.path.dirname(os.path.abspath(__file__)) + os.sep
+
+
+def nivel_de_pilha_fora_do_pacote() -> int:
+    """Calcula o ``stacklevel`` que atribui um warning ao código de quem usa o raspe.
+
+    O Python só mostra ``DeprecationWarning`` por padrão quando o warning é
+    atribuído ao módulo ``__main__`` (ou à célula do notebook). Atribuído a um
+    arquivo interno do raspe, ele sumiria. A pilha até aqui varia (``raspar``,
+    ``scrape``, raspadores com navegador), por isso o nível é contado subindo
+    os frames até o primeiro fora do pacote, como faz o ``skip_file_prefixes``
+    do Python 3.12.
+
+    Returns:
+        Valor de ``stacklevel`` para o ``warnings.warn`` chamado pela função que
+        chamou esta.
+    """
+    frame = inspect.currentframe()
+    # O primeiro frame é o desta função; o seguinte é o de quem vai chamar warn.
+    frame = frame.f_back if frame is not None else None
+    nivel = 1
+    while frame is not None and frame.f_code.co_filename.startswith(_DIRETORIO_PACOTE):
+        frame = frame.f_back
+        nivel += 1
+    return nivel
 
 
 def expand(expression: str) -> list[str]:

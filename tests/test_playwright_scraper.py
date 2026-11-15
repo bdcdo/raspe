@@ -2,7 +2,7 @@
 
 O navegador não é aberto: ``_browser_context`` vira um context manager que só
 entrega uma página falsa (``AsyncMock``), e as esperas de ``asyncio.sleep`` e do
-Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``_raspar_async``
+Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``raspar``
 (busca, contagem, pasta de download, ``_parse_data``, ``termo_busca``) sem rede.
 """
 
@@ -38,9 +38,11 @@ class _DummyPlaywright(PlaywrightScraper):
         raise AssertionError("sem resultados, nenhuma página deveria ser lida")
 
 
-def _raspador(mocker, pasta=None, debug: bool = False) -> _DummyPlaywright:
+def _raspador(
+    mocker, pasta=None, debug: bool = False, classe: type[_DummyPlaywright] = _DummyPlaywright
+) -> _DummyPlaywright:
     """Raspador com navegador falso; ``pasta`` troca o ``download_path`` (padrão: mkdtemp)."""
-    r = _DummyPlaywright(debug=debug)
+    r = classe(debug=debug)
     if pasta is not None:
         r.download_path = str(pasta)
     r.page_load_wait = r.between_pages_wait = 0
@@ -78,3 +80,30 @@ class TestRasparSemResultados:
         raspador = _raspador(mocker, tmp_path, debug=True)
         raspador.raspar(assunto="x")
         assert os.listdir(raspador.download_path)
+
+
+class _DuasPaginas(_DummyPlaywright):
+    """Duas páginas: a primeira rende uma linha, a segunda vem vazia."""
+
+    async def _encontrar_total_paginas(self) -> int:
+        return 2
+
+    async def _navegar_proxima_pagina(self, pagina_atual: int) -> bool:
+        return True
+
+    def _parse_page(self, path: str) -> pd.DataFrame:
+        if "_00002_" in os.path.basename(path):
+            return pd.DataFrame(columns=self.colunas)
+        return pd.DataFrame([{"titulo": "t", "link": "l"}])
+
+
+class TestAvisoDePaginaSemLinhas:
+    def test_aviso_aponta_para_quem_chamou_raspar(self, mocker):
+        """O aviso do ``_parse_data`` não pode ficar com o asyncio, que roda o navegador."""
+        raspador = _raspador(mocker, classe=_DuasPaginas)
+        raspador.pagina_falsa.content.return_value = "<html></html>"
+        with pytest.warns(UserWarning, match="1 de 2 páginas") as avisos:
+            df = raspador.raspar(assunto="x")
+        assert len(df) == 1
+        [aviso] = [a for a in avisos if "1 de 2 páginas" in str(a.message)]
+        assert aviso.filename == __file__

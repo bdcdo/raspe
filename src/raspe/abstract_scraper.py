@@ -21,8 +21,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from raspe.exceptions import ScraperError
-from raspe.schemas.base import InputBase, OutputBase, _nivel_de_pilha_fora_do_pacote, conferir_saida, validar_entrada
-from raspe.utils import validar_intervalo_datas
+from raspe.schemas.base import InputBase, OutputBase, conferir_saida, validar_entrada
+from raspe.utils import nivel_de_pilha_fora_do_pacote, validar_intervalo_datas
 
 # Fora da classe porque, dentro dela, o nome 'type' é a propriedade abstrata
 # declarada mais abaixo, e o pylint lê 'type[...]' como uso antes da definição.
@@ -350,7 +350,7 @@ class AbstractScraper(ABC):
                 f"{self.nome_buscador}: {len(sem_linhas)} de {len(arquivos)} páginas baixadas não renderam "
                 "resultados (erro de leitura, página de bloqueio ou layout novo), e o resultado pode estar "
                 f"incompleto. Páginas: {', '.join(os.path.basename(f) for f in sem_linhas)}.",
-                stacklevel=_nivel_de_pilha_fora_do_pacote(),
+                stacklevel=nivel_de_pilha_fora_do_pacote(),
             )
 
         return pd.concat(result, ignore_index=True)

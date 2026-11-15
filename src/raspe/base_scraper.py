@@ -35,8 +35,7 @@ from tqdm import tqdm
 
 from raspe.abstract_scraper import AbstractScraper
 from raspe.exceptions import APIError, RateLimitError, ScraperError
-from raspe.schemas.base import _nivel_de_pilha_fora_do_pacote
-from raspe.utils import start_session
+from raspe.utils import nivel_de_pilha_fora_do_pacote, start_session
 
 
 class BaseScraper(AbstractScraper):
@@ -161,7 +160,7 @@ class BaseScraper(AbstractScraper):
                 )
                 if nao_tentados:
                     aviso += f". Por causa do rate limit, ficaram sem coletar: {nao_tentados!r}"
-                warnings.warn(aviso, stacklevel=_nivel_de_pilha_fora_do_pacote())
+                warnings.warn(aviso, stacklevel=nivel_de_pilha_fora_do_pacote())
             if not dfs:
                 return pd.DataFrame(columns=[*self.colunas, 'termo_busca'])
             # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
