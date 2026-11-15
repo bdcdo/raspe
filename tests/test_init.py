@@ -65,13 +65,22 @@ class TestFactoriesPlaywright:
         assert isinstance(raspe.anvisa(), ScraperANVISA)
 
 
-@pytest.mark.parametrize("fabrica, extra", [
+FABRICAS = [
     *[(nome, {}) for nome in (
         "presidencia", "ipea", "senado", "camara", "cfm", "folha", "capes",
         "saudelegis", "ans", "anvisa",
     )],
     ("nyt", {"api_key": "chave-de-teste"}),
-])
+]
+
+
+@pytest.mark.parametrize("fabrica, extra", FABRICAS)
+def test_raspadores_declaram_colunas(fabrica, extra):
+    """Sem ``colunas``, a busca sem resultados voltaria como DataFrame sem colunas."""
+    assert getattr(raspe, fabrica)(**extra).colunas
+
+
+@pytest.mark.parametrize("fabrica, extra", FABRICAS)
 def test_fabricas_aceitam_debug(fabrica, extra):
     """``raspe.<fonte>(debug=False)`` desliga o modo de depuração já na construção."""
     raspador = getattr(raspe, fabrica)(debug=False, **extra)

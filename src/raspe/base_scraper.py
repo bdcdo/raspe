@@ -148,7 +148,11 @@ class BaseScraper(AbstractScraper):
                 dfs.append(df)
                 if self.debug is False:
                     shutil.rmtree(path_result)
-            result = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+            if not dfs:
+                return pd.DataFrame(columns=[*self.colunas, 'termo_busca'])
+            # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
+            # vazio (colunas object) com os demais alargaria os tipos das colunas.
+            result = pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
 
             return result
         # Fallback para busca única

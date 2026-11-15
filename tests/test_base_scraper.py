@@ -280,6 +280,39 @@ class TestRasparListaTermos:
         assert len(df) == 2
         assert set(df["termo_busca"]) == {"a", "b"}
 
+    @responses.activate
+    def test_termo_sem_resultados_nao_alarga_os_tipos(self, mocker):
+        """Um termo vazio na lista não muda o tipo das colunas dos demais."""
+        mocker.patch("time.sleep")
+        for termo, total in [("a", 1), ("vazio", 0)]:
+            responses.add(
+                responses.GET, "http://example.com/api",
+                body=f"<total>{total}</total>", status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({"q": termo})],
+            )
+        responses.add(
+            responses.GET, "http://example.com/api",
+            body="<r>a</r>", status=200,
+            content_type="text/html; charset=utf-8",
+            match=[matchers.query_param_matcher({"q": "a", "page": "1"})],
+        )
+
+        scraper = _DummyHTTPScraper()
+        scraper.colunas = ["content"]
+        sozinho = scraper.raspar(termo="a")
+        df = scraper.raspar(termo=["a", "vazio"])
+        assert len(df) == 1
+        assert df.dtypes.to_dict() == sozinho.dtypes.to_dict()
+
+    def test_lista_vazia_devolve_as_colunas(self, mocker):
+        mocker.patch("time.sleep")
+        scraper = _DummyHTTPScraper()
+        scraper.colunas = ["content"]
+        df = scraper.raspar(termo=[])
+        assert df.empty
+        assert list(df.columns) == ["content", "termo_busca"]
+
     def test_lista_em_multiplos_params_levanta_valueerror(self, mocker):
         """raspar() só suporta lista em um único parâmetro."""
         mocker.patch("time.sleep")

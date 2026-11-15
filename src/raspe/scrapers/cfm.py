@@ -255,7 +255,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
             return None
 
         # Garantir que todas as colunas esperadas existam
-        for col in ['Tipo', 'UF', 'Nº/Ano', 'Situação', 'Ementa', 'Link']:
+        for col in self.colunas:
             if col not in result:
                 result[col] = ''
 
