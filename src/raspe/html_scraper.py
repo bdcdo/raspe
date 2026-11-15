@@ -39,9 +39,11 @@ class HTMLScraper:
         """Confirma que uma página sem contagem de resultados é mesmo uma busca vazia.
 
         Os ``_find_n_pags`` chamam este método quando não acham o marcador de
-        contagem. Se a página traz o aviso de busca sem resultados, devolve 0.
-        Senão, a resposta não é uma página de resultados (manutenção,
-        verificação anti-robô, layout novo), e devolver 0 esconderia o problema.
+        contagem, e o ``PlaywrightScraper`` quando ``_encontrar_total_paginas``
+        dá 0. Se a página traz o aviso de busca sem resultados, devolve 0.
+        Senão, a resposta não é uma página de resultados (manutenção, acesso
+        recusado, verificação anti-robô, layout novo), e devolver 0 esconderia
+        o problema.
 
         Args:
             soup: Página da resposta inicial, já analisada.
@@ -58,5 +60,5 @@ class HTMLScraper:
         raise ScraperError(
             f"{type(self).__name__}: a resposta não traz a contagem de resultados nem o aviso "
             f"de busca vazia (título da página: '{titulo}'). O site pode estar fora do ar, "
-            "em manutenção ou exigindo verificação anti-robô."
+            "em manutenção, recusando o acesso ou exigindo verificação anti-robô."
         )

@@ -91,6 +91,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que no Jupyter e no Colab falhavam com `RuntimeError`
   ("asyncio.run() cannot be called from a running event loop"): com um loop do asyncio já ativo, o navegador roda
   em outra thread.
+- Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que tratavam portal recusando o acesso (como o ANSLegis em
+  "URL inválida. Acesse o sistema novamente"), em manutenção ou com layout novo como busca sem resultados: sem o
+  aviso de busca vazia na página, agora levantam `ScraperError`.
 - `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros

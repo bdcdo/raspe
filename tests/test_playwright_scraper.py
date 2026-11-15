@@ -13,7 +13,9 @@ from contextlib import asynccontextmanager
 import pandas as pd
 import pytest
 
+from raspe.exceptions import ScraperError
 from raspe.playwright_scraper import PlaywrightScraper
+from tests._helpers import load_sample
 
 
 class _DummyPlaywright(PlaywrightScraper):
@@ -48,6 +50,7 @@ def _raspador(
         r.download_path = str(pasta)
     r.page_load_wait = r.between_pages_wait = 0
     r.pagina_falsa = mocker.AsyncMock()
+    r.pagina_falsa.content.return_value = "<html><body>Nenhum resultado encontrado</body></html>"
 
     @asynccontextmanager
     async def _contexto_falso():
@@ -81,6 +84,26 @@ class TestRasparSemResultados:
         raspador = _raspador(mocker, tmp_path, debug=True)
         raspador.raspar(assunto="x")
         assert os.listdir(raspador.download_path)
+
+
+class TestBuscaVaziaConfirmada:
+    """Zero páginas só vira DataFrame vazio se a página traz o aviso de busca vazia."""
+
+    def test_acesso_recusado_levanta_scraper_error(self, mocker):
+        """O ANSLegis recusando o módulo público ("URL inválida") não vira 0 resultados."""
+        raspador = _raspador(mocker)
+        raspador.pagina_falsa.content.return_value = load_sample("datalegis", "raspar/acesso_negado.html")
+        with pytest.raises(ScraperError, match="ANSlegis"):
+            raspador.raspar(assunto="doença rara")
+        assert raspador._page is None
+
+    def test_busca_vazia_real_devolve_df_vazio(self, mocker):
+        """O AnvisaLegis sem resultados ("Nenhum ato encontrado") segue devolvendo DataFrame vazio."""
+        raspador = _raspador(mocker)
+        raspador.pagina_falsa.content.return_value = load_sample("datalegis", "raspar/no_results.html")
+        df = raspador.raspar(assunto="termoextremamenteimprovavelxyz")
+        assert df.empty
+        assert list(df.columns) == [*_DummyPlaywright.colunas, "termo_busca"]
 
 
 class _DuasPaginas(_DummyPlaywright):
