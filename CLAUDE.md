@@ -83,6 +83,9 @@ Novos scrapers devem:
   pre-commit run pyright --all-files       # typecheck (warnings não falham; erros sim)
   ```
 
+- CI (`.github/workflows/ci.yml`), em todo PR e em push na `main`: o job `testes` roda
+  `pytest` em Python 3.11 e 3.14, e o job `lint` roda `pre-commit run --all-files` com os
+  hooks acima, menos o `pytest`. Sem deploy e sem segredos.
 - Os testes de Playwright não abrem navegador; não é preciso `playwright install`.
 
 ## Estrutura do repositório

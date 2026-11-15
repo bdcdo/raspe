@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Instala o pacote com os extras dev e browser
         env:
@@ -57,12 +57,14 @@ jobs:
       # do runner, mas a cada execução consulta o PyPI para avisar de versão
       # nova. Esta variável desliga a consulta.
       PYRIGHT_PYTHON_IGNORE_WARNINGS: "1"
+      # O hook pytest repetiria a suíte que o job testes já roda em 3.11 e 3.14.
+      SKIP: pytest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       # Os hooks locais do pre-commit chamam .venv/bin/mypy e .venv/bin/pyright,
       # e o pyright resolve os imports pelo venv = ".venv" do pyproject.toml.

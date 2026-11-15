@@ -64,8 +64,8 @@ repos:
         files: ^(src|tests)/
         pass_filenames: false
         args: ["-q", "-p", "no:cacheprovider"]
-      # O hook pytest acima só dispara com arquivo de src/ ou tests/ no commit, e o repo não
-      # tem CI: um `git add -f .coverage` isolado passaria. Este roda em todo commit, com a
+      # O hook pytest acima só dispara com arquivo de src/ ou tests/ no commit: um
+      # `git add -f .coverage` isolado passaria no commit local. Este roda em todo commit, com a
       # mesma regra de tests/test_repositorio.py, e não depende do .venv, para não travar
       # commit só de documentação.
       - id: gitignore-versionado
