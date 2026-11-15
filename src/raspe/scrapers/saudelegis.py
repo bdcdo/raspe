@@ -32,8 +32,9 @@ class ScraperSaudeLegis(PlaywrightScraper):
     Exemplo:
         >>> scraper = ScraperSaudeLegis()
         >>> df = scraper.raspar(assunto="doença rara")
-        >>> print(df.columns.tolist())
-        ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
+
+        O resultado traz as colunas de ``ScraperSaudeLegis.colunas``, além de
+        ``termo_busca``.
     """
 
     colunas = ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
@@ -155,7 +156,7 @@ class ScraperSaudeLegis(PlaywrightScraper):
             path: Caminho para o arquivo HTML.
 
         Returns:
-            pd.DataFrame: Dados extraídos da página.
+            pd.DataFrame: Dados extraídos da página, com as colunas de ``self.colunas``.
         """
         try:
             with open(path, 'r', encoding='utf-8') as f:

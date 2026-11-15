@@ -25,8 +25,9 @@ class ScraperANS(ScraperDatalegis):
     Exemplo:
         >>> scraper = ScraperANS()
         >>> df = scraper.raspar(termo="doença rara")
-        >>> print(df.columns.tolist())
-        ['url', 'titulo', 'descricao', 'situacao', 'termo_busca']
+
+        O resultado traz as colunas de ``ScraperANS.colunas`` (herdadas de
+        ``ScraperDatalegis``), além de ``termo_busca``.
     """
 
     _dominio = "anslegis.datalegis.net"

@@ -237,8 +237,7 @@ class ScraperNYT(BaseScraper):
             path: Caminho do arquivo JSON salvo.
 
         Returns:
-            DataFrame com as colunas: titulo, url, data_publicacao, secao,
-            desk, tipo, resumo, autor, palavras, imagem_url.
+            DataFrame com as colunas de ``self.colunas``.
         """
         try:
             with open(path, 'r', encoding='utf-8') as f:
