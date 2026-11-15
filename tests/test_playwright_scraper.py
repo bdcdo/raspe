@@ -2,7 +2,7 @@
 
 O navegador não é aberto: ``_browser_context`` vira um context manager que só
 entrega uma página falsa (``AsyncMock``), e as esperas de ``asyncio.sleep`` e do
-Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``_baixar_async``
+Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``raspar``
 (busca, contagem, pasta de download, ``_parse_data``, ``termo_busca``) sem rede.
 """
 
@@ -89,13 +89,11 @@ class _DuasPaginas(_DummyPlaywright):
         return 2
 
     async def _navegar_proxima_pagina(self, pagina_atual: int) -> bool:
-        self.pagina_falsa.content.return_value = "vazia"
         return True
 
     def _parse_page(self, path: str) -> pd.DataFrame:
-        with open(path, encoding="utf-8") as f:
-            if f.read() == "vazia":
-                return pd.DataFrame(columns=self.colunas)
+        if "_00002_" in os.path.basename(path):
+            return pd.DataFrame(columns=self.colunas)
         return pd.DataFrame([{"titulo": "t", "link": "l"}])
 
 
@@ -103,7 +101,7 @@ class TestAvisoDePaginaSemLinhas:
     def test_aviso_aponta_para_quem_chamou_raspar(self, mocker):
         """O aviso do ``_parse_data`` não pode ficar com o asyncio, que roda o navegador."""
         raspador = _raspador(mocker, classe=_DuasPaginas)
-        raspador.pagina_falsa.content.return_value = "cheia"
+        raspador.pagina_falsa.content.return_value = "<html></html>"
         with pytest.warns(UserWarning, match="1 de 2 páginas") as avisos:
             df = raspador.raspar(assunto="x")
         assert len(df) == 1
