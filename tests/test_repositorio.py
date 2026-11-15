@@ -28,20 +28,22 @@ def test_nenhum_arquivo_versionado_esta_coberto_pelo_gitignore():
         pytest.skip("fora de um checkout git do raspe")
 
     resultado = subprocess.run(
-        # ``core.excludesFile`` vazio tira do ``--exclude-standard`` o ignore global de quem
-        # roda a suíte (por padrão ``$XDG_CONFIG_HOME/git/ignore``), que reprovaria arquivo
-        # legítimo do projeto. Ficam as regras versionadas e o ``info/exclude`` do clone.
-        # ``-z`` separa os caminhos por NUL, sem as aspas que o git põe em nome não ASCII.
-        ["git", "-c", "core.excludesFile=", "ls-files", "--cached", "--ignored", "--exclude-standard", "-z"],
+        # Só os ``.gitignore`` versionados contam. O ``--exclude-standard`` somaria o ignore
+        # global e o ``info/exclude`` de quem roda a suíte, que reprovariam arquivo legítimo
+        # do projeto. ``-z`` separa os caminhos por NUL, sem as aspas que o git põe em nome
+        # não ASCII.
+        ["git", "ls-files", "--cached", "--ignored", "--exclude-per-directory=.gitignore", "-z"],
         cwd=RAIZ_DO_REPOSITORIO,
         capture_output=True,
         encoding="utf-8",
+        errors="replace",
         check=False,
+        timeout=120,
     )
     if resultado.returncode != 0:
         pytest.fail(f"git ls-files falhou (código {resultado.returncode}): {resultado.stderr.strip()}")
 
-    versionados_e_ignorados = sorted(caminho for caminho in resultado.stdout.split("\0") if caminho)
+    versionados_e_ignorados = [caminho for caminho in resultado.stdout.split("\0") if caminho]
     assert not versionados_e_ignorados, (
         "Arquivos versionados que o .gitignore cobre. Tire-os do índice com `git rm --cached <arquivo>` "
         "(o arquivo continua no disco):\n" + "\n".join(versionados_e_ignorados)
