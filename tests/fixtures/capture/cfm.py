@@ -22,7 +22,7 @@ SAMPLES_DIR = Path(__file__).resolve().parents[2] / "cfm" / "samples" / "raspar"
 def main() -> None:
     raspador = ScraperCFM(debug=False)
     raspador.timeout = (20, 120)
-    _capturar(raspador, SAMPLES_DIR / "no_results.html", texto="xqzwvkjh")
+    _capturar(raspador, SAMPLES_DIR / "no_results.html", pesquisa="xqzwvkjh")
 
 
 if __name__ == "__main__":

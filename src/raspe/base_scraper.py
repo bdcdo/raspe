@@ -109,6 +109,7 @@ class BaseScraper(AbstractScraper):
         Args:
             **kwargs: Parâmetros de busca para o raspador. Se algum parâmetro for
                 uma lista/tupla, o raspador processará cada valor na sequência.
+                Nos raspadores com ``schema_entrada``, só ``pesquisa`` aceita lista.
                 O parâmetro especial 'paginas' pode ser um objeto range para
                 especificar as páginas.
 
@@ -117,7 +118,8 @@ class BaseScraper(AbstractScraper):
 
         Raises:
             ValueError: Se múltiplos parâmetros forem fornecidos como listas/tuplas.
-            ValidationError: Se algum parâmetro for inválido.
+            ValidationError: Se algum parâmetro for inválido ou desconhecido
+                pelo ``schema_entrada`` do raspador.
             RateLimitError: Se alguma requisição esbarrar em rate limit (429) persistente.
             APIError: Se alguma requisição esbarrar em erro de servidor (5xx) persistente.
             requests.RequestException: Se uma página falhar com outro erro HTTP ou de rede.
@@ -181,16 +183,19 @@ class BaseScraper(AbstractScraper):
                     aviso += f". Por causa do rate limit, ficaram sem coletar: {nao_tentados!r}"
                 warnings.warn(aviso, stacklevel=2)
             if not dfs:
-                return pd.DataFrame(columns=[*self.colunas, 'termo_busca'])
+                return self._conferir_saida(pd.DataFrame(columns=[*self.colunas, 'termo_busca']))
             # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
             # vazio (colunas object) com os demais alargaria os tipos das colunas.
-            return pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
+            return self._conferir_saida(pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True))
         # Fallback para busca única
         else:
             path_result = self._download_data(**kwargs)
             result = self._parse_data(path_result)
 
-            # Determina qual parâmetro contém o termo de busca
+            # Determina qual parâmetro contém o termo de busca. Com schema_entrada,
+            # _validar_parametros devolve sempre 'pesquisa' (canônico, com default),
+            # e a coluna termo_busca sai em todo raspador ligado a schema. Os outros
+            # nomes só valem para raspador ainda sem schema.
             termo_param = next((k for k in kwargs if k in ['pesquisa', 'termo', 'q', 'query']), None)
             if termo_param:
                 termo_busca = str(kwargs[termo_param])
@@ -201,7 +206,7 @@ class BaseScraper(AbstractScraper):
             if self.debug is False:
                 self._limpar_download(path_result)
 
-            return result
+            return self._conferir_saida(result)
 
     def _download_data(self, **kwargs) -> str:
         self.logger.debug("Definindo consulta")

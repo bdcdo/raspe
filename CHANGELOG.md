@@ -31,6 +31,11 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionados os notebooks `10_pipeline_completo.ipynb`, `11_multiplas_fontes.ipynb` e `12_analise_longitudinal.ipynb`, que reaproveitam as funções de `examples/` e explicam cada etapa.
 - Adicionado o parâmetro `debug` aos raspadores da Presidência, do Senado, da Câmara, da CAPES, do CFM, da Folha,
   do IPEA e do NYT, que também passa pelas funções `raspe.<fonte>()`: `raspe.ipea(debug=False)`.
+- Adicionados schemas pydantic de entrada e saída em `raspe.schemas` (atributos `schema_entrada` e `schema_saida`)
+  para todos os raspadores menos Câmara e Senado, que aguardam a reescrita sobre as APIs oficiais.
+- Adicionado `docs/colunas.md`, com coluna, tipo, descrição e exemplo de cada fonte, gerado dos schemas por
+  `python -m raspe.schemas.documentacao`.
+- Adicionada a dependência `pydantic>=2.4`.
 
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
@@ -47,6 +52,22 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
 - Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
+- **Incompatível:** renomeado para `pesquisa` o termo de busca de `cfm()` e `nyt()` (antes `texto`), de
+  `saudelegis()` (antes `assunto`) e de `ans()` e `anvisa()` (antes `termo`). Os nomes antigos seguem aceitos, com
+  `DeprecationWarning`; passar o antigo e `pesquisa` juntos levanta `ValidationError`.
+- **Incompatível:** renomeadas as colunas do `cfm()` para snake_case ASCII: `Tipo`, `UF`, `Nº/Ano`, `Situação`,
+  `Ementa` e `Link` viraram `tipo`, `uf`, `numero_ano`, `situacao`, `ementa` e `link`.
+- **Incompatível:** parâmetro desconhecido em `raspar()` passou a levantar `ValidationError`, com os aceitos e o
+  nome mais parecido. Antes era ignorado: `data_incio` virava uma busca sem filtro de data.
+- **Incompatível:** `pesquisa` passou a ser obrigatória e não vazia em `presidencia()`, `ipea()`, `capes()` e
+  `folha()`. Em `cfm()` e `nyt()` segue opcional.
+- **Incompatível:** o modo lista (uma busca por valor) passou a valer só para `pesquisa`. Lista em outro parâmetro,
+  como `cfm().raspar(uf=["SP", "RJ"])`, levanta `ValidationError`.
+- **Incompatível:** `saudelegis()`, `ans()` e `anvisa()` passaram a recusar `paginas` e lista em `pesquisa`, antes
+  ignorados.
+- **Incompatível:** `paginas` passou a exigir `range` crescente, não vazio e começando em 1.
+- **Incompatível:** `sort` do `nyt()` passou a aceitar só `newest`, `oldest`, `relevance` e `best`.
+- `cfm()` e `nyt()` passaram a devolver a coluna `termo_busca`, como os demais raspadores.
 
 ### Descontinuado
 - Descontinuado o parâmetro `download_path` de `ScraperIpea`, que sempre foi ignorado: agora emite

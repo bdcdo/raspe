@@ -18,8 +18,8 @@ from urllib.parse import urljoin
 import pandas as pd
 
 from ..base_scraper import BaseScraper
-from ..exceptions import ValidationError
 from ..html_scraper import HTMLScraper
+from ..schemas.capes import InputCapes, OutputCapes
 
 _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 
@@ -27,11 +27,8 @@ _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 class ScraperCapes(BaseScraper, HTMLScraper):
     """Raspador HTTP para o buscador do Portal de Periódicos da CAPES."""
 
-    colunas = [
-        'id', 'tipo', 'titulo', 'link', 'autores', 'ano', 'revista',
-        'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
-        'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
-    ]
+    schema_entrada = InputCapes
+    schema_saida = OutputCapes
 
     _SELETOR_CARD = 'div.col-md-12.br-item[id^="conteudo-"]'
 
@@ -76,12 +73,8 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         return self._api_method
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
-        pesquisa = kwargs.get('pesquisa', '')
-        if not pesquisa or not str(pesquisa).strip():
-            raise ValidationError(
-                "Parâmetro 'pesquisa' é obrigatório e não pode ser vazio."
-            )
-
+        # O schema (PesquisaObrigatoriaMixin) já recusou pesquisa vazia.
+        pesquisa = kwargs.get('pesquisa')
         return {
             'q': f'all:contains({pesquisa})',
             'mode': 'advanced',
