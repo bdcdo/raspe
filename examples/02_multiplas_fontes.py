@@ -9,8 +9,9 @@ Como rodar, a partir da raiz do repositório:
 
     python examples/02_multiplas_fontes.py
 
-Requisições: até 4 na Presidência, até 9 na Câmara (duas para abrir a sessão, uma para
-contar os resultados e até 6 páginas) e até 7 no Senado. Leva de um a dois minutos.
+Requisições: até 3 na Presidência, até 8 na Câmara (duas para abrir a sessão e até 6
+páginas) e até 6 no Senado; a primeira página de cada fonte também traz a contagem de
+resultados. Leva de um a dois minutos.
 
 Se uma fonte falhar ou voltar vazia, o script avisa e segue com as outras.
 """

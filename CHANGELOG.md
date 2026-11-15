@@ -43,6 +43,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado o notebook `notebooks/13_anvisa.ipynb`, com exemplos do raspador da ANVISA executados ao vivo.
 
 ### Modificado
+- Os raspadores HTTP pedem a página 1 uma vez só: a resposta que dá a contagem de resultados é gravada como página 1,
+  em vez de a página ser pedida de novo. Quando `paginas` inclui a 1, cada busca faz uma requisição a menos. Na
+  `capes()` e no `nyt()`, a requisição da contagem passa a levar o parâmetro de página (`page=1` e `page=0`).
 - Os avisos de que a busca passou do teto da fonte na `camara()` (10.000 resultados) e na `folha()` (10.000) passaram
   de mensagem de log para `UserWarning`, como os demais avisos de resultado incompleto.
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo

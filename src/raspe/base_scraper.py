@@ -182,12 +182,34 @@ class BaseScraper(AbstractScraper):
             return result
 
     def _download_data(self, **kwargs) -> str:
+        """Pede a página 1, conta as páginas por ela e baixa as de ``paginas``.
+
+        A página 1 é pedida uma vez só: a mesma resposta dá a contagem e, se
+        ``paginas`` a inclui, é gravada como página 1.
+
+        Args:
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
+
+        Returns:
+            str: Pasta com as páginas baixadas.
+
+        Raises:
+            RateLimitError: Se o rate limit (429) persistir após todas as tentativas.
+            APIError: Se o erro de servidor (5xx) persistir após todas as tentativas.
+            requests.RequestException: Se uma página falhar com outro erro HTTP ou de rede.
+            ScraperError: Se a página 1 não traz a contagem nem o aviso de busca vazia
+                (ver :meth:`HTMLScraper._confirmar_busca_vazia`).
+        """
         self.logger.debug("Definindo consulta")
         query_base = self._set_query_base(**kwargs)
         self.logger.debug(query_base)
 
         self.logger.debug("Definindo n_pags")
-        n_pags = self._get_n_pags(query_base)
+        # A contagem vem da própria página 1, que o laço grava sem pedir de novo.
+        r0 = self._request_with_retry(self._set_query_atual(query_base, 1))
+        self.logger.debug(f"Encontrando n_pags (status: {r0.status_code})")
+        n_pags = self._find_n_pags(r0)
+        self.logger.debug(f"Encontradas {n_pags} páginas")
 
         self.logger.debug("Definindo paginas")
         paginas = kwargs.get("paginas")
@@ -208,13 +230,17 @@ class BaseScraper(AbstractScraper):
             # interrompe a coleta: pular a página truncaria o resultado em silêncio. Com
             # Ctrl+C também, e sem debug a pasta sai.
             try:
-                time.sleep(self.sleep_time)
-                self.logger.debug(f"Baixando página {pag}")
+                if pag == 1:
+                    self.logger.debug("Página 1 já baixada com a contagem")
+                    r = r0
+                else:
+                    time.sleep(self.sleep_time)
+                    self.logger.debug(f"Baixando página {pag}")
 
-                query_atual = self._set_query_atual(query_base, pag)
-                self.logger.debug(query_atual)
+                    query_atual = self._set_query_atual(query_base, pag)
+                    self.logger.debug(query_atual)
 
-                r = self._request_with_retry(query_atual)
+                    r = self._request_with_retry(query_atual)
                 self.logger.debug(f"Response status: {r.status_code}")
                 r.raise_for_status()
 
@@ -230,33 +256,6 @@ class BaseScraper(AbstractScraper):
                 raise
 
         return download_dir
-
-    def _get_n_pags(self, query_inicial):
-        """
-        Obtém o número total de páginas para uma consulta.
-
-        Usa _request_with_retry() para fazer a requisição inicial com retry
-        automático para erros de rate limit (429) e erros de servidor (5xx).
-
-        Args:
-            query_inicial: Dicionário com a query a ser enviada para a API.
-
-        Returns:
-            int: Número total de páginas encontradas para a consulta.
-
-        Raises:
-            RateLimitError: Se o rate limit (429) persistir após todas as tentativas.
-            APIError: Se o erro de servidor (5xx) persistir após todas as tentativas.
-        """
-        self.logger.debug("Enviando requisição inicial com retry automático")
-
-        r0 = self._request_with_retry(query_inicial)
-
-        self.logger.debug(f"Encontrando n_pags (status: {r0.status_code})")
-        contagem = self._find_n_pags(r0)
-
-        self.logger.debug(f"Encontradas {contagem} páginas")
-        return contagem
 
     def _set_paginas(self, paginas, n_pags):
         # TODO: repensar essa escolha
@@ -397,7 +396,8 @@ class BaseScraper(AbstractScraper):
             **kwargs: Parâmetros de busca passados para o método scrape().
 
         Returns:
-            dict: Parâmetros de consulta para a requisição inicial à API.
+            dict: Parâmetros de consulta comuns a todas as páginas; o de página entra em
+            :meth:`_set_query_atual`.
         """
         ...
 
@@ -409,7 +409,7 @@ class BaseScraper(AbstractScraper):
         inicial e determinar quantas páginas de dados estão disponíveis.
 
         Args:
-            r0: A resposta inicial da API ou website.
+            r0: A resposta da página 1, da API ou do site.
 
         Returns:
             int: Número total de páginas a serem raspadas.

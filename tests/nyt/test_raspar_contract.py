@@ -32,12 +32,7 @@ class TestRasparContract:
     def test_typical_paginacao(self, scraper, mocker):
         """15 hits → 2 páginas (10 por página)."""
         mocker.patch("time.sleep")
-        # initial + page 1 (mesma URL — page=0) + page 2 (page=1)
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("nyt", "raspar/page_01.json"),
-            status=200, content_type="application/json",
-        )
+        # página 1 (page=0, que também traz a contagem) + página 2 (page=1)
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("nyt", "raspar/page_01.json"),
@@ -67,21 +62,23 @@ class TestRasparContract:
     def test_parametro_page_comeca_em_zero(self, scraper, mocker, paginas, esperado):
         """A página 1 do raspe vira ``page=0`` na API, e a página 2 vira ``page=1``.
 
-        A requisição inicial, que só lê ``meta.hits``, vai sem ``page``. O
-        ``query_param_matcher`` é estrito: um ``page`` a mais ou a menos em
-        qualquer requisição a faz não casar, e a ordem do registry prende
-        cada valor à sua página.
+        A primeira requisição é sempre a página 1 (``page=0``), que traz
+        ``meta.hits`` e não é pedida de novo; se ``paginas`` não inclui a 1,
+        ela serve só para contar. O ``query_param_matcher`` é estrito: um
+        ``page`` a mais, a menos ou trocado em qualquer requisição a faz não
+        casar, e a ordem do registry prende cada valor à sua página.
         """
         mocker.patch("time.sleep")
         query_base = {"api-key": "test-key-12345", "q": "politics", "sort": "newest"}
-        # Inicial: page_01 diz 15 hits, ou seja, 2 páginas.
+        # Página 1: page_01 diz 15 hits, ou seja, 2 páginas.
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("nyt", "raspar/page_01.json"),
             status=200, content_type="application/json",
-            match=[matchers.query_param_matcher(query_base)],
+            match=[matchers.query_param_matcher({**query_base, "page": "0"})],
         )
-        for page, sample in esperado:
+        demais = [(page, sample) for page, sample in esperado if page != "0"]
+        for page, sample in demais:
             responses.add(
                 responses.GET, API_URL,
                 body=load_sample_bytes("nyt", f"raspar/{sample}"),
@@ -91,7 +88,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="politics", paginas=paginas)
 
-        assert len(responses.calls) == 1 + len(esperado)
+        assert [call.request.params["page"] for call in responses.calls] == ["0"] + [page for page, _ in demais]
         docs_por_sample = {"page_01.json": 2, "page_02.json": 1}
         assert len(df) == sum(docs_por_sample[sample] for _, sample in esperado)
 
@@ -99,11 +96,6 @@ class TestRasparContract:
     def test_single_page(self, scraper, mocker):
         """3 hits → 1 página."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("nyt", "raspar/single_page.json"),
-            status=200, content_type="application/json",
-        )
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("nyt", "raspar/single_page.json"),
@@ -185,6 +177,7 @@ class TestRasparContract:
                 "sort": "newest",
                 "begin_date": "20240101",
                 "end_date": "20241231",
+                "page": "0",
             })],
         )
 

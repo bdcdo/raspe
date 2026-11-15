@@ -67,7 +67,7 @@ class _DummyHTTPScraper(BaseScraper):
 class TestRasparBuscaUnica:
     @responses.activate
     def test_raspar_uma_pagina(self, mocker):
-        """Fluxo completo com 1 página: 1 request inicial + 1 de página.
+        """Fluxo completo com 1 página: 1 request só, a página 1, que traz a contagem e os dados.
 
         Como 'termo' está na lista de parâmetros reconhecidos como busca
         (junto com 'pesquisa', 'q', 'query'), o DataFrame final ganha
@@ -77,15 +77,7 @@ class TestRasparBuscaUnica:
         responses.add(
             responses.GET,
             "http://example.com/api",
-            body="<total>1</total>",
-            status=200,
-            content_type="text/html; charset=utf-8",
-            match=[matchers.query_param_matcher({"q": "termo1"})],
-        )
-        responses.add(
-            responses.GET,
-            "http://example.com/api",
-            body="<resultado>item</resultado>",
+            body="<total>1</total><resultado>item</resultado>",
             status=200,
             content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher({"q": "termo1", "page": "1"})],
@@ -104,12 +96,7 @@ class TestRasparBuscaUnica:
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, "http://example.com/api",
-            body="<total>1</total>", status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="<resultado>item</resultado>", status=200,
+            body="<total>1</total><resultado>item</resultado>", status=200,
             content_type="text/html; charset=utf-8",
         )
 
@@ -124,18 +111,13 @@ class TestRasparBuscaUnica:
 
     @responses.activate
     def test_raspar_paginacao_completa(self, mocker):
-        """3 páginas: 1 request inicial + 3 de página, cada uma com body próprio."""
+        """3 páginas: 3 requests, um por página, cada uma com body próprio; a página 1 traz a contagem."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="<total>3</total>", status=200,
-            content_type="text/html; charset=utf-8",
-            match=[matchers.query_param_matcher({"q": "x"})],
-        )
         for pag in range(1, 4):
+            contagem = "<total>3</total>" if pag == 1 else ""
             responses.add(
                 responses.GET, "http://example.com/api",
-                body=f"<r>pagina{pag}</r>", status=200,
+                body=f"{contagem}<r>pagina{pag}</r>", status=200,
                 content_type="text/html; charset=utf-8",
                 match=[matchers.query_param_matcher({"q": "x", "page": str(pag)})],
             )
@@ -143,6 +125,27 @@ class TestRasparBuscaUnica:
         scraper = _DummyHTTPScraper()
         df = scraper.raspar(termo="x")
         assert len(df) == 3
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_pagina_1_e_pedida_uma_vez_so(self, mocker):
+        """A resposta que dá a contagem é a própria página 1: com 2 páginas, saem só 2 requests."""
+        mocker.patch("time.sleep")
+        for pag, corpo in ((1, "<total>2</total><r>pagina1</r>"), (2, "<r>pagina2</r>")):
+            responses.add(
+                responses.GET, "http://example.com/api",
+                body=corpo, status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({"q": "x", "page": str(pag)})],
+            )
+
+        df = _DummyHTTPScraper().raspar(termo="x")
+
+        assert len(responses.calls) == 2
+        assert [call.request.params for call in responses.calls] == [
+            {"q": "x", "page": "1"},
+            {"q": "x", "page": "2"},
+        ]
+        assert list(df["content"]) == ["<total>2</total><r>pagina1</r>", "<r>pagina2</r>"]
 
     @responses.activate
     def test_raspar_zero_paginas(self, mocker):
@@ -159,15 +162,10 @@ class TestRasparBuscaUnica:
 
     @staticmethod
     def _primeira_pagina_ok():
-        """Contagem de 2 páginas e a página 1 com dados; a página 2 fica a cargo do teste."""
+        """Página 1 com a contagem de 2 páginas e dados; a página 2 fica a cargo do teste."""
         responses.add(
             responses.GET, "http://example.com/api",
-            body="<total>2</total>", status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="<r>ok</r>", status=200,
+            body="<total>2</total><r>ok</r>", status=200,
             content_type="text/html; charset=utf-8",
         )
 
@@ -282,7 +280,7 @@ class TestRasparBuscaUnica:
     def test_sem_debug_apaga_a_pasta_quando_uma_pagina_falha(self, mocker):
         """A página 2 que falha derruba a coleta, e a pasta com a página 1 não fica para trás."""
         mocker.patch("time.sleep")
-        for corpo, status in (("<total>2</total>", 200), ("<r>1</r>", 200), ("proibido", 403)):
+        for corpo, status in (("<total>2</total><r>1</r>", 200), ("proibido", 403)):
             responses.add(responses.GET, "http://example.com/api", body=corpo, status=status)
         scraper = _DummyHTTPScraper(debug=False)
         with pytest.raises(requests.HTTPError):
@@ -312,12 +310,7 @@ class TestRasparBuscaUnica:
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, "http://example.com/api",
-            body="<total>1</total>", status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="<r>x</r>", status=200,
+            body="<total>1</total><r>x</r>", status=200,
             content_type="text/html; charset=utf-8",
         )
 
@@ -340,15 +333,10 @@ class TestRasparBuscaUnica:
 
 
 def _termo_ok(termo: str) -> None:
-    """Registra a contagem (1 página) e a página 1 de um termo que dá certo."""
+    """Registra a página 1 de um termo que dá certo, com a contagem (1 página) e os dados."""
     responses.add(
         responses.GET, "http://example.com/api",
-        body="<total>1</total>", status=200, content_type="text/html; charset=utf-8",
-        match=[matchers.query_param_matcher({"q": termo})],
-    )
-    responses.add(
-        responses.GET, "http://example.com/api",
-        body=f"<r>{termo}</r>", status=200, content_type="text/html; charset=utf-8",
+        body=f"<total>1</total><r>{termo}</r>", status=200, content_type="text/html; charset=utf-8",
         match=[matchers.query_param_matcher({"q": termo, "page": "1"})],
     )
 
@@ -359,18 +347,7 @@ class TestRasparListaTermos:
         """termo=['a','b'] dispara 2 buscas com termo_busca correspondente."""
         mocker.patch("time.sleep")
         for termo in ["a", "b"]:
-            responses.add(
-                responses.GET, "http://example.com/api",
-                body="<total>1</total>", status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({"q": termo})],
-            )
-            responses.add(
-                responses.GET, "http://example.com/api",
-                body=f"<r>{termo}</r>", status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({"q": termo, "page": "1"})],
-            )
+            _termo_ok(termo)
 
         scraper = _DummyHTTPScraper()
         df = scraper.raspar(termo=["a", "b"])
@@ -381,18 +358,12 @@ class TestRasparListaTermos:
     def test_termo_sem_resultados_nao_alarga_os_tipos(self, mocker):
         """Um termo vazio na lista não muda o tipo das colunas dos demais."""
         mocker.patch("time.sleep")
-        for termo, total in [("a", 1), ("vazio", 0)]:
-            responses.add(
-                responses.GET, "http://example.com/api",
-                body=f"<total>{total}</total>", status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({"q": termo})],
-            )
+        _termo_ok("a")
         responses.add(
             responses.GET, "http://example.com/api",
-            body="<r>a</r>", status=200,
+            body="<total>0</total>", status=200,
             content_type="text/html; charset=utf-8",
-            match=[matchers.query_param_matcher({"q": "a", "page": "1"})],
+            match=[matchers.query_param_matcher({"q": "vazio", "page": "1"})],
         )
 
         scraper = _DummyHTTPScraper()
@@ -407,21 +378,10 @@ class TestRasparListaTermos:
         """Um termo que falha fica de fora com aviso; os já coletados e os seguintes voltam."""
         mocker.patch("time.sleep")
         for termo in ["a", "c"]:
-            responses.add(
-                responses.GET, "http://example.com/api",
-                body="<total>1</total>", status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({"q": termo})],
-            )
-            responses.add(
-                responses.GET, "http://example.com/api",
-                body=f"<r>{termo}</r>", status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({"q": termo, "page": "1"})],
-            )
+            _termo_ok(termo)
         responses.add(
             responses.GET, "http://example.com/api", body="erro", status=503,
-            match=[matchers.query_param_matcher({"q": "b"})],
+            match=[matchers.query_param_matcher({"q": "b", "page": "1"})],
         )
 
         with pytest.warns(UserWarning, match=r"1 de 3 valores de 'termo' falharam.*'b' \(APIError") as avisos:
@@ -437,7 +397,7 @@ class TestRasparListaTermos:
         _termo_ok("a")
         responses.add(
             responses.GET, "http://example.com/api", body="", status=429,
-            match=[matchers.query_param_matcher({"q": "b"})],
+            match=[matchers.query_param_matcher({"q": "b", "page": "1"})],
         )
 
         with pytest.warns(UserWarning, match=r"1 de 4 valores.*ficaram sem coletar: \['c', 'd'\]"):
@@ -451,7 +411,7 @@ class TestRasparListaTermos:
         _termo_ok("ok")
         responses.add(
             responses.GET, "http://example.com/api", body="erro", status=503,
-            match=[matchers.query_param_matcher({"q": "x"})],
+            match=[matchers.query_param_matcher({"q": "x", "page": "1"})],
         )
         with pytest.warns(UserWarning, match="2 de 3 valores"):
             _DummyHTTPScraper().raspar(termo=["x", "x", "ok"])
@@ -753,14 +713,14 @@ class TestSetR:
 
 
 # ---------------------------------------------------------------------------
-# _get_n_pags: tratamento de erro da requisição inicial
+# Contagem: tratamento de erro na página 1, que traz a contagem
 # ---------------------------------------------------------------------------
 
 
-class TestGetNPags:
+class TestContagemNaPagina1:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_erro_persistente_levanta_api_error(self, mocker):
-        """5xx persistente na requisição inicial falha alto, em vez de virar 0 páginas."""
+        """5xx persistente na página 1, que traz a contagem, falha alto, em vez de virar 0 páginas."""
         mocker.patch("time.sleep")
         for _ in range(3):
             responses.add(
@@ -774,7 +734,7 @@ class TestGetNPags:
 
     @responses.activate(registry=registries.OrderedRegistry)
     def test_rate_limit_persistente_levanta_rate_limit_error(self, mocker):
-        """429 persistente na requisição inicial falha alto, em vez de virar 0 páginas."""
+        """429 persistente na página 1, que traz a contagem, falha alto, em vez de virar 0 páginas."""
         mocker.patch("time.sleep")
         for _ in range(3):
             responses.add(

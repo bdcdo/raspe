@@ -136,7 +136,7 @@ class ScraperFolha(BaseScraper, HTMLScraper):
         return query
 
     def _find_n_pags(self, r0) -> int:
-        """Extrai o número total de páginas da resposta inicial.
+        """Extrai o número total de páginas da resposta da página 1.
 
         Procura pela contagem de resultados na div com classe c-search__result.
         Avisa (``UserWarning``) se o número de resultados atingir o limite máximo.

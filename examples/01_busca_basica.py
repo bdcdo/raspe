@@ -7,7 +7,7 @@ Como rodar, a partir da raiz do repositório:
 
     python examples/01_busca_basica.py
 
-Faz até 4 requisições (uma para contar os resultados e uma por página) e leva menos de um minuto.
+Faz até 3 requisições (uma por página; a primeira também traz a contagem de resultados) e leva menos de um minuto.
 """
 
 import logging
