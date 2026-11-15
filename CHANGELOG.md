@@ -27,6 +27,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   a cobertura cair abaixo da meta. `playwright_scraper.py` foi excluído
   do denominador (testá-lo offline exigiria mockar a API async inteira
   do Playwright).
+- Adicionada a pasta `examples/` com quatro scripts reproduzíveis (busca básica, múltiplas fontes, análise temporal e pipeline completo com tratamento de erro), um README com tempo e número de requisições de cada um e, em `examples/datasets/`, as tabelas que eles geraram numa execução real.
+- Adicionados os notebooks `10_pipeline_completo.ipynb`, `11_multiplas_fontes.ipynb` e `12_analise_longitudinal.ipynb`, que reaproveitam as funções de `examples/` e explicam cada etapa.
 
 ### Modificado
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
