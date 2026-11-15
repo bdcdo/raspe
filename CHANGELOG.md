@@ -147,7 +147,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigida a busca por lista (`raspar(pesquisa=[...])`), que abortava com `FileExistsError` quando dois termos
   caíam no mesmo segundo, como acontece com termos sem resultado (#43). O diretório de download de cada busca
   continua em `{download_path}/{nome_buscador}/`, mas o nome passa de `AAAAMMDDHHMMSS` para
-  `AAAAMMDDHHMMSS_<sufixo aleatório>`.
+  `AAAAMMDDHHMMSS_<sufixo aleatório>`. Como vem do `tempfile.mkdtemp()`, a pasta de cada busca é criada só com
+  permissão para o dono (`0o700`), mesmo num `download_path` escolhido pelo usuário.
 
 ## [0.1.0] - 2025-05-15
 

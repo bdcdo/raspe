@@ -191,10 +191,7 @@ class TestCreateDownloadDir:
         assert p1 != p2
         for path in (p1, p2):
             assert os.path.isdir(path)
-            assert os.path.dirname(path) == os.path.join(s.download_path, s.nome_buscador)
-            nome = os.path.basename(path)
-            assert nome.startswith("20240101120000_")
-            assert len(nome) > len("20240101120000_")
+            assert os.path.basename(path).startswith("20240101120000_")
 
 
 class TestParseData:

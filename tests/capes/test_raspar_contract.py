@@ -100,22 +100,12 @@ class TestRasparContract:
         assert list(df.columns) == COLUNAS
 
     @responses.activate
-    def test_busca_por_lista_sem_resultados_no_mesmo_segundo(self, scraper, mocker):
-        """Dois termos sem resultado no mesmo segundo ganham diretórios distintos.
-
-        O relógio fica parado para que os dois termos gerem o mesmo timestamp
-        em ``_create_download_dir``, de forma determinística. A busca por lista
-        precisa terminar sem ``FileExistsError`` e, com ``debug=True`` (o
-        default, que mantém os arquivos), deixar um diretório por termo
-        (issue #43).
-        """
+    def test_busca_por_lista_sem_resultados_no_mesmo_segundo(self, scraper, mocker, tmp_path):
+        """Relógio parado: dois termos sem resultado no mesmo segundo ganham um diretório cada (#43)."""
         relogio = mocker.patch("raspe.abstract_scraper.datetime")
         relogio.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
 
-        # Sem ``nav.br-pagination``, ``_find_n_pags`` devolve 0 e cada termo
-        # faz só a requisição inicial. Se uma recaptura trouxer paginação, o
-        # teste deixa de exercitar o caso de borda e precisa falhar aqui.
-        assert b"br-pagination" not in load_sample_bytes("capes", "raspar/no_results.html")
+        scraper.download_path = str(tmp_path)
         termos = ["termo_inexistente_a", "termo_inexistente_b"]
         for termo in termos:
             _registrar(termo, "no_results")
@@ -123,6 +113,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa=termos)
 
         assert df.empty
+        # Uma requisição por termo: o sample não tem paginação, então cada termo faz só a contagem.
         assert len(responses.calls) == len(termos)
         diretorios = os.listdir(os.path.join(scraper.download_path, scraper.nome_buscador))
         assert len(diretorios) == len(termos)

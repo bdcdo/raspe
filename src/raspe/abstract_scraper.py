@@ -262,10 +262,7 @@ class AbstractScraper(ABC):
         """
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         pai = os.path.join(self.download_path, self.nome_buscador)
-        # O pai é compartilhado por todas as buscas da instância, então já
-        # existir é o caso normal. A unicidade vem do mkdtemp: ele cria o
-        # diretório de forma atômica e, se o nome sorteado já existir, sorteia
-        # outro em vez de levantar FileExistsError.
+        # O pai é compartilhado entre as buscas; a unicidade vem do mkdtemp.
         os.makedirs(pai, exist_ok=True)
         path = tempfile.mkdtemp(prefix=f"{timestamp}_", dir=pai)
         self.logger.debug(f"Criando diretório de download em {path}")
@@ -285,7 +282,7 @@ class AbstractScraper(ABC):
     def _limpar_download(self, path: str) -> None:
         """Apaga a pasta de uma busca e, se for a do raspe, a raiz temporária vazia.
 
-        Remove ``path`` (``{download_path}/{nome_buscador}/{timestamp}``). Se o
+        Remove ``path`` (``{download_path}/{nome_buscador}/{timestamp}_{sufixo}``). Se o
         ``download_path`` é a raiz criada pelo ``mkdtemp()``, remove também a
         pasta da fonte e a raiz, quando ficam vazias. Numa pasta escolhida pelo
         usuário, só a pasta da busca sai.
