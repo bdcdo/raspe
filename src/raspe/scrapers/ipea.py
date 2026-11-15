@@ -1,6 +1,5 @@
-import re
 import warnings
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -8,9 +7,6 @@ from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
 from ..schemas.ipea import InputIpea, OutputIpea
 from ..utils import nivel_de_pilha_fora_do_pacote
-
-if TYPE_CHECKING:
-    from bs4 import Tag
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
@@ -153,7 +149,7 @@ class ScraperIpea(BaseScraper, HTMLScraper):
                     titulo = anchor.text.strip()
                     autores = autores_div.text.strip() if autores_div else ''
                     data = p_element.text.strip() if p_element else ''
-                    assuntos = self._limpar_assuntos(assuntos_div) if assuntos_div else ''
+                    assuntos = self._limpar_assuntos(assuntos_div.get_text()) if assuntos_div else ''
 
                     lista_infos.append([titulo, link, autores, data, assuntos])
                 except Exception as e:
@@ -169,19 +165,19 @@ class ScraperIpea(BaseScraper, HTMLScraper):
             return pd.DataFrame(columns=self.colunas)
 
     @staticmethod
-    def _limpar_assuntos(assuntos_div: "Tag") -> str:
+    def _limpar_assuntos(texto: str) -> str:
         """Junta os temas do ``div.assuntos`` sem o rótulo "Temas:" e sem repetir tema.
 
         O portal escreve "Temas:" antes da lista, separa os temas com vírgula,
         quebra linha entre eles e repete alguns, ora como link, ora como texto solto.
 
         Args:
-            assuntos_div: O ``div.assuntos`` do card.
+            texto: Texto do ``div.assuntos`` do card.
 
         Returns:
             Os temas, cada um uma vez, na ordem em que aparecem, separados por ", ".
         """
-        sem_rotulo = re.sub(r'^\s*Temas:', '', assuntos_div.get_text())
+        sem_rotulo = texto.lstrip().removeprefix('Temas:')
         temas = (' '.join(parte.split()) for parte in sem_rotulo.split(','))
         return ', '.join(dict.fromkeys(tema for tema in temas if tema))
 

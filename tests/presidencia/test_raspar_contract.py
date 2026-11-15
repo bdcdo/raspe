@@ -21,7 +21,6 @@ mock não verifica TLS.
 """
 
 import re
-from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -31,7 +30,7 @@ from responses import matchers, registries
 from raspe.exceptions import ScraperError
 from raspe.schemas.presidencia import OutputPresidencia
 from raspe.scrapers.presidencia import ScraperPresidencia
-from tests._helpers import load_sample_bytes
+from tests._helpers import load_sample, load_sample_bytes
 
 API_URL = (
     "https://legislacao.presidencia.gov.br/pesquisa/ajax/"
@@ -40,7 +39,6 @@ API_URL = (
 # Igualdade, não subconjunto: com o wiring do schema, raspar() devolve
 # exatamente as colunas de OutputPresidencia, na ordem de colunas().
 COLUNAS = OutputPresidencia.colunas()
-SAMPLES = Path(__file__).parent / "samples" / "raspar"
 
 
 @pytest.fixture
@@ -196,13 +194,21 @@ class TestRasparContract:
         scraper.raspar(pesquisa="fenilcetonúria")
 
 
+def _parse(scraper, tmp_path, html):
+    """Grava ``html`` em ``tmp_path`` e devolve o que ``_parse_page`` tira dele."""
+    pagina = tmp_path / "pagina.html"
+    pagina.write_text(html, encoding="utf-8")
+    return scraper._parse_page(str(pagina))
+
+
 class TestParsePage:
     """Campos de cada ato, lidos dos samples reais da busca "telemedicina"."""
 
     @pytest.fixture
-    def atos(self, scraper):
+    def atos(self, scraper, tmp_path):
         return pd.concat(
-            [scraper._parse_page(str(SAMPLES / sample)) for sample in ("page_01.html", "page_02.html")],
+            [_parse(scraper, tmp_path, load_sample("presidencia", f"raspar/{sample}"))
+             for sample in ("page_01.html", "page_02.html")],
             ignore_index=True,
         )
 
@@ -232,16 +238,13 @@ class TestParsePage:
         assert (atos["rotulo"] == "Veto Parcial").sum() == 7
         assert (atos["rotulo"] == "").sum() == 12
 
-
     def test_card_sem_botao_ficha_avisa(self, scraper, tmp_path):
         """Sem o botão "Ficha", a coluna fica vazia e o raspador avisa, em vez de pegar outro link."""
-        html = (SAMPLES / "single_page.html").read_text(encoding="utf-8")
+        html = load_sample("presidencia", "raspar/single_page.html")
         assert html.count("Ficha") == 2, "o sample single_page.html mudou; ajuste a troca"
-        pagina = tmp_path / "sem_ficha.html"
-        pagina.write_text(html.replace("Ficha", "Detalhes", 1), encoding="utf-8")
 
         with pytest.warns(UserWarning, match="1 ato\\(s\\) sem o botão"):
-            df = scraper._parse_page(str(pagina))
+            df = _parse(scraper, tmp_path, html.replace("Ficha", "Detalhes", 1))
 
         assert len(df) == 2
         assert df["ficha"].tolist()[0] == ""
@@ -249,18 +252,13 @@ class TestParsePage:
 
     def test_selo_fora_do_link_tambem_vai_para_rotulo(self, scraper, tmp_path):
         """Se o portal tirar o selo de dentro do ``<a>`` e deixá-lo no ``<h4>``, ele segue em ``rotulo``."""
-        html = (SAMPLES / "page_01.html").read_text(encoding="utf-8")
+        html = load_sample("presidencia", "raspar/page_01.html")
+        nome = "Lei nº 14.724 de 14 de novembro de 2023"
         selo = '<span class="badge badge-info ml-2">Veto Parcial</span>'
-        trecho = f"Lei nº 14.724 de 14 de novembro de 2023{selo}"
-        assert trecho in html, "o sample page_01.html mudou; ajuste o trecho trocado"
-        fim_do_link = html.index("</a>", html.index(trecho))
-        html = html.replace(trecho, "Lei nº 14.724 de 14 de novembro de 2023")
-        fim_do_link -= len(selo)
-        html = html[:fim_do_link + len("</a>")] + selo + html[fim_do_link + len("</a>"):]
-        pagina = tmp_path / "selo_fora.html"
-        pagina.write_text(html, encoding="utf-8")
+        assert nome + selo in html, "o sample page_01.html mudou; ajuste o trecho trocado"
+        antes, depois = html.split(nome + selo, 1)
 
-        df = scraper._parse_page(str(pagina))
+        df = _parse(scraper, tmp_path, antes + nome + depois.replace("</a>", "</a>" + selo, 1))
 
         lei = df[df["nome"] == "Lei nº 14.724 de 14 de novembro de 2023"]
         assert lei["rotulo"].tolist() == ["Veto Parcial"]
