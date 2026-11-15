@@ -17,7 +17,15 @@ import pytest
 import responses
 
 from raspe.exceptions import ScraperError, ValidationError
-from raspe.schemas import InputCFM, InputPresidencia, OutputPresidencia, conferir_saida, descrever_tipo, validar_entrada
+from raspe.schemas import (
+    InputCFM,
+    InputNYT,
+    InputPresidencia,
+    OutputPresidencia,
+    conferir_saida,
+    descrever_tipo,
+    validar_entrada,
+)
 from raspe.scrapers.ans import ScraperANS
 from raspe.scrapers.anvisa import ScraperANVISA
 from raspe.scrapers.cfm import ScraperCFM
@@ -60,6 +68,14 @@ class TestMensagensDeErro:
     def test_ano_vazio_e_sem_filtro(self):
         """``ano=""`` era o default antigo de CFM e NYT."""
         assert validar_entrada(InputCFM, {"ano": ""}, metodo="m()")["ano"] is None
+
+    @pytest.mark.parametrize("schema", [InputNYT, InputCFM])
+    @pytest.mark.parametrize("ano", [24, 0, -2024, 20240])
+    def test_ano_sem_quatro_digitos_levanta(self, schema, ano):
+        """``ano=24`` virava erro de formato de data no NYT, e ``ano=0`` desligava o filtro."""
+        mensagem = rf"'ano': 'ano' precisa ter quatro dígitos \(ex\.: 2024\); veio {ano}\."
+        with pytest.raises(ValidationError, match=mensagem):
+            validar_entrada(schema, {"ano": ano}, metodo="m()")
 
     @responses.activate
     def test_valor_fora_da_lista_mostra_os_permitidos(self):
