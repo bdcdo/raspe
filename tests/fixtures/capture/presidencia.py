@@ -26,11 +26,10 @@ Notas operacionais:
   se ``single_page`` não der 1 ou ``no_results`` não der 0, troque o termo.
 """
 
-import argparse
 from pathlib import Path
 
 from raspe.scrapers.presidencia import ScraperPresidencia
-from tests.fixtures.capture._util import capturar_cenarios
+from tests.fixtures.capture._util import capturar_cenarios, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "presidencia" / "samples" / "raspar"
 
@@ -48,14 +47,8 @@ CENARIOS = (
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados da Presidência)",
-    )
-    capturar_cenarios(ScraperPresidencia(), CENARIOS, parser.parse_args().saida)
+    saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
+    capturar_cenarios(ScraperPresidencia(), CENARIOS, saida)
 
 
 if __name__ == "__main__":

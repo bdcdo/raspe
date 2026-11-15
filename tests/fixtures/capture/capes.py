@@ -26,12 +26,11 @@ Cenários capturados:
 - ``no_results.html`` — termo absurdo, sem paginação.
 """
 
-import argparse
 from pathlib import Path
 
 import requests
 
-from tests.fixtures.capture._util import attach_capture_hook, dump_response
+from tests.fixtures.capture._util import attach_capture_hook, dump_response, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "capes" / "samples" / "raspar"
 API_URL = "https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html"
@@ -63,14 +62,7 @@ def _get(session: requests.Session, pesquisa: str, page: int = 1) -> requests.Re
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados da CAPES)",
-    )
-    saida: Path = parser.parse_args().saida
+    saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
     saida.mkdir(parents=True, exist_ok=True)
 
     # page_01.html — typical primeira página (busca "natjus", ~20 resultados)

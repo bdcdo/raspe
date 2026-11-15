@@ -21,11 +21,10 @@ traz o ``_find_n_pags`` da resposta: se ``single_page`` não der 1 ou
 ``no_results`` não der 0, troque o termo.
 """
 
-import argparse
 from pathlib import Path
 
 from raspe.scrapers.folha import ScraperFolha
-from tests.fixtures.capture._util import capturar_cenarios
+from tests.fixtures.capture._util import capturar_cenarios, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "folha" / "samples" / "raspar"
 
@@ -41,14 +40,8 @@ CENARIOS = (
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados da Folha)",
-    )
-    capturar_cenarios(ScraperFolha(), CENARIOS, parser.parse_args().saida)
+    saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
+    capturar_cenarios(ScraperFolha(), CENARIOS, saida)
 
 
 if __name__ == "__main__":

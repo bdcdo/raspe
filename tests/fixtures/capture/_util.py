@@ -24,6 +24,7 @@ Uso típico em um script de captura:
     )
 """
 
+import argparse
 import time
 from collections.abc import Iterable
 from pathlib import Path
@@ -46,6 +47,22 @@ def dump_response(resp: requests.Response, path: Path) -> None:
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(resp.content)
+
+
+def pasta_saida(padrao: Path, descricao: str) -> Path:
+    """Lê ``--saida`` da linha de comando, a pasta onde o script grava os samples.
+
+    Args:
+        padrao: Pasta usada sem ``--saida``, em geral a dos samples commitados.
+        descricao: Descrição do script na ajuda do ``argparse``.
+
+    Returns:
+        A pasta de saída.
+    """
+    parser = argparse.ArgumentParser(description=descricao)
+    parser.add_argument("--saida", type=Path, default=padrao, help=f"pasta de saída (padrão: {padrao})")
+    saida: Path = parser.parse_args().saida
+    return saida
 
 
 def requisitar_sem_url(enviar: Callable[[], requests.Response], arquivo: str) -> requests.Response:

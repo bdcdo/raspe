@@ -27,11 +27,10 @@ scraper envia em produção. O fragmento ``#resultado`` de ``api_base`` não
 chega ao servidor: a linha de requisição HTTP leva só o caminho e a query.
 """
 
-import argparse
 from pathlib import Path
 
 from raspe.scrapers.cfm import ScraperCFM
-from tests.fixtures.capture._util import capturar_cenarios
+from tests.fixtures.capture._util import capturar_cenarios, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "cfm" / "samples" / "raspar"
 
@@ -47,16 +46,10 @@ CENARIOS = (
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados do CFM)",
-    )
+    saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
     scraper = ScraperCFM(debug=False)
     scraper.timeout = (20, 120)
-    capturar_cenarios(scraper, CENARIOS, parser.parse_args().saida)
+    capturar_cenarios(scraper, CENARIOS, saida)
 
 
 if __name__ == "__main__":

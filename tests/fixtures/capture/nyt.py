@@ -30,72 +30,44 @@ Notas operacionais:
   convertida por ``_set_query_atual``: a página 1 do raspe vira
   ``page=0`` na API.
 * O termo de ``single_page`` e o de ``no_results`` dependem do acervo do
-  dia. O script avisa quando o número de hits não cabe no cenário, e aí
-  é preciso trocar o termo ou o intervalo de datas.
+  dia. A linha impressa por cenário traz o ``_find_n_pags`` da resposta:
+  se ``page_01`` não der 2 ou mais, ``single_page`` não der 1 ou
+  ``no_results`` não der 0, troque o termo ou o intervalo de datas.
 """
 
-import argparse
 import time
 from pathlib import Path
-from typing import Any
-
-import requests
 
 from raspe.scrapers.nyt import ScraperNYT
-from tests.fixtures.capture._util import dump_response, requisitar_sem_url
+from tests.fixtures.capture._util import capturar_cenarios, dump_response, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "nyt" / "samples" / "raspar"
 
-# (arquivo de saída, parâmetros de busca, página do raspe, faixa de hits
-# aceita). A busca typical precisa de pelo menos duas páginas de 10.
-CENARIOS: tuple[tuple[str, dict[str, Any], int, range], ...] = (
-    ("page_01.json", {"pesquisa": "Brazil"}, 1, range(11, 10**9)),
-    ("page_02.json", {"pesquisa": "Brazil"}, 2, range(11, 10**9)),
+# (arquivo de saída, parâmetros de raspar, página do raspe). A busca
+# typical precisa de pelo menos duas páginas de 10; a single_page, de uma
+# só; a no_results, de zero hits.
+CENARIOS = (
+    ("page_01.json", {"pesquisa": "Brazil"}, 1),
+    ("page_02.json", {"pesquisa": "Brazil"}, 2),
     (
         "single_page.json",
         {"pesquisa": "Supremo Tribunal Federal", "data_inicio": "2024-01-01", "data_fim": "2024-01-31"},
         1,
-        range(1, 11),
     ),
-    ("no_results.json", {"pesquisa": "termoextremamenteimprovavelxyz123"}, 1, range(0, 1)),
+    ("no_results.json", {"pesquisa": "termoextremamenteimprovavelxyz123"}, 1),
 )
 
 
-def _consultar(scraper: ScraperNYT, params: dict[str, Any], pagina: int) -> requests.Response:
-    return scraper._set_r(scraper._set_query_atual(scraper._set_query_base(**params), pagina))
-
-
-def _hits(resp: requests.Response) -> int:
-    resposta = resp.json().get("response", {})
-    meta = resposta.get("meta") or resposta.get("metadata") or {}
-    return int(meta.get("hits", 0))
-
-
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados do NYT)",
-    )
-    saida: Path = parser.parse_args().saida
-    saida.mkdir(parents=True, exist_ok=True)
+    saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
     scraper = ScraperNYT()
-
-    for i, (arquivo, params, pagina, hits_aceitos) in enumerate(CENARIOS):
-        if i:
-            time.sleep(scraper.sleep_time)
-        resp = requisitar_sem_url(lambda p=params, n=pagina: _consultar(scraper, p, n), arquivo)
-        dump_response(resp, saida / arquivo)
-        hits = _hits(resp)
-        aviso = "" if hits in hits_aceitos else f"  AVISO: {hits} hits não cabe no cenário, troque o termo"
-        print(f"{arquivo}: HTTP {resp.status_code}, {len(resp.content)} bytes, hits={hits}{aviso}")
+    capturar_cenarios(scraper, CENARIOS, saida)
 
     # unauthorized.json: a mesma busca com uma chave que a API recusa (401).
+    # A chave inválida pode aparecer em mensagem de erro sem expor a real.
     time.sleep(scraper.sleep_time)
     invalido = ScraperNYT(api_key="chave-invalida-para-captura")
-    resp = _consultar(invalido, {"pesquisa": "Brazil"}, 1)
+    resp = invalido._set_r(invalido._set_query_atual(invalido._set_query_base(pesquisa="Brazil"), 1))
     dump_response(resp, saida / "unauthorized.json")
     print(f"unauthorized.json: HTTP {resp.status_code}, {len(resp.content)} bytes")
 

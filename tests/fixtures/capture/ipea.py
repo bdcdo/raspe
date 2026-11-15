@@ -25,12 +25,11 @@ Notas operacionais:
   se ``single_page`` não der 1 ou ``no_results`` não der 0, troque o termo.
 """
 
-import argparse
 import re
 from pathlib import Path
 
 from raspe.scrapers.ipea import ScraperIpea
-from tests.fixtures.capture._util import capturar_cenarios
+from tests.fixtures.capture._util import capturar_cenarios, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "ipea" / "samples" / "raspar"
 
@@ -64,14 +63,8 @@ def _esvaziar_selects(html: bytes) -> bytes:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--saida",
-        type=Path,
-        default=SAMPLES_DIR,
-        help="pasta de saída (padrão: os samples commitados do IPEA)",
-    )
-    capturar_cenarios(ScraperIpea(), CENARIOS, parser.parse_args().saida, enxugar=_esvaziar_selects)
+    saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
+    capturar_cenarios(ScraperIpea(), CENARIOS, saida, enxugar=_esvaziar_selects)
 
 
 if __name__ == "__main__":
