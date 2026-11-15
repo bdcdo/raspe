@@ -8,7 +8,8 @@ diverge do gerado.
 
 Uso::
 
-    python -m raspe.schemas.documentacao                # reescreve docs/colunas.md
+    python -m raspe.schemas.documentacao                # reescreve docs/colunas.md da raiz do repo
+                                                        # (de qualquer pasta dentro dele)
     python -m raspe.schemas.documentacao --saida outro.md
 
 Este módulo importa os raspadores, e por isso :mod:`raspe.schemas` não o
@@ -21,6 +22,7 @@ import ast
 import importlib
 import inspect
 import pkgutil
+import tomllib
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -147,6 +149,24 @@ def gerar_documento_colunas() -> str:
     return "\n".join(linhas).rstrip("\n") + "\n"
 
 
+def _raiz_do_repo(partida: Path) -> Path | None:
+    """Sobe de ``partida`` até a pasta com o ``pyproject.toml`` do raspe.
+
+    Args:
+        partida: Pasta de onde a busca começa, em geral a atual.
+
+    Returns:
+        A raiz do repositório do raspe, ou ``None`` se ``partida`` não está dentro dele.
+    """
+    for pasta in (partida, *partida.parents):
+        pyproject = pasta / "pyproject.toml"
+        if pyproject.is_file():
+            with pyproject.open("rb") as arquivo:
+                if tomllib.load(arquivo).get("project", {}).get("name") == "raspe":
+                    return pasta
+    return None
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     """Grava o documento gerado no caminho pedido.
 
@@ -154,11 +174,20 @@ def main(argv: Sequence[str] | None = None) -> None:
         argv: Argumentos de linha de comando; ``None`` lê ``sys.argv``.
     """
     analisador = argparse.ArgumentParser(description="Gera a documentação das colunas de raspar().")
-    analisador.add_argument("--saida", default="docs/colunas.md", help="Arquivo de destino.")
+    analisador.add_argument(
+        "--saida", help="Arquivo de destino. Sem ele, docs/colunas.md na raiz do repo em que a pasta atual está."
+    )
     argumentos = analisador.parse_args(argv)
-    destino = Path(argumentos.saida)
+    if argumentos.saida is not None:
+        destino = Path(argumentos.saida)
+    else:
+        raiz = _raiz_do_repo(Path.cwd().resolve())
+        if raiz is None:
+            analisador.error("a pasta atual não está no repositório do raspe; rode de dentro dele ou passe --saida.")
+        destino = raiz / "docs" / "colunas.md"
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(gerar_documento_colunas(), encoding="utf-8")
+    print(f"Gravado {destino}")
 
 
 if __name__ == "__main__":  # pragma: no cover
