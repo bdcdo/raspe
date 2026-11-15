@@ -68,10 +68,11 @@ jobs:
           EOF
           echo "Tag $GITHUB_REF_NAME confere com o pyproject.toml, o CHANGELOG, o README e a main."
 
+      # O extra all traz o Playwright, que parte dos testes de contrato importa.
       - name: Rodar a suíte offline
         run: |
           uv venv
-          uv pip install -e ".[dev]"
+          uv pip install -e ".[all]"
           .venv/bin/pytest
 
       - name: Construir sdist e wheel
@@ -79,7 +80,8 @@ jobs:
 
       # Esta conferência não lê o MANIFEST.in, para pegar o MANIFEST.in apagado
       # ou quebrado: ela repete a regra dele a partir do git. O sdist leva todo
-      # arquivo versionado de src/ e tests/ e os de topo, e nada além disso e
+      # arquivo versionado de src/ e tests/, os de topo e o docs/colunas.md, que
+      # a suíte lê, e nada além disso e
       # dos metadados que o build gera. Bytecode e notebook ficam fora mesmo
       # versionados; o que a suíte acabou de deixar na árvore fica fora por não
       # ser versionado.
@@ -98,7 +100,7 @@ jobs:
           fora = (".pyc", ".pyo", ".pyd", ".ipynb")
           gerados = {"PKG-INFO", "setup.cfg"} | {n for n in nomes if n.startswith("src/raspe.egg-info/")}
           sobram = sorted(n for n in nomes - gerados if n not in versionados or n.endswith(fora))
-          topo = {"CHANGELOG.md", "LICENSE", "README.md", "pyproject.toml"}
+          topo = {"CHANGELOG.md", "LICENSE", "README.md", "pyproject.toml", "docs/colunas.md"}
           faltam = sorted(
               n for n in versionados - nomes if (n.startswith(("src/", "tests/")) or n in topo) and not n.endswith(fora)
           )
