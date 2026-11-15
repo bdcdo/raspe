@@ -96,58 +96,53 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        try:
-            with open(path, 'r', encoding='utf-8') as file:
-                html_content = file.read()
+        with open(path, 'r', encoding='utf-8') as file:
+            html_content = file.read()
 
-            lista_infos = []
-            sem_ficha: list[str] = []
+        lista_infos = []
+        sem_ficha: list[str] = []
 
-            soup = BeautifulSoup(html_content, 'html.parser')
-            card_body = soup.find('div', class_='card-body p-0')
+        soup = BeautifulSoup(html_content, 'html.parser')
+        card_body = soup.find('div', class_='card-body p-0')
 
-            if not card_body:
-                return pd.DataFrame(columns=self.colunas)
-
-            container = card_body.find('div')
-            if not container:
-                return pd.DataFrame(columns=self.colunas)
-
-            itens = container.find_all('div')
-
-            for i, item in enumerate(itens):
-                if i % 2 == 1:
-                    continue
-                try:
-                    titulo = item.select_one('h4 a')
-                    paragraphs = item.find_all('p')
-
-                    if titulo and len(paragraphs) >= 2:
-                        link = titulo['href']
-                        # Selos como "Veto Parcial" vêm num <span class="badge"> no título, colados ao nome.
-                        rotulo = ', '.join(selo.extract().get_text(strip=True)
-                                           for selo in item.select('h4 span.badge'))
-                        nome = titulo.text.strip()
-                        # A ficha é o botão "Ficha"; os outros links do card citam leis na ementa.
-                        ficha = next((a.get('href', '') for a in item.select('a.btn')
-                                      if a.get_text(strip=True) == 'Ficha'), '')
-                        if not ficha:
-                            sem_ficha.append(nome)
-                        revogacao = paragraphs[0].text
-                        descricao = paragraphs[1].text
-
-                        lista_infos.append([nome, link, ficha, revogacao, descricao, rotulo])
-                except Exception as e:
-                    self.logger.warning(f"Error parsing item in {path}: {e}")
-                    continue
-
-            df = pd.DataFrame(lista_infos, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Error parsing page {path}: {e}")
+        if not card_body:
             return pd.DataFrame(columns=self.colunas)
 
-        # Fora dos try: com warnings virando erro, o aviso não pode descartar os atos.
+        container = card_body.find('div')
+        if not container:
+            return pd.DataFrame(columns=self.colunas)
+
+        itens = container.find_all('div')
+
+        for i, item in enumerate(itens):
+            if i % 2 == 1:
+                continue
+            try:
+                titulo = item.select_one('h4 a')
+                paragraphs = item.find_all('p')
+
+                if titulo and len(paragraphs) >= 2:
+                    link = titulo['href']
+                    # Selos como "Veto Parcial" vêm num <span class="badge"> no título, colados ao nome.
+                    rotulo = ', '.join(selo.extract().get_text(strip=True)
+                                       for selo in item.select('h4 span.badge'))
+                    nome = titulo.text.strip()
+                    # A ficha é o botão "Ficha"; os outros links do card citam leis na ementa.
+                    ficha = next((a.get('href', '') for a in item.select('a.btn')
+                                  if a.get_text(strip=True) == 'Ficha'), '')
+                    if not ficha:
+                        sem_ficha.append(nome)
+                    revogacao = paragraphs[0].text
+                    descricao = paragraphs[1].text
+
+                    lista_infos.append([nome, link, ficha, revogacao, descricao, rotulo])
+            except Exception as e:
+                self.logger.warning(f"Erro ao processar item em {path}: {e}")
+                continue
+
+        df = pd.DataFrame(lista_infos, columns=self.colunas)
+
+        # Fora do try de cada ato, para o aviso (erro, com warnings virando erro) não descartar um ato.
         if sem_ficha:
             warnings.warn(
                 f"Presidência: {len(sem_ficha)} ato(s) sem o botão \"Ficha\", com a coluna ficha vazia: "

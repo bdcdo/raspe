@@ -174,44 +174,39 @@ class ScraperSaudeLegis(PlaywrightScraper):
         Returns:
             pd.DataFrame: Dados extraídos da página, com as colunas de ``self.colunas``.
         """
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
+        with open(path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
 
-            soup = self.soup_it(html_content)
-            results_table = soup.find('table', id='form:grid')
+        soup = self.soup_it(html_content)
+        results_table = soup.find('table', id='form:grid')
 
-            if not results_table:
-                self.logger.debug(f"Tabela não encontrada em {path}")
-                return pd.DataFrame(columns=self.colunas)
-
-            tbody = results_table.find('tbody')
-            if not tbody:
-                self.logger.debug(f"Tbody não encontrado em {path}")
-                return pd.DataFrame(columns=self.colunas)
-
-            rows = tbody.find_all('tr')
-            data = []
-
-            for row in rows:
-                cells = row.find_all('td')
-                if len(cells) < 8:
-                    continue
-
-                tipo_norma = cells[3].text.strip()
-                numero = cells[1].text.strip()
-                data_pub = cells[4].text.strip()
-                origem = cells[2].text.strip()
-                ementa = cells[5].text.strip()
-
-                link_tag = cells[7].find('a', {'title': 'Texto Completo'})
-                link_url = link_tag['href'] if link_tag else ''
-
-                data.append([tipo_norma, numero, data_pub, origem, ementa, link_url])
-
-            self.logger.debug(f"Extraídos {len(data)} registros de {path}")
-            return pd.DataFrame(data, columns=self.colunas)
-
-        except Exception as e:
-            self.logger.error(f"Erro ao processar {path}: {e}")
+        if not results_table:
+            self.logger.debug(f"Tabela não encontrada em {path}")
             return pd.DataFrame(columns=self.colunas)
+
+        tbody = results_table.find('tbody')
+        if not tbody:
+            self.logger.debug(f"Tbody não encontrado em {path}")
+            return pd.DataFrame(columns=self.colunas)
+
+        rows = tbody.find_all('tr')
+        data = []
+
+        for row in rows:
+            cells = row.find_all('td')
+            if len(cells) < 8:
+                continue
+
+            tipo_norma = cells[3].text.strip()
+            numero = cells[1].text.strip()
+            data_pub = cells[4].text.strip()
+            origem = cells[2].text.strip()
+            ementa = cells[5].text.strip()
+
+            link_tag = cells[7].find('a', {'title': 'Texto Completo'})
+            link_url = link_tag['href'] if link_tag else ''
+
+            data.append([tipo_norma, numero, data_pub, origem, ementa, link_url])
+
+        self.logger.debug(f"Extraídos {len(data)} registros de {path}")
+        return pd.DataFrame(data, columns=self.colunas)

@@ -112,55 +112,50 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        try:
-            with open(path, 'r', encoding='utf-8') as file:
-                html_content = file.read()
+        with open(path, 'r', encoding='utf-8') as file:
+            html_content = file.read()
 
-            lista_infos = []
+        lista_infos = []
 
-            soup = BeautifulSoup(html_content, 'html.parser')
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-            resultado_busca = soup.find('div', class_='resultado-busca')
-            if not resultado_busca or not isinstance(resultado_busca, Tag):
-                return pd.DataFrame(columns=self.colunas)
+        resultado_busca = soup.find('div', class_='resultado-busca')
+        if not resultado_busca or not isinstance(resultado_busca, Tag):
+            return pd.DataFrame(columns=self.colunas)
 
-            ul_element = resultado_busca.find('ul')
-            if not ul_element or not isinstance(ul_element, Tag):
-                return pd.DataFrame(columns=self.colunas)
+        ul_element = resultado_busca.find('ul')
+        if not ul_element or not isinstance(ul_element, Tag):
+            return pd.DataFrame(columns=self.colunas)
 
-            itens = ul_element.find_all('li')
+        itens = ul_element.find_all('li')
 
-            for item in itens:
-                try:
-                    link_element = item.find('a')
-                    if not link_element or not isinstance(link_element, Tag):
-                        continue
-
-                    link = link_element.get('href', '')
-                    titulo = link_element.text or ''
-
-                    div_element = item.find('div')
-                    descricao = ''
-                    if div_element and isinstance(div_element, Tag):
-                        p_element = div_element.find('p')
-                        if p_element and isinstance(p_element, Tag):
-                            descricao = p_element.text.strip()
-
-                    ementa_element = item.find('p', class_='busca-resultados__situacao')
-                    ementa = ''
-                    if ementa_element and isinstance(ementa_element, Tag):
-                        ementa = ementa_element.text.strip()
-
-                    lista_infos.append([link, titulo, descricao, ementa])
-                except Exception as e:
-                    self.logger.warning(f"Error parsing item in {path}: {e}")
+        for item in itens:
+            try:
+                link_element = item.find('a')
+                if not link_element or not isinstance(link_element, Tag):
                     continue
 
-            return pd.DataFrame(lista_infos, columns=self.colunas)
+                link = link_element.get('href', '')
+                titulo = link_element.text or ''
 
-        except Exception as e:
-            self.logger.error(f"Error parsing page {path}: {e}")
-            return pd.DataFrame(columns=self.colunas)
+                div_element = item.find('div')
+                descricao = ''
+                if div_element and isinstance(div_element, Tag):
+                    p_element = div_element.find('p')
+                    if p_element and isinstance(p_element, Tag):
+                        descricao = p_element.text.strip()
+
+                ementa_element = item.find('p', class_='busca-resultados__situacao')
+                ementa = ''
+                if ementa_element and isinstance(ementa_element, Tag):
+                    ementa = ementa_element.text.strip()
+
+                lista_infos.append([link, titulo, descricao, ementa])
+            except Exception as e:
+                self.logger.warning(f"Erro ao processar item em {path}: {e}")
+                continue
+
+        return pd.DataFrame(lista_infos, columns=self.colunas)
 
     def _acessar_pagina_inicial(self):
         """Primeiro acessa a página inicial para estabelecer sessão"""

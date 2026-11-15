@@ -236,7 +236,7 @@ class TestParseData:
 
         mocker.patch.object(s, "_parse_page", side_effect=maybe_fail)
 
-        with pytest.warns(UserWarning, match=r"1 de 2 páginas .*broken\.html"):
+        with pytest.warns(UserWarning, match=r"1 de 2 páginas .*broken\.html \(ValueError: simulated parse error\)"):
             df = s._parse_data(str(tmp_path))
         assert len(df) == 1
         assert df.iloc[0]["content"] == "ok"
@@ -262,8 +262,19 @@ class TestParseData:
         (tmp_path / "a.html").write_text("x", encoding="utf-8")
         (tmp_path / "b.html").write_text("y", encoding="utf-8")
         mocker.patch.object(s, "_parse_page", side_effect=ValueError("layout novo"))
-        with pytest.raises(ScraperError, match="nenhuma das 2 páginas"):
+        with pytest.raises(ScraperError, match=r"nenhuma das 2 páginas.*a\.html \(ValueError: layout novo\)") as erro:
             s._parse_data(str(tmp_path))
+        assert isinstance(erro.value.__cause__, ValueError)
+
+    def test_mensagem_lista_ate_cinco_paginas(self, tmp_path, mocker):
+        """Numa busca longa, a lista de páginas com erro não afoga o traceback."""
+        s = _DummyScraper("pd6")
+        for i in range(8):
+            (tmp_path / f"p{i}.html").write_text("x", encoding="utf-8")
+        mocker.patch.object(s, "_parse_page", side_effect=ValueError("layout novo"))
+        with pytest.raises(ScraperError, match=r"p4\.html \(ValueError: layout novo\); e mais 3\.") as erro:
+            s._parse_data(str(tmp_path))
+        assert "p5.html" not in str(erro.value)
 
 
 class TestScrapeAlias:

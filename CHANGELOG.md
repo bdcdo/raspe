@@ -107,6 +107,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   anterior de novo: agora espera o rodapé da tabela mostrar os registros da página nova.
 - Corrigidos todos os raspadores, que com `debug=False` deixavam a pasta de download para trás quando a raspagem
   levantava erro: agora ela é apagada também nesse caso.
+- Corrigidos todos os raspadores, que, quando a leitura de uma página baixada falhava, a tratavam como página vazia e
+  deixavam o erro só no log: agora o aviso de página sem linhas e o `ScraperError` de nenhuma página lida trazem a
+  exceção original de cada página.
 - `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
