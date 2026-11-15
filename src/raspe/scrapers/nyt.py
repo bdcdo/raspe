@@ -9,6 +9,7 @@ import pandas as pd
 from ..base_scraper import BaseScraper
 from ..exceptions import APIError, APIKeyError
 from ..schemas.nyt import InputNYT, OutputNYT
+from ..utils import validar_intervalo_datas
 
 
 class ScraperNYT(BaseScraper):
@@ -120,14 +121,43 @@ class ScraperNYT(BaseScraper):
     def api_method(self) -> Literal['GET', 'POST']:
         return self._api_method
 
+    def _validar_parametros(self, **kwargs) -> dict[str, Any]:
+        """Valida os parâmetros e preenche com ``ano`` as datas que não vieram.
+
+        ``ano`` vira 1º de janeiro em ``data_inicio`` e 31 de dezembro em
+        ``data_fim``, só nas que faltam. A ordem do período é conferida de novo
+        depois do preenchimento: ``ano=2024, data_fim="2023-06-01"`` iria
+        invertido à API.
+
+        Args:
+            **kwargs: Parâmetros de ``raspar()``.
+
+        Returns:
+            dict: Parâmetros validados, com as datas preenchidas.
+
+        Raises:
+            ValidationError: Se algum parâmetro for inválido ou se o período
+                ficar invertido depois do preenchimento.
+        """
+        kwargs = super()._validar_parametros(**kwargs)
+        ano = kwargs.get('ano')
+        if ano:
+            nome_inicio = 'data_inicio' if kwargs.get('data_inicio') else 'ano'
+            nome_fim = 'data_fim' if kwargs.get('data_fim') else 'ano'
+            kwargs['data_inicio'] = kwargs.get('data_inicio') or f"{ano}-01-01"
+            kwargs['data_fim'] = kwargs.get('data_fim') or f"{ano}-12-31"
+            validar_intervalo_datas(
+                kwargs['data_inicio'], kwargs['data_fim'], nome_inicio=nome_inicio, nome_fim=nome_fim
+            )
+        return kwargs
+
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta os parâmetros base da query.
 
         Args:
             pesquisa: Termo de busca.
-            ano: Ano para filtrar (usa ano inteiro).
-            data_inicio: Data inicial (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD).
-            data_fim: Data final (aceita YYYY-MM-DD, DD/MM/YYYY ou YYYYMMDD).
+            data_inicio: Data inicial, já em YYYY-MM-DD (ou preenchida a partir de ``ano``).
+            data_fim: Data final, já em YYYY-MM-DD (ou preenchida a partir de ``ano``).
             sort: Ordenação ('best', 'newest', 'oldest', 'relevance').
             filtro: Filtro adicional em sintaxe Lucene (fq).
 
@@ -135,20 +165,13 @@ class ScraperNYT(BaseScraper):
             Dicionário com os parâmetros da query.
 
         Note:
-            As datas são validadas automaticamente pelo BaseScraper._validar_parametros().
+            As datas chegam validadas e normalizadas por :meth:`_validar_parametros`.
         """
         pesquisa = kwargs.get('pesquisa', '')
-        ano = kwargs.get('ano')
         data_inicio = kwargs.get('data_inicio')
         data_fim = kwargs.get('data_fim')
         sort = kwargs.get('sort', 'newest')
         filtro = kwargs.get('filtro', '')
-
-        # Se ano foi especificado, usar ano inteiro
-        if ano and not data_inicio:
-            data_inicio = f"{ano}-01-01"
-        if ano and not data_fim:
-            data_fim = f"{ano}-12-31"
 
         params = {
             "api-key": self._api_key,

@@ -109,6 +109,31 @@ class TestRasparContract:
         assert list(df.columns) == COLUNAS
 
 
+    @responses.activate
+    def test_rotulo_desconhecido_avisa_e_mantem_as_linhas(self, scraper, mocker):
+        """Rótulo de card fora do mapa de colunas não some em silêncio: avisa e mantém o resto."""
+        mocker.patch("time.sleep")
+        corpo = load_sample_bytes("cfm", "raspar/single_page.html").replace(
+            "<strong>Situação</strong>".encode(), "<strong>Órgão</strong>".encode()
+        )
+        assert "Órgão".encode() in corpo
+        for _ in range(2):
+            responses.add(
+                responses.GET, API_URL, body=corpo, status=200, content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({"texto": "medicamentos órfãos"}, strict_match=False)],
+            )
+
+        with pytest.warns(UserWarning, match=r"rótulos que o raspe não conhece.*\['Órgão'\]") as avisos:
+            df = scraper.raspar(pesquisa="medicamentos órfãos")
+
+        # Um aviso por página, não um por card, apontando para quem chamou raspar().
+        assert len(avisos) == 1
+        assert avisos[0].filename == __file__
+        assert len(df) == 3
+        assert list(df.columns) == COLUNAS
+        assert (df["situacao"] == "").all()
+
+
 class TestAliasDeprecado:
     @responses.activate
     def test_texto_avisa_e_vira_pesquisa(self, scraper, mocker):

@@ -180,6 +180,40 @@ class TestValidacao:
         )
         scraper.raspar(pesquisa="election", ano="2024")
 
+    @responses.activate
+    def test_ano_preenche_so_a_data_que_falta(self, scraper, mocker):
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("nyt", "raspar/no_results.json"),
+            status=200, content_type="application/json",
+            match=[matchers.query_param_matcher(
+                {"begin_date": "20240101", "end_date": "20240630"}, strict_match=False,
+            )],
+        )
+        scraper.raspar(pesquisa="election", ano=2024, data_fim="2024-06-30")
+
+    @responses.activate
+    @pytest.mark.parametrize(
+        ("datas", "mensagem"),
+        [
+            pytest.param(
+                {"data_fim": "2023-06-01"},
+                r"'ano' \(2024-01-01\) não pode ser posterior a 'data_fim' \(2023-06-01\)",
+                id="data_fim_antes_do_ano",
+            ),
+            pytest.param(
+                {"data_inicio": "2025-01-01"},
+                r"'data_inicio' \(2025-01-01\) não pode ser posterior a 'ano' \(2024-12-31\)",
+                id="data_inicio_depois_do_ano",
+            ),
+        ],
+    )
+    def test_ano_que_inverte_o_periodo_levanta(self, scraper, datas, mensagem):
+        """A ordem é conferida depois do preenchimento; ``responses`` sem rota prova que nada sai."""
+        with pytest.raises(ValidationError, match=mensagem):
+            scraper.raspar(pesquisa="election", ano=2024, **datas)
+
     def test_sort_fora_da_lista_levanta(self, scraper):
         with pytest.raises(ValidationError, match="'sort'"):
             scraper.raspar(pesquisa="x", sort="aleatorio")

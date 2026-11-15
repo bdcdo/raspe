@@ -1,4 +1,5 @@
 import re
+import warnings
 from typing import Any, Literal
 
 import pandas as pd
@@ -6,10 +7,12 @@ from bs4 import BeautifulSoup
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.base import _nivel_de_pilha_fora_do_pacote
 from ..schemas.cfm import InputCFM, OutputCFM
 
 # Rótulo do cabeçalho do card no portal -> coluna canônica do DataFrame.
-# Rótulo fora deste mapa é descartado: o DataFrame só leva as colunas de ScraperCFM.colunas.
+# Rótulo fora deste mapa fica fora do DataFrame, que só leva as colunas de ScraperCFM.colunas,
+# mas emite UserWarning: um rótulo novo indica que o portal mudou e que há dado sendo perdido.
 _COLUNA_POR_ROTULO = {
     'Tipo': 'tipo',
     'UF': 'uf',
@@ -213,6 +216,8 @@ class ScraperCFM(BaseScraper, HTMLScraper):
                 self.logger.debug(f"Nenhum artigo encontrado em {path}")
                 return pd.DataFrame(columns=self.colunas)
 
+            rotulos = {strong.text.strip() for strong in results_div.select('div.card-header li strong')}
+            rotulos_desconhecidos = rotulos - _COLUNA_POR_ROTULO.keys()
             parsed_articles = []
 
             for article in articles:
@@ -224,11 +229,21 @@ class ScraperCFM(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Erro ao processar artigo em {path}: {e}")
                     continue
 
-            return pd.DataFrame(parsed_articles, columns=self.colunas)
+            df = pd.DataFrame(parsed_articles, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro ao analisar página {path}: {e}")
             return pd.DataFrame(columns=self.colunas)
+
+        # Fora dos try: com warnings virando erro, o aviso não pode descartar os cards.
+        if rotulos_desconhecidos:
+            warnings.warn(
+                f"CFM: os cards trazem rótulos que o raspe não conhece, e os valores deles ficaram fora do "
+                f"resultado: {sorted(rotulos_desconhecidos)}. O portal pode ter mudado de layout.",
+                UserWarning,
+                stacklevel=_nivel_de_pilha_fora_do_pacote(),
+            )
+        return df
 
     def _parse_article(self, article) -> dict[str, str] | None:
         """Extrai informações de um artigo individual.

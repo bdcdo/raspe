@@ -19,6 +19,7 @@ import responses
 from raspe.exceptions import ScraperError, ValidationError
 from raspe.schemas import InputCFM, InputPresidencia, OutputPresidencia, conferir_saida, descrever_tipo, validar_entrada
 from raspe.scrapers.ans import ScraperANS
+from raspe.scrapers.anvisa import ScraperANVISA
 from raspe.scrapers.cfm import ScraperCFM
 from raspe.scrapers.folha import ScraperFolha
 from raspe.scrapers.presidencia import ScraperPresidencia
@@ -152,6 +153,22 @@ class TestNavegador:
         navegador = mocker.patch.object(ScraperANS, "_raspar_async", new=AsyncMock())
         with pytest.raises(ValidationError, match=mensagem):
             ScraperANS().raspar(**kwargs)
+        navegador.assert_not_awaited()
+
+
+    @pytest.mark.parametrize("classe", [ScraperSaudeLegis, ScraperANS, ScraperANVISA], ids=lambda c: c.__name__)
+    @pytest.mark.parametrize(
+        ("kwargs", "mensagem"),
+        [
+            pytest.param({}, "'pesquisa': parâmetro obrigatório ausente", id="ausente"),
+            pytest.param({"pesquisa": ""}, "'pesquisa' é obrigatória e não pode ser vazia", id="vazia"),
+            pytest.param({"pesquisa": "   "}, "'pesquisa' é obrigatória e não pode ser vazia", id="espacos"),
+        ],
+    )
+    def test_pesquisa_vazia_levanta_antes_de_abrir_o_navegador(self, mocker, classe, kwargs, mensagem):
+        navegador = mocker.patch.object(classe, "_raspar_async", new=AsyncMock())
+        with pytest.raises(ValidationError, match=mensagem):
+            classe().raspar(**kwargs)
         navegador.assert_not_awaited()
 
 

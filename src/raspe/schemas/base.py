@@ -39,6 +39,20 @@ _DESCRICAO_PESQUISA = (
 )
 
 
+def _recusar_pesquisa_vazia(pesquisa: str | list[str]) -> None:
+    """Levanta ``ValueError`` se não há termo ou se algum é vazio ou só espaços.
+
+    Args:
+        pesquisa: Termo ou lista de termos recebidos em ``pesquisa``.
+
+    Raises:
+        ValueError: Se não há termo ou se algum está em branco.
+    """
+    termos = [pesquisa] if isinstance(pesquisa, str) else pesquisa
+    if not termos or any(not termo.strip() for termo in termos):
+        raise ValueError("'pesquisa' é obrigatória e não pode ser vazia.")
+
+
 class InputBase(BaseModel):
     """Base de todo schema de entrada de ``raspar()``.
 
@@ -68,9 +82,7 @@ class PesquisaObrigatoriaMixin(InputBase):
     @classmethod
     def _validar_pesquisa(cls, pesquisa: str | list[str]) -> str | list[str]:
         """Recusa termo vazio, que viraria uma busca sem filtro baixando todas as páginas."""
-        termos = [pesquisa] if isinstance(pesquisa, str) else pesquisa
-        if not termos or any(not termo.strip() for termo in termos):
-            raise ValueError("'pesquisa' é obrigatória e não pode ser vazia.")
+        _recusar_pesquisa_vazia(pesquisa)
         return pesquisa
 
 
@@ -85,17 +97,25 @@ class PesquisaOpcionalMixin(InputBase):
 
 
 class PesquisaNavegadorMixin(InputBase):
-    """``pesquisa`` de texto único, para os raspadores com navegador.
+    """``pesquisa`` obrigatória e de texto único, para os raspadores com navegador.
 
     Os raspadores com Playwright preenchem um campo de formulário e não
-    percorrem listas, por isso o tipo não aceita ``list[str]``.
+    percorrem listas, por isso o tipo não aceita ``list[str]``. O termo vazio
+    é recusado aqui, antes de abrir o navegador, como em
+    :class:`PesquisaObrigatoriaMixin`.
     """
 
     pesquisa: str = Field(
-        default="",
         description="Termo de busca digitado no formulário do portal. Não aceita lista.",
         examples=["doença rara"],
     )
+
+    @field_validator("pesquisa")
+    @classmethod
+    def _validar_pesquisa(cls, pesquisa: str) -> str:
+        """Recusa termo vazio, que só seria percebido depois de abrir o navegador."""
+        _recusar_pesquisa_vazia(pesquisa)
+        return pesquisa
 
 
 class PaginasMixin(InputBase):

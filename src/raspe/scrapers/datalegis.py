@@ -78,10 +78,7 @@ class ScraperDatalegis(PlaywrightScraper):
         Args:
             **kwargs: Deve conter 'pesquisa' com o texto de busca.
         """
-        termo = kwargs.get('pesquisa', '')
-
-        if not termo:
-            self.logger.warning("Nenhum termo de busca fornecido")
+        termo = kwargs['pesquisa']
 
         # Preenche o campo de busca
         # O campo usa name="txt_texto[]" com id="nolivesearchGadget"
