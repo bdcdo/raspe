@@ -239,8 +239,8 @@ As colunas da Câmara e do Senado, que ainda não estão em `docs/colunas.md`:
 
 | Fonte | Colunas |
 |-------|---------|
-| Câmara | `link`, `titulo`, `descricao`, `ementa` |
-| Senado | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao` |
+| Câmara | `link`, `titulo`, `descricao`, `ementa`, `termo_busca` |
+| Senado | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao`, `termo_busca` |
 
 ### CAPES (Portal de Periódicos)
 
