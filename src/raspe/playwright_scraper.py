@@ -568,7 +568,9 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         """Determina o número total de páginas de resultados.
 
         Returns:
-            int: Número total de páginas (0 se nenhum resultado).
+            int: Número total de páginas (0 se nenhum resultado). Com 0, a página
+            precisa trazer o aviso de busca vazia; senão, ``raspar`` levanta
+            ``ScraperError`` (ver :meth:`HTMLScraper._confirmar_busca_vazia`).
         """
         ...
 
@@ -613,6 +615,8 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
                     # Salva primeira página
                     await self._salvar_html_pagina(1, download_dir)
                 else:
+                    # Levanta ScraperError se a página não traz o aviso de busca vazia.
+                    self._confirmar_busca_vazia(self.soup_it(await self._obter_html()))
                     # Segue para o fluxo normal: o _parse_data da pasta vazia devolve as
                     # colunas da fonte, e o termo de busca e a limpeza da pasta valem igual.
                     self.logger.warning("Nenhum resultado encontrado")
