@@ -24,10 +24,9 @@ Cenários capturados:
   de 500 KB do hook ``check-added-large-files``. O teste
   ``test_typical_paginacao`` espera que page_02 contribua com ao menos
   10 cards.
-- ``single_page.html`` — busca ``natjus saude judicializacao`` (17
-  resultados, 1 página, em 15/11/2026; ``natjus_brasil``, o termo
-  anterior, passou a não achar nada). Caso retorne 0 ou >1, troque por
-  outro termo restritivo.
+- ``single_page.html`` — busca ``natjus_brasil`` (termo composto pouco
+  comum, costuma retornar 1 página). Caso retorne 0 ou >1, troque por
+  outro termo restritivo (ex.: ``natjus saude judicializacao``).
 - ``no_results.html`` — termo absurdo, sem paginação.
 """
 
@@ -43,7 +42,7 @@ SAMPLES_DIR = Path(__file__).resolve().parents[2] / "capes" / "samples" / "raspa
 # para o disco inteiros; a page_02 tem chamada própria, com corte.
 CENARIOS = (
     ("page_01.html", {"pesquisa": "natjus"}, 1),
-    ("single_page.html", {"pesquisa": "natjus saude judicializacao"}, 1),
+    ("single_page.html", {"pesquisa": "natjus_brasil"}, 1),
     ("no_results.html", {"pesquisa": "termo_inexistente_xyz12345abc"}, 1),
 )
 CENARIO_PAGE_02 = ("page_02.html", {"pesquisa": "saude"}, 2)
