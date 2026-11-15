@@ -17,9 +17,9 @@ Como rodar, a partir da raiz do repositório:
 
     python examples/04_pipeline_completo.py
 
-Requisições: para cada termo, uma de contagem e uma por página. Em outubro de 2026 foram 9
-(os dois termos tinham 1 e 6 páginas) e a execução levou cerca de 2 minutos, porque o site
-do IPEA às vezes leva 20 segundos para responder.
+Requisições: para cada termo, uma por página (a primeira também traz a contagem). Com os
+dois termos de outubro de 2026, que tinham 1 e 6 páginas, são 7. A execução levou cerca de
+2 minutos, porque o site do IPEA às vezes leva 20 segundos para responder.
 """
 
 import logging

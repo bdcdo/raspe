@@ -40,13 +40,7 @@ class TestRasparContract:
         """28 resultados → 2 páginas (25 por página)."""
         mocker.patch("time.sleep")
 
-        # Initial + page 1 + page 2 = 3 requests
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("folha", "raspar/page_01.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
+        # Página 1 (que também traz a contagem) + página 2 = 2 requests
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("folha", "raspar/page_01.html"),
@@ -81,13 +75,14 @@ class TestRasparContract:
         """A página 1 pede ``sr=1`` e a página 2 pede ``sr=26``.
 
         ``sr`` é a posição do primeiro resultado da página (25 por página).
-        A requisição inicial também vai com ``sr=1``, que vem de
-        ``_set_query_base``. O ``query_param_matcher`` é estrito, e a ordem
+        A primeira requisição é sempre a página 1 (``sr=1``), que traz a
+        contagem e não é pedida de novo; se ``paginas`` não inclui a 1, ela
+        serve só para contar. O ``query_param_matcher`` é estrito, e a ordem
         do registry prende cada valor à sua página.
         """
         mocker.patch("time.sleep")
         query_base = {"q": "Elevidys", "site": "todos", "periodo": "todos"}
-        # Inicial: page_01 diz 28 resultados, ou seja, 2 páginas.
+        # Página 1: page_01 diz 28 resultados, ou seja, 2 páginas.
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("folha", "raspar/page_01.html"),
@@ -95,7 +90,8 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher({**query_base, "sr": "1"})],
         )
-        for sr, sample in esperado:
+        demais = [(sr, sample) for sr, sample in esperado if sr != "1"]
+        for sr, sample in demais:
             responses.add(
                 responses.GET, API_URL,
                 body=load_sample_bytes("folha", f"raspar/{sample}"),
@@ -106,7 +102,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="Elevidys", paginas=paginas)
 
-        assert len(responses.calls) == 1 + len(esperado)
+        assert [call.request.params["sr"] for call in responses.calls] == ["1"] + [sr for sr, _ in demais]
         noticias_por_sample = {"page_01.html": 25, "page_02.html": 3}
         assert len(df) == sum(noticias_por_sample[sample] for _, sample in esperado)
 
@@ -114,12 +110,6 @@ class TestRasparContract:
     def test_single_page(self, scraper, mocker):
         """6 resultados → 1 página."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("folha", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("folha", "raspar/single_page.html"),
@@ -188,7 +178,7 @@ class TestRasparContract:
         with pytest.raises(ScraperError, match="contagem de resultados"):
             scraper.raspar(pesquisa="Elevidys")
 
-        # Só a requisição inicial: nenhuma página é pedida.
+        # Só a página 1, que traz a contagem: nenhuma outra página é pedida.
         assert len(responses.calls) == 1
 
 

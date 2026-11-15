@@ -28,20 +28,21 @@ COLUNAS = OutputCapes.colunas()
 
 
 def _registrar(termo: str, *amostras: str | bytes) -> None:
-    """Registra as respostas de uma busca: a contagem, sem ``page``, e uma por página.
+    """Registra as respostas de uma busca, uma por página.
 
-    A contagem recebe a amostra da página 1, como no portal. Cada resposta só
-    casa com a query completa daquela requisição. Cada amostra é o nome de um
-    sample (``str``) ou o próprio corpo da resposta (``bytes``).
+    A página 1 também dá a contagem, como no portal, e é pedida uma vez só.
+    Cada resposta só casa com a query completa daquela requisição. Cada
+    amostra é o nome de um sample (``str``) ou o próprio corpo da resposta
+    (``bytes``).
     """
     query = {"q": f"all:contains({termo})", "mode": "advanced", "source": "all"}
-    for pagina, amostra in [(None, amostras[0]), *enumerate(amostras, start=1)]:
+    for pagina, amostra in enumerate(amostras, start=1):
         responses.add(
             responses.GET, API_URL,
             body=amostra if isinstance(amostra, bytes) else load_sample_bytes("capes", f"raspar/{amostra}.html"),
             status=200,
             content_type="text/html; charset=utf-8",
-            match=[matchers.query_param_matcher(query if pagina is None else {**query, "page": str(pagina)})],
+            match=[matchers.query_param_matcher({**query, "page": str(pagina)})],
         )
 
 
@@ -113,7 +114,8 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa=termos)
 
         assert df.empty
-        # Uma requisição por termo: o sample não tem paginação, então cada termo faz só a contagem.
+        # Uma requisição por termo: o sample não tem paginação, então cada termo pede só a página 1,
+        # que traz a contagem.
         assert len(responses.calls) == len(termos)
         diretorios = os.listdir(os.path.join(scraper.download_path, scraper.nome_buscador))
         assert len(diretorios) == len(termos)

@@ -46,11 +46,6 @@ class TestRasparContract:
         )
         responses.add(
             responses.GET, API_URL,
-            body=load_sample_bytes("senado", "raspar/page_01.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
             body=load_sample_bytes("senado", "raspar/page_02.html"),
             status=200, content_type="text/html; charset=utf-8",
         )
@@ -63,11 +58,6 @@ class TestRasparContract:
     @responses.activate
     def test_single_page(self, scraper, mocker):
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("senado", "raspar/single_page.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("senado", "raspar/single_page.html"),
@@ -91,12 +81,11 @@ class TestRasparContract:
         mocker.patch("time.sleep")
         body = load_sample_bytes("senado", "raspar/single_page.html")
         assert "<p>Legislação</p>".encode() in body, "o sample perdeu o layout com rótulo 'Legislação'"
-        for _ in range(2):
-            responses.add(
-                responses.GET, API_URL,
-                body=body,
-                status=200, content_type="text/html; charset=utf-8",
-            )
+        responses.add(
+            responses.GET, API_URL,
+            body=body,
+            status=200, content_type="text/html; charset=utf-8",
+        )
 
         df = scraper.raspar(pesquisa="lei").set_index("titulo")
 
@@ -125,7 +114,7 @@ class TestRasparContract:
 
     @responses.activate(registry=registries.OrderedRegistry)
     def test_resolve_a_verificacao_anti_robo_e_segue(self, scraper, mocker):
-        """Resolve a prova de trabalho, envia a resposta e repete a busca."""
+        """Resolve a prova de trabalho, envia a resposta e repete a busca da página 1."""
         mocker.patch("time.sleep")
         respostas_ao_desafio = []
 
@@ -139,7 +128,7 @@ class TestRasparContract:
             status=200, content_type="text/html; charset=utf-8",
         )
         responses.add_callback(responses.POST, DESAFIO_URL, callback=_desafio)
-        for sample in ("page_01", "page_01", "page_02"):
+        for sample in ("page_01", "page_02"):
             responses.add(
                 responses.GET, API_URL,
                 body=load_sample_bytes("senado", f"raspar/{sample}.html"),

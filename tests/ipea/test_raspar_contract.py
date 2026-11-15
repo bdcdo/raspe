@@ -41,11 +41,11 @@ def scraper():
 class TestRasparContract:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
-        """13 resultados → 2 páginas: 1 request inicial + 2 de página."""
+        """13 resultados → 2 páginas: 2 requests, a página 1 trazendo também a contagem."""
         mocker.patch("time.sleep")
 
-        # Inicial (pagina=1), página 1 (pagina=1) e página 2 (pagina=2).
-        for pagina, sample in [("1", "page_01.html"), ("1", "page_01.html"), ("2", "page_02.html")]:
+        # Página 1 (pagina=1, que dá a contagem) e página 2 (pagina=2).
+        for pagina, sample in [("1", "page_01.html"), ("2", "page_02.html")]:
             responses.add(
                 responses.GET, API_URL,
                 body=load_sample_bytes("ipea", f"raspar/{sample}"),
@@ -77,12 +77,6 @@ class TestRasparContract:
             status=200,
             content_type="text/html; charset=utf-8",
         )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("ipea", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
 
         df = scraper.raspar(pesquisa="telemedicina")
         assert len(df) == 1
@@ -102,7 +96,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="termoextremamenteimprovavelxyz")
         assert df.empty
         assert list(df.columns) == COLUNAS
-        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        # Só a página 1, que traz a contagem: com 0 páginas, nenhuma outra é pedida.
         assert len(responses.calls) == 1
 
     @responses.activate
@@ -145,7 +139,7 @@ class TestRasparContract:
         with pytest.raises(ScraperError, match="contagem de resultados"):
             scraper.raspar(pesquisa="telemedicina")
 
-        # Só a requisição inicial: nenhuma página é pedida.
+        # Só a página 1, que traz a contagem: nenhuma outra página é pedida.
         assert len(responses.calls) == 1
 
     @responses.activate
@@ -167,12 +161,6 @@ class TestRasparContract:
                 "data-final": "",
                 "pagina": "1",
             })],
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("ipea", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
         )
 
         scraper.raspar(pesquisa="telemedicina")

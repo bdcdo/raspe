@@ -51,8 +51,8 @@ class TestRasparContract:
     def test_typical_paginacao(self, scraper, mocker):
         """19 resultados → 2 páginas (10 por página), e todos os 19 atos saem."""
         mocker.patch("time.sleep")
-        # Inicial (posicao=0), página 1 (posicao=0) e página 2 (posicao=10).
-        for posicao, sample in [("0", "page_01.html"), ("0", "page_01.html"), ("10", "page_02.html")]:
+        # Página 1 (posicao=0, que também traz a contagem) e página 2 (posicao=10).
+        for posicao, sample in [("0", "page_01.html"), ("10", "page_02.html")]:
             responses.add(
                 responses.POST, API_URL,
                 body=load_sample_bytes("presidencia", f"raspar/{sample}"),
@@ -75,12 +75,6 @@ class TestRasparContract:
     def test_single_page(self, scraper, mocker):
         """2 resultados → 1 página."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.POST, API_URL,
-            body=load_sample_bytes("presidencia", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
         responses.add(
             responses.POST, API_URL,
             body=load_sample_bytes("presidencia", "raspar/single_page.html"),
@@ -113,7 +107,8 @@ class TestRasparContract:
         assert trecho in original, "o sample page_01.html mudou; ajuste o trecho trocado"
         inicial = original.replace(trecho, f'<h4 class="pb-2 fw-bold">{contagem} resultados encontrados</h4>')
 
-        # A posição de cada página segue posicao = pagina * 10 - 10.
+        # A posição de cada página segue posicao = pagina * 10 - 10. A página 1
+        # (posicao=0) sai sempre, para contar, mas fica fora de ``paginas``.
         pedidos = [
             ("0", inicial.encode("utf-8")),
             (str((n_pags - 2) * 10), load_sample_bytes("presidencia", "raspar/page_01.html")),
@@ -132,7 +127,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="telemedicina", paginas=range(n_pags - 1, n_pags + 2))
 
-        # Inicial + as duas páginas existentes; a página n_pags + 1 não sai.
+        # Página 1 (só a contagem) + as duas páginas existentes; a página n_pags + 1 não sai.
         assert len(responses.calls) == 3
         # page_01 tem 10 atos e page_02 tem 9
         assert len(df) == 19
@@ -152,7 +147,7 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="termoextremamenteimprovavelxyz")
         assert df.empty
         assert list(df.columns) == COLUNAS
-        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        # Só a página 1, que traz a contagem: com 0 páginas, nenhuma outra é pedida.
         assert len(responses.calls) == 1
 
     @responses.activate
@@ -171,7 +166,7 @@ class TestRasparContract:
 
     @responses.activate
     def test_payload_post_formato_form(self, scraper, mocker):
-        """A request inicial usa POST form-urlencoded com termo, ordenação e posição."""
+        """A request da página 1 usa POST form-urlencoded com termo, ordenação e posição."""
         mocker.patch("time.sleep")
         responses.add(
             responses.POST, API_URL,
@@ -183,12 +178,6 @@ class TestRasparContract:
                 "ordenacao": "maior_data",
                 "posicao": "0",
             })],
-        )
-        responses.add(
-            responses.POST, API_URL,
-            body=load_sample_bytes("presidencia", "raspar/single_page.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
         )
 
         scraper.raspar(pesquisa="fenilcetonúria")

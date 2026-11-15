@@ -12,12 +12,12 @@ Rode os scripts a partir da raiz do repositório, por exemplo `python examples/0
 
 | Script | O que faz | Fonte | Requisições | Tempo |
 |---|---|---|---|---|
-| [`01_busca_basica.py`](01_busca_basica.py) | Busca "doenças raras" na legislação federal, mostra os dez primeiros resultados e salva a tabela em CSV e em Excel. | Presidência | até 4 | 11 s |
-| [`02_multiplas_fontes.py`](02_multiplas_fontes.py) | Faz a mesma busca em três bases legislativas, põe os resultados num formato comum, conta quantos citam o termo no título ou na ementa e lista as normas que aparecem em mais de uma base. | Presidência, Câmara e Senado | até 20 | 35 s |
-| [`03_analise_temporal.py`](03_analise_temporal.py) | Coleta todas as páginas da busca por "judicialização de medicamentos", conta os trabalhos de cada ano entre 2000 e 2025 e desenha um gráfico de barras. | CAPES | até 21 | 55 s |
-| [`04_pipeline_completo.py`](04_pipeline_completo.py) | Coleta, limpa, analisa e exporta as publicações sobre "judicialização da saúde" e "saúde suplementar". Tenta de novo quando a conexão com o site falha, salva os dados brutos antes da limpeza e registra data, versão do raspe e resultado de cada termo. | IPEA | 9, sem contar novas tentativas | 20 s a 2 min |
+| [`01_busca_basica.py`](01_busca_basica.py) | Busca "doenças raras" na legislação federal, mostra os dez primeiros resultados e salva a tabela em CSV e em Excel. | Presidência | até 3 | 11 s |
+| [`02_multiplas_fontes.py`](02_multiplas_fontes.py) | Faz a mesma busca em três bases legislativas, põe os resultados num formato comum, conta quantos citam o termo no título ou na ementa e lista as normas que aparecem em mais de uma base. | Presidência, Câmara e Senado | até 17 | 35 s |
+| [`03_analise_temporal.py`](03_analise_temporal.py) | Coleta todas as páginas da busca por "judicialização de medicamentos", conta os trabalhos de cada ano entre 2000 e 2025 e desenha um gráfico de barras. | CAPES | até 20 | 55 s |
+| [`04_pipeline_completo.py`](04_pipeline_completo.py) | Coleta, limpa, analisa e exporta as publicações sobre "judicialização da saúde" e "saúde suplementar". Tenta de novo quando a conexão com o site falha, salva os dados brutos antes da limpeza e registra data, versão do raspe e resultado de cada termo. | IPEA | 7, sem contar novas tentativas | 20 s a 2 min |
 
-Os números são da execução de 21 de outubro de 2026. Cada busca faz uma requisição para contar os resultados e uma por página, e a Câmara faz mais duas para abrir a sessão. Entre uma página e outra, o raspe espera 2 segundos. O tempo do exemplo 4 varia porque o site do IPEA às vezes leva 20 segundos para responder.
+Os tempos são da execução de 21 de outubro de 2026, quando cada busca ainda pedia a página 1 duas vezes. Cada busca faz uma requisição por página (a primeira também traz a contagem de resultados), e a Câmara faz mais duas para abrir a sessão. Entre uma página e outra, o raspe espera 2 segundos. O tempo do exemplo 4 varia porque o site do IPEA às vezes leva 20 segundos para responder.
 
 Três observações da execução que ajudam a ler os resultados:
 

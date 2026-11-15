@@ -43,11 +43,6 @@ class TestRasparContract:
         )
         responses.add(
             responses.GET, API_URL,
-            body=load_sample_bytes("cfm", "raspar/page_01.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
             body=load_sample_bytes("cfm", "raspar/page_02.html"),
             status=200, content_type="text/html; charset=utf-8",
         )
@@ -61,11 +56,6 @@ class TestRasparContract:
     def test_single_page(self, scraper, mocker):
         """3 registros, "Mostrando página 1 de 1" → 1 página."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("cfm", "raspar/single_page.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("cfm", "raspar/single_page.html"),
@@ -90,13 +80,8 @@ class TestRasparContract:
             body=load_sample_bytes("cfm", "raspar/single_page.html"),
             status=200, content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher(
-                {"texto": "doenças raras", "ano": "2023", "uf": "DF"}, strict_match=False,
+                {"texto": "doenças raras", "ano": "2023", "uf": "DF", "pagina": "1"}, strict_match=False,
             )],
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("cfm", "raspar/single_page.html"),
-            status=200, content_type="text/html; charset=utf-8",
         )
 
         # ano chega como texto e o schema o converte em int; a query volta a texto.
@@ -124,11 +109,10 @@ class TestRasparContract:
             "<strong>Situação</strong>".encode(), "<strong>Órgão</strong>".encode()
         )
         assert "Órgão".encode() in corpo
-        for _ in range(2):
-            responses.add(
-                responses.GET, API_URL, body=corpo, status=200, content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({"texto": "medicamentos órfãos"}, strict_match=False)],
-            )
+        responses.add(
+            responses.GET, API_URL, body=corpo, status=200, content_type="text/html; charset=utf-8",
+            match=[matchers.query_param_matcher({"texto": "medicamentos órfãos"}, strict_match=False)],
+        )
 
         with pytest.warns(UserWarning, match=r"rótulos que o raspe não conhece.*\['Órgão'\]") as avisos:
             df = scraper.raspar(pesquisa="medicamentos órfãos")
@@ -150,11 +134,6 @@ class TestAliasDeprecado:
             body=load_sample_bytes("cfm", "raspar/single_page.html"),
             status=200, content_type="text/html; charset=utf-8",
             match=[matchers.query_param_matcher({"texto": "doenças raras"}, strict_match=False)],
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("cfm", "raspar/single_page.html"),
-            status=200, content_type="text/html; charset=utf-8",
         )
 
         with pytest.warns(DeprecationWarning, match="'texto'.*'pesquisa'") as avisos:

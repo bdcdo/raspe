@@ -48,11 +48,6 @@ class TestRasparContract:
         )
         responses.add(
             responses.GET, API_URL,
-            body=load_sample_bytes("camara", "raspar/page_01.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, API_URL,
             body=load_sample_bytes("camara", "raspar/page_02.html"),
             status=200, content_type="text/html; charset=utf-8",
         )
@@ -65,11 +60,6 @@ class TestRasparContract:
     @responses.activate
     def test_single_page(self, scraper, mocker):
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("camara", "raspar/single_page.html"),
-            status=200, content_type="text/html; charset=utf-8",
-        )
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("camara", "raspar/single_page.html"),

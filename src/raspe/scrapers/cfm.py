@@ -133,13 +133,13 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         return query_inicial
 
     def _find_n_pags(self, r0) -> int:
-        """Extrai o número total de páginas da resposta inicial.
+        """Extrai o número total de páginas da resposta da página 1.
 
         Note:
             Erros 429 e 5xx são tratados automaticamente pelo BaseScraper._request_with_retry()
 
         Args:
-            r0: Response da requisição inicial
+            r0: Resposta da página 1
 
         Returns:
             int: Número total de páginas

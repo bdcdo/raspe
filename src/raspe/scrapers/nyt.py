@@ -193,10 +193,10 @@ class ScraperNYT(BaseScraper):
         return params
 
     def _find_n_pags(self, r0) -> int:
-        """Extrai o número total de páginas da resposta inicial.
+        """Extrai o número total de páginas da resposta da página 1.
 
         Args:
-            r0: Resposta da requisição inicial.
+            r0: Resposta da página 1.
 
         Returns:
             Número total de páginas (máximo 100 devido a limite da API).

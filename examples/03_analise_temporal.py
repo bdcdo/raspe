@@ -10,7 +10,7 @@ Como rodar, a partir da raiz do repositório:
 O gráfico precisa do matplotlib (pip install matplotlib). Sem ele, o script salva as
 tabelas e avisa que pulou o gráfico.
 
-Requisições: uma para contar os resultados e uma por página, até 21. Em outubro de 2026 a
+Requisições: uma por página (a primeira também traz a contagem), até 20. Em outubro de 2026 a
 busca tinha 18 páginas de 20 trabalhos, e a coleta levou cerca de um minuto.
 """
 
