@@ -6,6 +6,7 @@ Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``raspar``
 (busca, contagem, pasta de download, ``_parse_data``, ``termo_busca``) sem rede.
 """
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -107,3 +108,16 @@ class TestAvisoDePaginaSemLinhas:
         assert len(df) == 1
         [aviso] = [a for a in avisos if "1 de 2 páginas" in str(a.message)]
         assert aviso.filename == __file__
+
+
+class TestRasparComLoopAtivo:
+    def test_funciona_dentro_de_um_loop_do_asyncio(self, mocker):
+        """No Jupyter e no Colab já há um loop rodando na thread de quem chama ``raspar()``."""
+        raspador = _raspador(mocker)
+
+        async def _celula_do_notebook() -> pd.DataFrame:
+            return raspador.raspar(assunto="x")
+
+        df = asyncio.run(_celula_do_notebook())
+        assert df.empty
+        assert raspador.buscas == [{"assunto": "x"}]
