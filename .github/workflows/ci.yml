@@ -9,10 +9,12 @@ permissions:
   contents: read
 
 # Um push novo no mesmo PR cancela o run anterior, que ficou obsoleto. Na main
-# cada push termina o seu run, para que todo commit mesclado tenha resultado.
+# cada push tem grupo próprio (o SHA), para que todo commit mesclado tenha
+# resultado: num grupo compartilhado, o GitHub guarda um só run pendente e
+# cancela o pendente anterior mesmo com cancel-in-progress falso.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   testes:

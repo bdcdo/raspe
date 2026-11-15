@@ -84,8 +84,8 @@ Novos scrapers devem:
   ```
 
 - CI (`.github/workflows/ci.yml`), em todo PR e em push na `main`: o job `testes` roda
-  `pytest` em Python 3.11 e 3.14, e o job `lint` roda `pre-commit run --all-files` com os
-  hooks acima, menos o `pytest`. Sem deploy e sem segredos.
+  `pytest` na matriz de Python do workflow, e o job `lint` roda `pre-commit run --all-files` com todos
+  os hooks do `.pre-commit-config.yaml`, menos o `pytest`. Sem deploy e sem segredos.
 - Os testes de Playwright não abrem navegador; não é preciso `playwright install`.
 
 ## Estrutura do repositório
