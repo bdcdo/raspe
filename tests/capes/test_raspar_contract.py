@@ -165,3 +165,13 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="saude", paginas=range(1, 2))
         assert not df.empty
+
+
+class TestFindNPags:
+    def test_tamanho_da_pagina_vem_dos_cards_da_pagina_1(self, scraper, mocker):
+        """O nav declara data-per-page="20", mas o portal serve 30 (436 = 14 x 30 + 16, ao vivo)."""
+        cards = "".join(f'<div class="col-md-12 br-item" id="conteudo-{i}"></div>' for i in range(30))
+        r0 = mocker.Mock(content=(
+            f'<nav class="br-pagination" data-total="436" data-per-page="20"></nav>{cards}'
+        ).encode())
+        assert scraper._find_n_pags(r0) == 15

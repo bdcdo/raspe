@@ -51,6 +51,10 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         self._query_page_name = 'pagina'
         self._api_method = 'GET'
 
+        # O portal leva mais de um minuto para responder (visto em 2026-11-14), e o
+        # timeout de leitura padrão de 30 s derrubava a coleta.
+        self.timeout = (10, 120)
+
         # Configuração de paginação: páginas começam em 1
         self.query_page_multiplier = 1
         self.query_page_increment = 0

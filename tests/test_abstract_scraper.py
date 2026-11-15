@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 
 from raspe.abstract_scraper import AbstractScraper
-from raspe.exceptions import ValidationError
+from raspe.exceptions import ScraperError, ValidationError
 
 
 class _DummyScraper(AbstractScraper):
@@ -162,8 +162,8 @@ class TestParseData:
         assert df.empty
         assert list(df.columns) == ["path", "content"]
 
-    def test_erro_em_arquivo_isolado_nao_aborta(self, tmp_path, mocker):
-        """Se _parse_page levantar, o arquivo é ignorado mas os demais entram."""
+    def test_erro_em_arquivo_isolado_nao_aborta_e_avisa(self, tmp_path, mocker):
+        """Se _parse_page levantar, os demais arquivos entram e o resultado vem com aviso."""
         s = _DummyScraper("pd3")
         f1 = tmp_path / "ok.html"
         f2 = tmp_path / "broken.html"
@@ -179,9 +179,33 @@ class TestParseData:
 
         mocker.patch.object(s, "_parse_page", side_effect=maybe_fail)
 
-        df = s._parse_data(str(tmp_path))
+        with pytest.warns(UserWarning, match=r"1 de 2 páginas .*broken\.html"):
+            df = s._parse_data(str(tmp_path))
         assert len(df) == 1
         assert df.iloc[0]["content"] == "ok"
+
+    def test_pagina_sem_linhas_avisa(self, tmp_path, mocker):
+        """Página baixada que não rende linhas (bloqueio, layout novo) não some em silêncio."""
+        s = _DummyScraper("pd4")
+        (tmp_path / "a.html").write_text("ok", encoding="utf-8")
+        (tmp_path / "b.html").write_text("", encoding="utf-8")
+        original_parse = s._parse_page
+        mocker.patch.object(
+            s, "_parse_page",
+            side_effect=lambda p: pd.DataFrame(columns=["content"]) if p.endswith("b.html") else original_parse(p),
+        )
+        with pytest.warns(UserWarning, match=r"1 de 2 páginas .*b\.html"):
+            df = s._parse_data(str(tmp_path))
+        assert len(df) == 1
+
+    def test_nenhuma_pagina_lida_levanta_erro(self, tmp_path, mocker):
+        """Se todas as páginas falham no _parse_page, o resultado não pode parecer busca vazia."""
+        s = _DummyScraper("pd5")
+        (tmp_path / "a.html").write_text("x", encoding="utf-8")
+        (tmp_path / "b.html").write_text("y", encoding="utf-8")
+        mocker.patch.object(s, "_parse_page", side_effect=ValueError("layout novo"))
+        with pytest.raises(ScraperError, match="nenhuma das 2 páginas"):
+            s._parse_data(str(tmp_path))
 
 
 class TestScrapeAlias:

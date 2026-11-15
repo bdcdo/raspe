@@ -33,6 +33,8 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
     ]
 
+    _SELETOR_CARD = 'div.col-md-12.br-item[id^="conteudo-"]'
+
     def __init__(self, debug: bool = True):
         super().__init__("capes", debug)
 
@@ -104,12 +106,12 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         if total == 0:
             return 0
 
-        # O CAPES expõe o tamanho de página no próprio nav (data-per-page).
-        # Em 2026-05 o portal serve 20 itens/página, mas o atributo é a
-        # fonte de verdade — ler dinâmico evita perder páginas se o
-        # site mudar o valor. Fallback para 20 se o atributo sumir.
+        # O nav declara data-per-page="20", mas o portal serve 30 itens por página
+        # (visto ao vivo em 2026-11-14: 436 resultados = 14 páginas de 30 + 16).
+        # Por isso o tamanho da página vem dos cards da própria página 1; o
+        # atributo fica só de reserva.
         per_page_attr = str(nav.get('data-per-page', '') or '').strip()
-        per_page = int(per_page_attr) if per_page_attr.isdigit() and int(per_page_attr) > 0 else 20
+        per_page = len(soup.select(self._SELETOR_CARD)) or (int(per_page_attr) if per_page_attr.isdigit() else 0) or 20
         return (total + per_page - 1) // per_page
 
     def _parse_page(self, path: str) -> pd.DataFrame:
@@ -118,7 +120,7 @@ class ScraperCapes(BaseScraper, HTMLScraper):
                 html_content = f.read()
 
             soup = self.soup_it(html_content)
-            cards = soup.select('div.col-md-12.br-item[id^="conteudo-"]')
+            cards = soup.select(self._SELETOR_CARD)
 
             registros = []
             for card in cards:

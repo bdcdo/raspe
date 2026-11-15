@@ -24,9 +24,9 @@ Exemplo de uso:
             ...
 """
 
-import json
 import shutil
 import time
+import warnings
 from abc import abstractmethod
 from typing import Any, Literal
 
@@ -35,7 +35,7 @@ import requests
 from tqdm import tqdm
 
 from raspe.abstract_scraper import AbstractScraper
-from raspe.exceptions import APIError, RateLimitError
+from raspe.exceptions import APIError, RateLimitError, ScraperError
 from raspe.utils import start_session
 
 
@@ -60,7 +60,8 @@ class BaseScraper(AbstractScraper):
         timeout: Tupla (connect_timeout, read_timeout) para requisições.
         api_method: Método HTTP a ser usado nas requisições ('GET' ou 'POST').
         old_page_name: Nome do parâmetro para a página anterior.
-        max_retries: Número máximo de tentativas para rate limit e erros 5xx.
+        max_retries: Número máximo de tentativas para rate limit, erros 5xx e falhas de rede.
+        max_retry_after: Espera máxima, em segundos, pedida pelo header Retry-After de um 429.
     """
 
     def __init__(self, nome_buscador: str, debug: bool = True):
@@ -75,6 +76,7 @@ class BaseScraper(AbstractScraper):
         self.timeout: tuple[int, int] = (10, 30)
         self.old_page_name: str | None = None
         self.max_retries: int = 3
+        self.max_retry_after: int = 300
 
         # Propriedades a serem definidas pelas subclasses
         self._api_base: str
@@ -117,10 +119,16 @@ class BaseScraper(AbstractScraper):
         Raises:
             ValueError: Se múltiplos parâmetros forem fornecidos como listas/tuplas.
             ValidationError: Se algum parâmetro for inválido.
-            RateLimitError: Se a requisição inicial esbarrar em rate limit (429) persistente.
-            APIError: Se a requisição inicial esbarrar em erro de servidor (5xx) persistente.
+            RateLimitError: Se alguma requisição esbarrar em rate limit (429) persistente.
+            APIError: Se alguma requisição esbarrar em erro de servidor (5xx) persistente.
+            requests.RequestException: Se uma página falhar com outro erro HTTP ou de rede.
             ScraperError: Se a resposta inicial não for uma página de resultados
-                (manutenção ou verificação anti-robô, nos raspadores que detectam isso).
+                (manutenção ou verificação anti-robô, nos raspadores que detectam isso)
+                ou se nenhuma página baixada render resultados.
+
+        Warns:
+            UserWarning: No modo lista, quando parte dos valores falha. Os valores que
+                deram certo voltam no resultado; se todos falharem, o primeiro erro sobe.
         """
 
         # Valida parâmetros antes de iniciar
@@ -135,11 +143,24 @@ class BaseScraper(AbstractScraper):
             key = list_keys[0]
             static_kwargs = {k: v for k, v in kwargs.items() if k != key}
             dfs: list[pd.DataFrame] = []
-            for val in kwargs[key]:
+            erros: list[tuple[Any, Exception]] = []
+            nao_tentados: list[Any] = []
+            for i, val in enumerate(kwargs[key]):
                 self.logger.info(f"Iniciando raspagem para {key}={val}")
                 loop_kwargs = {**static_kwargs, key: val}
-                path_result = self._download_data(**loop_kwargs)
-                df = self._parse_data(path_result)
+                # Um termo que falha não descarta os já coletados: segue para os demais
+                # e avisa no fim. Erros de programação (fora destas classes) sobem direto.
+                try:
+                    path_result = self._download_data(**loop_kwargs)
+                    df = self._parse_data(path_result)
+                except (ScraperError, requests.RequestException) as e:
+                    self.logger.error(f"Raspagem de {key}={val} falhou: {e}")
+                    erros.append((val, e))
+                    if isinstance(e, RateLimitError):
+                        # Insistir nos demais valores só agravaria o bloqueio.
+                        nao_tentados = list(kwargs[key][i + 1:])
+                        break
+                    continue
 
                 termo_busca_val = str(val)
                 df = df.assign(termo_busca=termo_busca_val)
@@ -148,6 +169,18 @@ class BaseScraper(AbstractScraper):
                 dfs.append(df)
                 if self.debug is False:
                     shutil.rmtree(path_result)
+            if erros:
+                if not dfs:
+                    # Nenhum termo foi coletado: não há resultado parcial a preservar.
+                    raise erros[0][1]
+                aviso = (
+                    f"{self.nome_buscador}: {len(erros)} de {len(kwargs[key])} valores de '{key}' falharam "
+                    "e ficaram fora do resultado: "
+                    + "; ".join(f"{val!r} ({type(e).__name__}: {e})" for val, e in erros)
+                )
+                if nao_tentados:
+                    aviso += f". Por causa do rate limit, ficaram sem coletar: {nao_tentados!r}"
+                warnings.warn(aviso, stacklevel=2)
             if not dfs:
                 return pd.DataFrame(columns=[*self.colunas, 'termo_busca'])
             # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
@@ -200,26 +233,22 @@ class BaseScraper(AbstractScraper):
             query_atual = self._set_query_atual(query_base, pag)
             self.logger.debug(query_atual)
 
+            # Página que falha (429 ou 5xx depois das tentativas, outro 4xx, erro de rede)
+            # interrompe a coleta: pular a página truncaria o resultado em silêncio.
             try:
-                r = self._set_r(query_atual)
+                r = self._request_with_retry(query_atual)
                 self.logger.debug(f"Response status: {r.status_code}")
+                r.raise_for_status()
+            except Exception:
+                self.logger.error(
+                    f"Coleta interrompida na página {pag}; as páginas já baixadas ficam em {download_dir}"
+                )
+                raise
 
-                # Se erro de servidor, registra e pula esta página
-                if r.status_code >= 500:
-                    self.logger.warning(f"Server error {r.status_code} para URL {r.url}, ignorando página {pag}")
-                    continue
-
-                file_name = f"{download_dir}/{self.nome_buscador}_{pag:05d}.{self.type.lower()}"
-
-                with open(file_name, "w", encoding="utf-8") as f:
-                    # Write response content: use text or JSON dump fallback
-                    content = r.text if r.text and r.text.strip() else json.dumps(r.json(), ensure_ascii=False)
-                    f.write(content)
-                self.logger.debug(f"Arquivo salvo: {file_name}")
-
-            except Exception as e:
-                self.logger.error(f"Erro ao baixar página {pag}: {e}")
-                continue
+            file_name = f"{download_dir}/{self.nome_buscador}_{pag:05d}.{self.type.lower()}"
+            with open(file_name, "w", encoding="utf-8") as f:
+                f.write(r.text)
+            self.logger.debug(f"Arquivo salvo: {file_name}")
 
         return download_dir
 
@@ -296,8 +325,9 @@ class BaseScraper(AbstractScraper):
     def _request_with_retry(self, query: dict, max_retries: int | None = None) -> requests.Response:
         """Faz uma requisição com retry automático para rate limit e erros de servidor.
 
-        Implementa exponential backoff para erros 429 (rate limit) e 5xx (servidor).
-        Para 429, tenta usar o header Retry-After se disponível.
+        Implementa exponential backoff para erros 429 (rate limit), 5xx (servidor)
+        e falhas de conexão. Para 429, tenta usar o header Retry-After
+        se disponível, limitado a ``self.max_retry_after`` segundos.
 
         Args:
             query: Parâmetros da requisição.
@@ -309,11 +339,25 @@ class BaseScraper(AbstractScraper):
         Raises:
             RateLimitError: Se o rate limit persistir após todas as tentativas.
             APIError: Se ocorrer erro de servidor após todas as tentativas.
+            requests.ConnectionError: Se a conexão falhar em todas as tentativas.
+            requests.ReadTimeout: Se o servidor não responder dentro de ``self.timeout``.
         """
         retries = max_retries if max_retries is not None else self.max_retries
 
         for attempt in range(retries):
-            r = self._set_r(query)
+            try:
+                r = self._set_r(query)
+            except requests.ConnectionError as e:
+                # Inclui ConnectTimeout. O ReadTimeout sobe direto: o servidor recebeu o
+                # pedido e travou, e repetir só multiplicaria a espera.
+                if attempt == retries - 1:
+                    raise
+                self.logger.warning(
+                    f"Falha de rede ({type(e).__name__}). Aguardando {2 ** attempt}s "
+                    f"(tentativa {attempt + 1}/{retries})"
+                )
+                time.sleep(2 ** attempt)
+                continue
 
             # Sucesso ou erro de cliente (exceto 429)
             if r.status_code < 400 or (400 <= r.status_code < 500 and r.status_code != 429):
@@ -329,6 +373,7 @@ class BaseScraper(AbstractScraper):
                         wait_time = 2 ** attempt
                 else:
                     wait_time = 2 ** attempt
+                wait_time = min(wait_time, self.max_retry_after)
 
                 if attempt < retries - 1:
                     self.logger.warning(

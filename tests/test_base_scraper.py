@@ -156,13 +156,9 @@ class TestRasparBuscaUnica:
         df = scraper.raspar(termo="vazio")
         assert df.empty
 
-    @responses.activate(registry=registries.OrderedRegistry)
-    def test_raspar_pula_pagina_com_erro_5xx(self, mocker):
-        """Páginas individuais com 5xx são puladas (não levantam) - apenas
-        a request inicial usa _request_with_retry; downloads de página
-        seguem fluxo direto.
-        """
-        mocker.patch("time.sleep")
+    @staticmethod
+    def _primeira_pagina_ok():
+        """Contagem de 2 páginas e a página 1 com dados; a página 2 fica a cargo do teste."""
         responses.add(
             responses.GET, "http://example.com/api",
             body="<total>2</total>", status=200,
@@ -173,38 +169,67 @@ class TestRasparBuscaUnica:
             body="<r>ok</r>", status=200,
             content_type="text/html; charset=utf-8",
         )
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="erro", status=503,
-        )
-
-        scraper = _DummyHTTPScraper()
-        df = scraper.raspar(termo="x")
-        # Apenas 1 página foi salva (a outra deu 503 e foi pulada)
-        assert len(df) == 1
 
     @responses.activate(registry=registries.OrderedRegistry)
-    def test_raspar_pula_pagina_com_excecao(self, mocker):
-        """Exceções de rede em páginas individuais são logadas e puladas."""
+    def test_pagina_com_5xx_persistente_levanta_api_error(self, mocker):
+        """Uma página com 5xx é tentada de novo e, se persistir, interrompe a coleta."""
         mocker.patch("time.sleep")
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="<total>2</total>", status=200,
-            content_type="text/html; charset=utf-8",
-        )
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body=ConnectionError("falha de rede"),
-        )
-        responses.add(
-            responses.GET, "http://example.com/api",
-            body="<r>ok</r>", status=200,
-            content_type="text/html; charset=utf-8",
-        )
+        self._primeira_pagina_ok()
+        for _ in range(3):
+            responses.add(responses.GET, "http://example.com/api", body="erro", status=503)
 
-        scraper = _DummyHTTPScraper()
-        df = scraper.raspar(termo="x")
-        assert len(df) == 1
+        with pytest.raises(APIError):
+            _DummyHTTPScraper().raspar(termo="x")
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_pagina_com_5xx_passageiro_e_retentada(self, mocker):
+        mocker.patch("time.sleep")
+        self._primeira_pagina_ok()
+        responses.add(responses.GET, "http://example.com/api", body="erro", status=503)
+        responses.add(
+            responses.GET, "http://example.com/api",
+            body="<r>ok 2</r>", status=200,
+            content_type="text/html; charset=utf-8",
+        )
+        df = _DummyHTTPScraper().raspar(termo="x")
+        assert len(df) == 2
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_pagina_com_429_persistente_levanta_rate_limit_error(self, mocker):
+        """O 429 numa página não pode ser gravado como página de resultados."""
+        mocker.patch("time.sleep")
+        self._primeira_pagina_ok()
+        for _ in range(3):
+            responses.add(
+                responses.GET, "http://example.com/api",
+                body="<html>Too Many Requests</html>", status=429, headers={"Retry-After": "1"},
+            )
+
+        with pytest.raises(RateLimitError):
+            _DummyHTTPScraper().raspar(termo="x")
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_pagina_com_4xx_levanta_http_error(self, mocker):
+        mocker.patch("time.sleep")
+        self._primeira_pagina_ok()
+        responses.add(responses.GET, "http://example.com/api", body="proibido", status=403)
+
+        with pytest.raises(requests.HTTPError):
+            _DummyHTTPScraper().raspar(termo="x")
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_pagina_com_erro_de_rede_levanta(self, mocker):
+        """Exceções de rede numa página interrompem a coleta, em vez de pular a página."""
+        mocker.patch("time.sleep")
+        self._primeira_pagina_ok()
+        for _ in range(3):
+            responses.add(
+                responses.GET, "http://example.com/api",
+                body=requests.ConnectionError("falha de rede"),
+            )
+
+        with pytest.raises(requests.ConnectionError):
+            _DummyHTTPScraper().raspar(termo="x")
 
     @responses.activate
     def test_raspar_paginas_nao_iteravel_usa_fallback(self, mocker):
@@ -256,6 +281,20 @@ class TestRasparBuscaUnica:
         assert os.path.isdir(captured["path"])
 
 
+def _termo_ok(termo: str) -> None:
+    """Registra a contagem (1 página) e a página 1 de um termo que dá certo."""
+    responses.add(
+        responses.GET, "http://example.com/api",
+        body="<total>1</total>", status=200, content_type="text/html; charset=utf-8",
+        match=[matchers.query_param_matcher({"q": termo})],
+    )
+    responses.add(
+        responses.GET, "http://example.com/api",
+        body=f"<r>{termo}</r>", status=200, content_type="text/html; charset=utf-8",
+        match=[matchers.query_param_matcher({"q": termo, "page": "1"})],
+    )
+
+
 class TestRasparListaTermos:
     @responses.activate
     def test_lista_de_termos_concatena_resultados(self, mocker):
@@ -305,6 +344,72 @@ class TestRasparListaTermos:
         assert len(df) == 1
         assert df.dtypes.to_dict() == sozinho.dtypes.to_dict()
 
+    @responses.activate
+    def test_termo_com_erro_nao_descarta_os_demais(self, mocker):
+        """Um termo que falha fica de fora com aviso; os já coletados e os seguintes voltam."""
+        mocker.patch("time.sleep")
+        for termo in ["a", "c"]:
+            responses.add(
+                responses.GET, "http://example.com/api",
+                body="<total>1</total>", status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({"q": termo})],
+            )
+            responses.add(
+                responses.GET, "http://example.com/api",
+                body=f"<r>{termo}</r>", status=200,
+                content_type="text/html; charset=utf-8",
+                match=[matchers.query_param_matcher({"q": termo, "page": "1"})],
+            )
+        responses.add(
+            responses.GET, "http://example.com/api", body="erro", status=503,
+            match=[matchers.query_param_matcher({"q": "b"})],
+        )
+
+        with pytest.warns(UserWarning, match=r"1 de 3 valores de 'termo' falharam.*'b' \(APIError"):
+            df = _DummyHTTPScraper().raspar(termo=["a", "b", "c"])
+        assert list(df["termo_busca"]) == ["a", "c"]
+
+    @responses.activate
+    def test_rate_limit_interrompe_a_lista_e_preserva_o_coletado(self, mocker):
+        """Depois de um 429 persistente, os demais valores não são tentados, mas o já coletado volta."""
+        mocker.patch("time.sleep")
+        _termo_ok("a")
+        responses.add(
+            responses.GET, "http://example.com/api", body="", status=429,
+            match=[matchers.query_param_matcher({"q": "b"})],
+        )
+
+        with pytest.warns(UserWarning, match=r"1 de 4 valores.*ficaram sem coletar: \['c', 'd'\]"):
+            df = _DummyHTTPScraper().raspar(termo=["a", "b", "c", "d"])
+        assert list(df["termo_busca"]) == ["a"]
+        assert not any("q=c" in call.request.url for call in responses.calls)
+
+    @responses.activate
+    def test_valores_repetidos_contam_cada_falha(self, mocker):
+        mocker.patch("time.sleep")
+        _termo_ok("ok")
+        responses.add(
+            responses.GET, "http://example.com/api", body="erro", status=503,
+            match=[matchers.query_param_matcher({"q": "x"})],
+        )
+        with pytest.warns(UserWarning, match="2 de 3 valores"):
+            _DummyHTTPScraper().raspar(termo=["x", "x", "ok"])
+
+    @responses.activate
+    def test_todos_os_termos_com_erro_levanta(self, mocker):
+        mocker.patch("time.sleep")
+        responses.add(responses.GET, "http://example.com/api", body="erro", status=503)
+        with pytest.raises(APIError):
+            _DummyHTTPScraper().raspar(termo=["a", "b"])
+
+    def test_erro_de_programacao_nao_vira_aviso(self, mocker):
+        """Só falhas de coleta (ScraperError, requests) são toleradas no modo lista."""
+        scraper = _DummyHTTPScraper()
+        mocker.patch.object(scraper, "_download_data", side_effect=TypeError("bug"))
+        with pytest.raises(TypeError):
+            scraper.raspar(termo=["a", "b"])
+
     def test_lista_vazia_devolve_as_colunas(self, mocker):
         mocker.patch("time.sleep")
         scraper = _DummyHTTPScraper()
@@ -344,6 +449,44 @@ class TestRequestWithRetry:
         assert r.status_code == 200
         # Deve ter chamado sleep com 5s (do Retry-After)
         sleep_mock.assert_any_call(5)
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_429_retry_after_longo_e_limitado(self, mocker):
+        """Um Retry-After de um dia não pode travar o processo: a espera para em max_retry_after."""
+        sleep_mock = mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, "http://example.com/api",
+            status=429, headers={"Retry-After": "86400"}, body="",
+        )
+        responses.add(responses.GET, "http://example.com/api", status=200, body="ok")
+
+        scraper = _DummyHTTPScraper()
+        assert scraper._request_with_retry({"q": "x"}).status_code == 200
+        sleep_mock.assert_called_once_with(300)
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_falha_de_rede_e_retentada(self, mocker):
+        mocker.patch("time.sleep")
+        responses.add(responses.GET, "http://example.com/api", body=requests.ConnectTimeout("sem conexão"))
+        responses.add(responses.GET, "http://example.com/api", status=200, body="ok")
+
+        assert _DummyHTTPScraper()._request_with_retry({"q": "x"}).status_code == 200
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_read_timeout_nao_e_retentado(self, mocker):
+        mocker.patch("time.sleep")
+        responses.add(responses.GET, "http://example.com/api", body=requests.ReadTimeout("travou"))
+        with pytest.raises(requests.ReadTimeout):
+            _DummyHTTPScraper()._request_with_retry({"q": "x"})
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_falha_de_rede_persistente_levanta(self, mocker):
+        mocker.patch("time.sleep")
+        for _ in range(3):
+            responses.add(responses.GET, "http://example.com/api", body=requests.ConnectionError("fora"))
+
+        with pytest.raises(requests.ConnectionError):
+            _DummyHTTPScraper()._request_with_retry({"q": "x"})
 
     @responses.activate(registry=registries.OrderedRegistry)
     def test_429_retry_after_invalido_cai_em_backoff(self, mocker):
