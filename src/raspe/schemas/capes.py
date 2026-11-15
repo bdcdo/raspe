@@ -25,12 +25,12 @@ class OutputCapes(OutputBase):
         description="Endereço da página de detalhes no portal da CAPES.",
         examples=[
             "https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html"
-            "?task=detalhes&source=all&id=W4387465478"
+            "?task=detalhes&source=digital&id=W4387465478"
         ],
     )
     autores: str = Field(
         description="Autores separados por `; `.",
-        examples=["João Paulo Kulczynski Forster; Najwa Dagash; Paula Franciele Da Silva"],
+        examples=["Ronaldo Portela; Daniel Marques Mota; Paulo José Gonçalves Ferreira"],
     )
     ano: str = Field(description="Ano de publicação, com quatro dígitos, ou vazio.", examples=["2023"])
     revista: str = Field(description="Periódico em que o registro saiu.", examples=["Cadernos de Saúde Pública"])

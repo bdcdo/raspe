@@ -25,8 +25,8 @@ Schema: `OutputCapes`.
 | `id` | texto | Identificador do registro, o mesmo do OpenAlex. | W4387465478 |
 | `tipo` | texto | Tipo do registro. | Artigo |
 | `titulo` | texto | Título do registro. | Judicialização de produtos à base de canabidiol no Brasil: uma análise de 2019 a 2022 |
-| `link` | texto | Endereço da página de detalhes no portal da CAPES. | https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html?task=detalhes&source=all&id=W4387465478 |
-| `autores` | texto | Autores separados por `; `. | João Paulo Kulczynski Forster; Najwa Dagash; Paula Franciele Da Silva |
+| `link` | texto | Endereço da página de detalhes no portal da CAPES. | https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html?task=detalhes&source=digital&id=W4387465478 |
+| `autores` | texto | Autores separados por `; `. | Ronaldo Portela; Daniel Marques Mota; Paulo José Gonçalves Ferreira |
 | `ano` | texto | Ano de publicação, com quatro dígitos, ou vazio. | 2023 |
 | `revista` | texto | Periódico em que o registro saiu. | Cadernos de Saúde Pública |
 | `instituicao` | texto | Instituição informada no card. | Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz |
