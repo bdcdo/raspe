@@ -21,7 +21,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from raspe.exceptions import ScraperError
-from raspe.schemas.base import InputBase, OutputBase, conferir_saida, validar_entrada
+from raspe.schemas.base import InputBase, OutputBase, _nivel_de_pilha_fora_do_pacote, conferir_saida, validar_entrada
 from raspe.utils import validar_intervalo_datas
 
 # Fora da classe porque, dentro dela, o nome 'type' é a propriedade abstrata
@@ -154,7 +154,7 @@ class AbstractScraper(ABC):
             emite ``DeprecationWarning``. ``None`` mantém o comportamento antigo,
             sem validação dos nomes.
         schema_saida: Schema pydantic das colunas do DataFrame de ``raspar()``,
-            conferido em :meth:`_conferir_saida`. Com ele, ``colunas`` sai do
+            conferido no fim de :meth:`raspar`. Com ele, ``colunas`` sai do
             schema (``OutputXx.colunas_da_fonte()``) e não precisa ser declarado.
     """
 
@@ -246,22 +246,6 @@ class AbstractScraper(ABC):
                     params[fim_key] = fim_norm
 
         return params
-
-    def _conferir_saida(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Confere o DataFrame de ``raspar()`` contra ``schema_saida``.
-
-        Ver :func:`raspe.schemas.base.conferir_saida` para o que acontece com
-        DataFrame vazio e com colunas divergentes.
-
-        Args:
-            df: DataFrame montado por ``raspar()``.
-
-        Returns:
-            pd.DataFrame: O mesmo DataFrame sem schema; conferido com schema.
-        """
-        if self.schema_saida is None:
-            return df
-        return conferir_saida(df, self.schema_saida, metodo=f"{type(self).__name__}.raspar()")
 
     def _create_download_dir(self) -> str:
         """Cria um diretório para armazenar os arquivos baixados.
@@ -366,7 +350,7 @@ class AbstractScraper(ABC):
                 f"{self.nome_buscador}: {len(sem_linhas)} de {len(arquivos)} páginas baixadas não renderam "
                 "resultados (erro de leitura, página de bloqueio ou layout novo), e o resultado pode estar "
                 f"incompleto. Páginas: {', '.join(os.path.basename(f) for f in sem_linhas)}.",
-                stacklevel=3,
+                stacklevel=_nivel_de_pilha_fora_do_pacote(),
             )
 
         return pd.concat(result, ignore_index=True)
@@ -386,15 +370,65 @@ class AbstractScraper(ABC):
         """
         ...
 
-    @abstractmethod
     def raspar(self, **kwargs) -> pd.DataFrame:
         """Método principal para executar o processo de raspagem de dados.
 
+        É o caminho único de todos os raspadores: valida os parâmetros com
+        ``schema_entrada``, coleta com :meth:`_raspar` e confere o resultado
+        com ``schema_saida`` (ver :func:`raspe.schemas.base.conferir_saida` para
+        o que acontece com DataFrame vazio e com colunas divergentes).
+
+        A validação roda antes de qualquer requisição ou navegador. Nos
+        raspadores com Playwright, roda também antes do ``asyncio.run``, para o
+        ``DeprecationWarning`` de alias sair de uma pilha que ainda passa pelo
+        código de quem chamou (dentro do loop do asyncio, ele seria atribuído ao
+        próprio asyncio e não apareceria).
+
         Args:
-            **kwargs: Parâmetros de busca para o raspador.
+            **kwargs: Parâmetros de busca para o raspador. Nos raspadores HTTP,
+                uma lista em ``pesquisa`` (ou, sem ``schema_entrada``, em outro
+                parâmetro) dispara uma busca por item, e ``paginas`` aceita um
+                ``range`` com as páginas a baixar.
 
         Returns:
             pd.DataFrame: DataFrame com os dados raspados.
+
+        Raises:
+            ValidationError: Se algum parâmetro for inválido ou desconhecido
+                pelo ``schema_entrada`` do raspador.
+            ValueError: Se mais de um parâmetro vier como lista, nos raspadores
+                HTTP sem ``schema_entrada``.
+            RateLimitError: Nos raspadores HTTP, se alguma requisição esbarrar em
+                rate limit (429) persistente.
+            APIError: Nos raspadores HTTP, se alguma requisição esbarrar em erro de
+                servidor (5xx) persistente.
+            requests.RequestException: Nos raspadores HTTP, se uma página falhar
+                com outro erro HTTP ou de rede.
+            ScraperError: Se a resposta inicial não for uma página de resultados
+                (manutenção ou verificação anti-robô, nos raspadores que detectam isso)
+                ou se nenhuma página baixada render resultados.
+
+        Warns:
+            UserWarning: Se parte das páginas baixadas não render linhas. Nos
+                raspadores HTTP, também no modo lista, quando parte dos valores
+                falha: os que deram certo voltam no resultado; se todos falharem,
+                o primeiro erro sobe.
+        """
+        kwargs = self._validar_parametros(**kwargs)
+        resultado = self._raspar(**kwargs)
+        if self.schema_saida is None:
+            return resultado
+        return conferir_saida(resultado, self.schema_saida, metodo=f"{type(self).__name__}.raspar()")
+
+    @abstractmethod
+    def _raspar(self, **kwargs) -> pd.DataFrame:
+        """Coleta os dados com os parâmetros já validados por :meth:`raspar`.
+
+        Args:
+            **kwargs: Parâmetros de busca validados e normalizados.
+
+        Returns:
+            pd.DataFrame: Dados raspados, antes da conferência com ``schema_saida``.
         """
         ...
 

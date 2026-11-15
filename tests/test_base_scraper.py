@@ -405,9 +405,11 @@ class TestRasparListaTermos:
             match=[matchers.query_param_matcher({"q": "b"})],
         )
 
-        with pytest.warns(UserWarning, match=r"1 de 3 valores de 'termo' falharam.*'b' \(APIError"):
+        with pytest.warns(UserWarning, match=r"1 de 3 valores de 'termo' falharam.*'b' \(APIError") as avisos:
             df = _DummyHTTPScraper().raspar(termo=["a", "b", "c"])
         assert list(df["termo_busca"]) == ["a", "c"]
+        # O aviso aponta para quem chamou raspar(), não para o código do raspe.
+        assert avisos[0].filename == __file__
 
     @responses.activate
     def test_rate_limit_interrompe_a_lista_e_preserva_o_coletado(self, mocker):

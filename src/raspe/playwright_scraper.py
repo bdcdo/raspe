@@ -558,7 +558,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         3. Aguardar os resultados carregarem
 
         Args:
-            **kwargs: Parâmetros de busca passados para raspar().
+            **kwargs: Parâmetros de busca já validados por :meth:`AbstractScraper.raspar`.
         """
         ...
 
@@ -579,7 +579,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         """Executa o processo completo de raspagem de forma assíncrona.
 
         Args:
-            **kwargs: Parâmetros de busca já validados por :meth:`raspar`.
+            **kwargs: Parâmetros de busca já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
             pd.DataFrame: Dados raspados consolidados.
@@ -650,27 +650,13 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         self.logger.info(f"Raspagem concluída: {len(result)} registros")
         return result
 
-    def raspar(self, **kwargs) -> pd.DataFrame:
-        """Executa o processo completo de raspagem.
-
-        Interface síncrona que internamente usa asyncio para executar
-        o código assíncrono do Playwright.
-
-        A validação dos parâmetros roda aqui, antes de ``asyncio.run``, por dois
-        motivos: kwarg inválido falha sem abrir navegador, e o
-        ``DeprecationWarning`` de alias sai de uma pilha que ainda passa pelo
-        código de quem chamou ``raspar()`` (dentro do loop do asyncio, ele seria
-        atribuído ao próprio asyncio e não apareceria).
+    def _raspar(self, **kwargs) -> pd.DataFrame:
+        """Roda :meth:`_raspar_async` num loop do asyncio.
 
         Args:
-            **kwargs: Parâmetros de busca específicos do scraper.
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
             pd.DataFrame: Dados raspados consolidados.
-
-        Raises:
-            ValidationError: Se algum parâmetro for inválido ou desconhecido.
         """
-        kwargs = self._validar_parametros(**kwargs)
-        resultado = asyncio.run(self._raspar_async(**kwargs))
-        return self._conferir_saida(resultado)
+        return asyncio.run(self._raspar_async(**kwargs))
