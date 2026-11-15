@@ -21,7 +21,7 @@ Os números são da execução de 21 de outubro de 2026. Cada busca faz uma requ
 
 Três observações da execução que ajudam a ler os resultados:
 
-- **Senado.** O site do Senado respondeu com uma página de verificação contra robôs, e o raspador voltou sem resultados. O exemplo 2 trata isso como fonte vazia e segue com as outras; as tabelas de `datasets/` registram o Senado com zero.
+- **Senado.** O site do Senado respondeu com uma página de verificação contra robôs. Na época o raspador voltava sem resultados; hoje ele levanta `ScraperError`. O exemplo 2 trata isso como fonte vazia e segue com as outras; as tabelas de `datasets/` registram o Senado com zero.
 - **CAPES.** Depois de cerca de 25 requisições seguidas, o portal passou a responder com erro 403 por alguns minutos. Se isso acontecer, espere e rode de novo. Os títulos de `03_capes_judicializacao_medicamentos.csv` têm palavras coladas, um defeito do raspador descrito na issue #40; rodar o exemplo 3 depois da correção atualiza a tabela.
 - **Sintaxe da busca.** A Presidência aceita aspas para pedir a expressão exata. A Câmara responde com erro 400 quando a busca tem aspas, por isso o exemplo 2 busca sem elas na Câmara e no Senado.
 

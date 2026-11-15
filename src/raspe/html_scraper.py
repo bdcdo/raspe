@@ -8,9 +8,10 @@ if TYPE_CHECKING:
 
 # Aviso que as fontes exibem quando a busca não tem resultados, como
 # "Nenhum resultado encontrado" (Senado) ou "Nenhum registro encontrado" (CAPES).
-# Exige o "encontrad" para não casar com textos como "Nenhuma área selecionada",
-# que a CAPES exibe também nas páginas com resultados.
-_AVISO_SEM_RESULTADOS = re.compile(r'nenhuma?\s+\w+\s+encontrad', re.IGNORECASE)
+# Aceita até três palavras no meio ("Nenhum resultado foi encontrado") e exige o
+# "encontrad" para não casar com textos como "Nenhuma área selecionada", que a
+# CAPES exibe também nas páginas com resultados.
+_AVISO_SEM_RESULTADOS = re.compile(r'nenhuma?\s+(?:\w+\s+){1,3}encontrad', re.IGNORECASE)
 
 
 class HTMLScraper:

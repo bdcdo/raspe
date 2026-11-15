@@ -72,14 +72,15 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
 
         r0s = self.soup_it(r0.content)
         a_tag = r0s.find('a', attrs={"data-click-type": "dynnav.colecao.Legislação Federal"})
-        match = re.search(r'\d+', a_tag.text) if a_tag else None
+        # A contagem vem com separador de milhar ("8.950").
+        match = re.search(r'\d[\d.]*', a_tag.text) if a_tag else None
         if not match:
             # A busca sem resultados não traz o link da coleção, só o aviso.
             return self._confirmar_busca_vazia(r0s)
         num_text = match.group()
         self.logger.debug(f"Found a text: '{num_text}'")
 
-        num = int(num_text)
+        num = int(num_text.replace('.', ''))
 
         self.logger.debug(f"Extracted number of results: {num}")
 

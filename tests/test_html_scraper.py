@@ -1,7 +1,9 @@
 """Testes unitários para o mixin HTMLScraper."""
 
+import pytest
 from bs4 import BeautifulSoup
 
+from raspe.exceptions import ScraperError
 from raspe.html_scraper import HTMLScraper
 
 
@@ -32,3 +34,30 @@ class TestHTMLScraper:
         soup = client.soup_it("texto sem tags")
         assert isinstance(soup, BeautifulSoup)
         assert "texto sem tags" in soup.get_text()
+
+
+class TestConfirmarBuscaVazia:
+    """Distingue a busca sem resultados de uma página que não é de resultados."""
+
+    def test_aviso_de_busca_vazia_devolve_zero(self):
+        client = _DummyHTMLClient()
+        for aviso in ("Nenhum resultado encontrado", "Nenhum registro encontrado",
+                      "Nenhuma legislação encontrada", "Nenhum resultado foi encontrado"):
+            soup = client.soup_it(f"<html><body><h2>&nbsp;{aviso}</h2></body></html>")
+            assert client._confirmar_busca_vazia(soup) == 0
+
+    def test_pagina_sem_aviso_levanta_erro_com_titulo(self):
+        client = _DummyHTMLClient()
+        soup = client.soup_it(
+            "<html><head><title>SEI indisponível temporariamente</title></head>"
+            "<body><h2>Sistema indisponível temporariamente!</h2></body></html>"
+        )
+        with pytest.raises(ScraperError, match="SEI indisponível temporariamente"):
+            client._confirmar_busca_vazia(soup)
+
+    def test_nenhuma_area_selecionada_nao_conta_como_busca_vazia(self):
+        """A CAPES mostra "Nenhuma área selecionada" também nas páginas com resultados."""
+        client = _DummyHTMLClient()
+        soup = client.soup_it("<html><body><p>Nenhuma área selecionada</p></body></html>")
+        with pytest.raises(ScraperError):
+            client._confirmar_busca_vazia(soup)
