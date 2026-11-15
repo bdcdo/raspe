@@ -34,6 +34,7 @@ Exemplo de uso:
 """
 
 import asyncio
+import math
 import os
 import time
 from abc import abstractmethod
@@ -46,7 +47,7 @@ from typing import Literal
 import pandas as pd
 
 from raspe.abstract_scraper import AbstractScraper
-from raspe.exceptions import BrowserError, DriverNotInstalledError
+from raspe.exceptions import BrowserError, DriverNotInstalledError, ScraperError
 from raspe.html_scraper import HTMLScraper
 
 
@@ -150,6 +151,8 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         # Estratégia de paginação padrão
         self._pagination_strategy: PaginationStrategy = PaginationStrategy.NONE
         self._max_pages: int = 100  # Limite de segurança
+        # Resultados por página, lido da contagem por _paginas_pela_contagem.
+        self._por_pagina: int = 1
 
     @property
     def type(self) -> Literal['HTML']:
@@ -441,6 +444,34 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
     # Estratégias de Paginação
     # =========================================================================
 
+    def _paginas_pela_contagem(self, fim: str, total: str) -> int:
+        """Calcula o número de páginas pela contagem da primeira página, como "1 a 10 de 14".
+
+        Lida na primeira página, a posição final (``fim``) é o tamanho da página,
+        guardado em ``_por_pagina`` para :meth:`_inicio_da_pagina`.
+
+        Args:
+            fim: Posição do último resultado da primeira página ("10"). O ponto, se
+                vier, é separador de milhar.
+            total: Total de resultados ("14").
+
+        Returns:
+            int: Número de páginas (0 se o total é 0).
+        """
+        self._por_pagina, quantos = (int(n.replace('.', '')) for n in (fim, total))
+        return math.ceil(quantos / self._por_pagina) if quantos else 0
+
+    def _inicio_da_pagina(self, numero: int) -> int:
+        """Posição do primeiro resultado da página ``numero`` (11 na página 2, com 10 por página).
+
+        Args:
+            numero: Número da página (1-indexed).
+
+        Returns:
+            int: Posição, contada a partir de 1.
+        """
+        return (numero - 1) * self._por_pagina + 1
+
     async def _navegar_proxima_pagina(self, pagina_atual: int) -> bool:
         """Navega para a próxima página usando a estratégia configurada.
 
@@ -589,9 +620,8 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         """
         self.logger.info(f"Iniciando raspagem Playwright: {kwargs}")
 
-        download_dir = self._create_download_dir()
-
         async with self._browser_context():
+            download_dir = self._create_download_dir()
             try:
                 # Navega até a URL base
                 self.logger.debug(f"Navegando para: {self.url_base}")
@@ -625,14 +655,22 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
                 for pagina in range(2, total_paginas + 1):
                     self.logger.debug(f"Navegando para página {pagina}")
 
+                    # A contagem diz que a página existe: parar aqui truncaria o
+                    # resultado em silêncio, como no BaseScraper._download_data.
                     if not await self._navegar_proxima_pagina(pagina - 1):
-                        self.logger.info(f"Fim da paginação na página {pagina - 1}")
-                        break
+                        raise ScraperError(
+                            f"{self.nome_buscador}: não foi possível abrir a página {pagina} de "
+                            f"{total_paginas}, e o resultado ficaria incompleto. O site pode ter "
+                            "mudado o paginador ou demorado a responder. "
+                            f"{self._onde_ficam_os_arquivos(download_dir)}"
+                        )
 
                     await self._salvar_html_pagina(pagina, download_dir)
 
-            except Exception as e:
-                self.logger.error(f"Erro durante raspagem: {e}")
+            except BaseException as e:
+                # BaseException: o Ctrl+C chega aqui como CancelledError.
+                self.logger.error(f"Erro durante raspagem: {e!r}")
+                self._apagar_sem_debug(download_dir)
                 raise
 
         return download_dir
@@ -670,7 +708,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
             pd.DataFrame: Dados raspados consolidados.
         """
         download_dir = self._rodar_async(**kwargs)
-        result = self._parse_data(download_dir)
+        result = self._ler_e_limpar(download_dir)
 
         # Adiciona termo de busca se disponível
         termo_param = next(
@@ -681,10 +719,6 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
             termo_busca = str(kwargs[termo_param])
             result = result.assign(termo_busca=termo_busca)
             self.logger.debug(f"Adicionada coluna termo_busca={termo_busca}")
-
-        # Limpa diretório se não estiver em modo debug
-        if not self.debug:
-            self._limpar_download(download_dir)
 
         self.logger.info(f"Raspagem concluída: {len(result)} registros")
         return result

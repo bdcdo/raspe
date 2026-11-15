@@ -132,7 +132,7 @@ class BaseScraper(AbstractScraper):
                 # e avisa no fim. Erros de programação (fora destas classes) sobem direto.
                 try:
                     path_result = self._download_data(**loop_kwargs)
-                    df = self._parse_data(path_result)
+                    df = self._ler_e_limpar(path_result)
                 except (ScraperError, requests.RequestException) as e:
                     self.logger.error(f"Raspagem de {key}={val} falhou: {e}")
                     erros.append((val, e))
@@ -147,8 +147,6 @@ class BaseScraper(AbstractScraper):
                 self.logger.debug(f"Adicionada coluna termo_busca={termo_busca_val} aos resultados")
 
                 dfs.append(df)
-                if self.debug is False:
-                    self._limpar_download(path_result)
             if erros:
                 if not dfs:
                     # Nenhum termo foi coletado: não há resultado parcial a preservar.
@@ -169,7 +167,7 @@ class BaseScraper(AbstractScraper):
         # Fallback para busca única
         else:
             path_result = self._download_data(**kwargs)
-            result = self._parse_data(path_result)
+            result = self._ler_e_limpar(path_result)
 
             # Determina qual parâmetro contém o termo de busca. Com schema_entrada,
             # _validar_parametros devolve sempre 'pesquisa' (canônico, com default),
@@ -180,10 +178,6 @@ class BaseScraper(AbstractScraper):
                 termo_busca = str(kwargs[termo_param])
                 result = result.assign(termo_busca=termo_busca)
                 self.logger.debug(f"Adicionada coluna termo_busca={termo_busca} aos resultados")
-
-            self.logger.info(f"Raspagem finalizada, limpando diretório {path_result}")
-            if self.debug is False:
-                self._limpar_download(path_result)
 
             return result
 
@@ -210,28 +204,30 @@ class BaseScraper(AbstractScraper):
         total_pages = list(paginas)
 
         for pag in tqdm(total_pages, desc="Baixando documentos"):
-            time.sleep(self.sleep_time)
-            self.logger.debug(f"Baixando página {pag}")
-
-            query_atual = self._set_query_atual(query_base, pag)
-            self.logger.debug(query_atual)
-
             # Página que falha (429 ou 5xx depois das tentativas, outro 4xx, erro de rede)
-            # interrompe a coleta: pular a página truncaria o resultado em silêncio.
+            # interrompe a coleta: pular a página truncaria o resultado em silêncio. Com
+            # Ctrl+C também, e sem debug a pasta sai.
             try:
+                time.sleep(self.sleep_time)
+                self.logger.debug(f"Baixando página {pag}")
+
+                query_atual = self._set_query_atual(query_base, pag)
+                self.logger.debug(query_atual)
+
                 r = self._request_with_retry(query_atual)
                 self.logger.debug(f"Response status: {r.status_code}")
                 r.raise_for_status()
-            except Exception:
-                self.logger.error(
-                    f"Coleta interrompida na página {pag}; as páginas já baixadas ficam em {download_dir}"
-                )
-                raise
 
-            file_name = f"{download_dir}/{self.nome_buscador}_{pag:05d}.{self.type.lower()}"
-            with open(file_name, "w", encoding="utf-8") as f:
-                f.write(r.text)
-            self.logger.debug(f"Arquivo salvo: {file_name}")
+                file_name = f"{download_dir}/{self.nome_buscador}_{pag:05d}.{self.type.lower()}"
+                with open(file_name, "w", encoding="utf-8") as f:
+                    f.write(r.text)
+                self.logger.debug(f"Arquivo salvo: {file_name}")
+            except BaseException:
+                self.logger.error(
+                    f"Coleta interrompida na página {pag}. {self._onde_ficam_os_arquivos(download_dir)}"
+                )
+                self._apagar_sem_debug(download_dir)
+                raise
 
         return download_dir
 

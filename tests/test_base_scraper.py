@@ -6,6 +6,7 @@ Usa ``_DummyHTTPScraper`` (subclasse mínima) para exercitar o fluxo
 (via ``mocker.patch("time.sleep")``).
 """
 
+import os
 import re
 from typing import Any, Literal
 
@@ -16,7 +17,7 @@ import responses
 from responses import matchers, registries
 
 from raspe.base_scraper import BaseScraper
-from raspe.exceptions import APIError, RateLimitError
+from raspe.exceptions import APIError, RateLimitError, ScraperError
 
 
 class _DummyHTTPScraper(BaseScraper):
@@ -250,8 +251,6 @@ class TestRasparBuscaUnica:
     @pytest.mark.parametrize("termo", ["x", ["x", "y"]])
     def test_sem_debug_nao_deixa_a_pasta_temporaria(self, mocker, termo):
         """Com debug=False, nada fica para trás, nem a raiz criada pelo mkdtemp()."""
-        import os
-
         mocker.patch("time.sleep")
         termos = [termo] if isinstance(termo, str) else termo
         for t in termos:
@@ -279,6 +278,28 @@ class TestRasparBuscaUnica:
         assert sorted(p.name for p in tmp_path.iterdir()) == ["DUMMY", "meu_arquivo.txt", "vazia"]
         assert vazia.is_dir()
 
+    @responses.activate
+    def test_sem_debug_apaga_a_pasta_quando_uma_pagina_falha(self, mocker):
+        """A página 2 que falha derruba a coleta, e a pasta com a página 1 não fica para trás."""
+        mocker.patch("time.sleep")
+        for corpo, status in (("<total>2</total>", 200), ("<r>1</r>", 200), ("proibido", 403)):
+            responses.add(responses.GET, "http://example.com/api", body=corpo, status=status)
+        scraper = _DummyHTTPScraper(debug=False)
+        with pytest.raises(requests.HTTPError):
+            scraper.raspar(termo="x")
+        assert not os.path.exists(scraper.download_path)
+
+    @responses.activate
+    def test_sem_debug_apaga_a_pasta_quando_a_leitura_falha(self, mocker):
+        """Páginas que não rendem linhas levantam ScraperError e, sem debug, a pasta sai igual."""
+        mocker.patch("time.sleep")
+        _termo_ok("x")
+        scraper = _DummyHTTPScraper(debug=False)
+        mocker.patch.object(scraper, "_parse_page", return_value=pd.DataFrame())
+        with pytest.raises(ScraperError, match="Rode com debug=True"):
+            scraper.raspar(termo="x")
+        assert not os.path.exists(scraper.download_path)
+
     def test_sem_busca_nao_cria_pasta_temporaria(self, mocker):
         """A raiz do mkdtemp() só nasce quando uma busca precisa dela."""
         criar = mocker.patch("tempfile.mkdtemp")
@@ -288,8 +309,6 @@ class TestRasparBuscaUnica:
     @responses.activate
     def test_debug_true_preserva_download_dir(self, mocker):
         """Com debug=True, o diretório de download não é removido após raspar()."""
-        import os
-
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, "http://example.com/api",

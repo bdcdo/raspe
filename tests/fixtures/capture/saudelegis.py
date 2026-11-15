@@ -15,7 +15,7 @@ página que a contagem lê. O HTML passa por ``enxugar_html`` (sem
 from pathlib import Path
 
 from raspe.scrapers.saudelegis import ScraperSaudeLegis
-from tests.fixtures.capture._util import enxugar_html, pasta_saida
+from tests.fixtures.capture._util import capturar_paginas_lidas, pasta_saida
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "saudelegis" / "samples" / "raspar"
 
@@ -28,32 +28,11 @@ CENARIOS = (
 )
 
 
-def _capturar(saida: Path, pesquisa: str, arquivos: tuple[str, ...]) -> None:
-    """Faz a busca com o raspador real e grava as páginas que ele lê."""
-    scraper = ScraperSaudeLegis(debug=False)
-    obter_html = scraper._obter_html
-    lidas: list[str] = []
-
-    async def _obter_e_guardar() -> str:
-        lidas.append(await obter_html())
-        return lidas[-1]
-
-    scraper._obter_html = _obter_e_guardar  # type: ignore[method-assign]
-    linhas = len(scraper.raspar(pesquisa=pesquisa))
-    # A primeira leitura é a da contagem; as seguintes, as páginas salvas.
-    paginas = lidas[1:] if linhas else lidas[:1]
-    if len(paginas) != len(arquivos):
-        raise RuntimeError(f"'{pesquisa}': {len(paginas)} páginas, esperadas {len(arquivos)}")
-    for arquivo, html in zip(arquivos, paginas):
-        (saida / arquivo).write_bytes(enxugar_html(html.encode()))
-    print(f"'{pesquisa}': {linhas} linhas, {len(paginas)} páginas gravadas")
-
-
 def main() -> None:
     saida = pasta_saida(SAMPLES_DIR, __doc__.splitlines()[0])
     saida.mkdir(parents=True, exist_ok=True)
     for pesquisa, arquivos in CENARIOS:
-        _capturar(saida, pesquisa, arquivos)
+        capturar_paginas_lidas(ScraperSaudeLegis(debug=False), pesquisa, arquivos, saida)
 
 
 if __name__ == "__main__":

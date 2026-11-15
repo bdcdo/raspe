@@ -9,11 +9,16 @@ a lógica comum de navegação, busca e extração de atos normativos.
 """
 
 import asyncio
+import re
 
 import pandas as pd
 
 from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
 from raspe.schemas.datalegis import InputDatalegis, OutputDatalegis
+
+# "1 - 50 de 62 itens.": posição final da página e total de itens. O ponto, se vier, é
+# separador de milhar.
+_CONTAGEM = re.compile(r'\d[\d.]*\s*-\s*(\d[\d.]*)\s+de\s+(\d[\d.]*)\s+ite(?:ns|m)\b')
 
 
 class ScraperDatalegis(PlaywrightScraper):
@@ -111,40 +116,20 @@ class ScraperDatalegis(PlaywrightScraper):
         await asyncio.sleep(2)
 
     async def _encontrar_total_paginas(self) -> int:
-        """Determina o número total de páginas de resultados.
+        """Calcula o número de páginas pela contagem acima dos resultados.
 
-        O sistema Datalegis usa um combobox (select) para navegação entre páginas.
-        Cada option representa uma página disponível.
+        A página de resultados diz "1 - 50 de 62 itens.".
 
         Returns:
-            int: Número de páginas encontradas.
+            int: Número de páginas (0 se a página não traz a contagem). Com 0,
+            ``raspar`` confere o aviso de busca vazia e levanta ``ScraperError``
+            sem ele.
         """
-        try:
-            # Procura o combobox de paginação
-            # O sistema Datalegis usa um select#fieldPage com onchange="openPage()"
-            select_element = await self._page.query_selector(
-                '#fieldPage, select[onchange*="openPage"]'
-            )
-
-            if select_element:
-                # Conta as options no select para determinar total de páginas
-                options = await select_element.query_selector_all('option')
-                if options:
-                    total = len(options)
-                    self.logger.debug(f"Páginas encontradas via combobox: {total}")
-                    return min(total, self._max_pages)
-
-            # Fallback: verifica se há resultados sem paginação
-            atos = await self._page.query_selector_all('.ato, a[href*="abrirTextoAto"]')
-            if atos:
-                self.logger.debug(f"Encontrados {len(atos)} atos, assumindo 1 página")
-                return 1
-
+        texto = self.soup_it(await self._obter_html()).get_text(' ')
+        contagem = _CONTAGEM.search(texto)
+        if not contagem:
             return 0
-
-        except Exception as e:
-            self.logger.warning(f"Erro ao determinar páginas: {e}")
-            return 1
+        return self._paginas_pela_contagem(*contagem.groups())
 
     async def _paginar_por_numero(self, numero: int) -> bool:
         """Navega para página específica via combobox de paginação.
@@ -156,7 +141,8 @@ class ScraperDatalegis(PlaywrightScraper):
             numero: Número da página destino.
 
         Returns:
-            bool: True se navegou com sucesso.
+            bool: True se a página nova carregou; False se o combobox não existe
+            ou se a contagem não mudou dentro de ``wait_timeout``.
         """
         pw = self._ensure_playwright()
 
@@ -182,20 +168,18 @@ class ScraperDatalegis(PlaywrightScraper):
             self.logger.debug(f"Selecionando página {numero} no combobox...")
             await select_element.select_option(label=str(numero))
 
-            # Aguarda a página carregar
-            await asyncio.sleep(self.between_pages_wait)
-
-            # Verifica se a navegação funcionou aguardando novos resultados
-            await self._page.wait_for_selector('.ato, a[href*="abrirTextoAto"]', timeout=10000)
+            # A página nova chegou quando a contagem passa a começar no primeiro item dela,
+            # como "51 - 62 de 62 itens" na página 2. Os itens de antes ainda estão na tela.
+            inicio = self._inicio_da_pagina(numero)
+            await self._page.wait_for_selector(
+                f"#numeroRegistroInicial:text-is('{inicio}')", timeout=self.wait_timeout * 1000
+            )
 
             self.logger.debug(f"Navegação para página {numero} concluída")
             return True
 
         except pw['PlaywrightTimeout']:
             self.logger.debug(f"Timeout ao navegar para página {numero}")
-            return False
-        except Exception as e:
-            self.logger.debug(f"Erro ao navegar para página {numero}: {e}")
             return False
 
     def _extrair_atos_do_html(self, html: str) -> list[dict]:
