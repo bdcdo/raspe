@@ -651,7 +651,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         except RuntimeError:
             return asyncio.run(self._baixar_async(**kwargs))
         with ThreadPoolExecutor(max_workers=1) as executor:
-            return executor.submit(asyncio.run, self._baixar_async(**kwargs)).result()
+            return executor.submit(lambda: asyncio.run(self._baixar_async(**kwargs))).result()
 
     def _raspar(self, **kwargs) -> pd.DataFrame:
         """Baixa as páginas num loop do asyncio e as lê depois que ele termina.

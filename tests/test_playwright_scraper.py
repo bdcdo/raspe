@@ -121,3 +121,15 @@ class TestRasparComLoopAtivo:
         df = asyncio.run(_celula_do_notebook())
         assert df.empty
         assert raspador.buscas == [{"assunto": "x"}]
+
+    def test_erro_do_navegador_chega_a_quem_chamou(self, mocker):
+        """O erro levantado na thread do navegador sobe em ``raspar()``, e o contexto do navegador fecha."""
+        raspador = _raspador(mocker)
+        raspador.pagina_falsa.goto.side_effect = TimeoutError("portal fora do ar")
+
+        async def _celula_do_notebook() -> pd.DataFrame:
+            return raspador.raspar(assunto="x")
+
+        with pytest.raises(TimeoutError, match="portal fora do ar"):
+            asyncio.run(_celula_do_notebook())
+        assert raspador._page is None

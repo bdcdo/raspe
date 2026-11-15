@@ -88,8 +88,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
 
 ### Corrigido
-- Corrigidos `ans()` e `anvisa()`, que no Jupyter e no Colab falhavam com `RuntimeError` ("asyncio.run() cannot be
-  called from a running event loop"): com um loop do asyncio já ativo, o navegador roda em outra thread.
+- Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que no Jupyter e no Colab falhavam com `RuntimeError`
+  ("asyncio.run() cannot be called from a running event loop"): com um loop do asyncio já ativo, o navegador roda
+  em outra thread.
 - `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
