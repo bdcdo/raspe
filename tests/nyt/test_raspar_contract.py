@@ -88,6 +88,20 @@ class TestRasparContract:
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
     @responses.activate
+    @pytest.mark.parametrize("body", [
+        '{"status": "OK", "response": {"docs": []}}',
+        '{"status": "OK", "response": {"meta": {"hits": null}}}',
+        "[]",
+        "<html><title>Service Unavailable</title></html>",
+    ])
+    def test_resposta_sem_contagem_levanta_apierror(self, scraper, mocker, body):
+        """Sem ``meta.hits`` (ou sem JSON), a resposta não vira 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(responses.GET, API_URL, body=body, status=200)
+        with pytest.raises(APIError, match="NYT"):
+            scraper.raspar(texto="climate")
+
+    @responses.activate
     def test_api_key_invalida_levanta_apikeyerror(self, scraper, mocker):
         """Status 401 → APIKeyError."""
         mocker.patch("time.sleep")

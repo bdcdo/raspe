@@ -8,6 +8,7 @@ import pytest
 import responses
 from responses import registries
 
+from raspe.exceptions import ScraperError
 from raspe.scrapers.cfm import ScraperCFM
 from tests._helpers import load_sample_bytes
 
@@ -68,7 +69,7 @@ class TestRasparContract:
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
-        """Sem 'X registros encontrados' no HTML → 0 páginas."""
+        """Busca real sem resultados: sem 'X registros encontrados', só o aviso "Não há resultados"."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -78,6 +79,25 @@ class TestRasparContract:
         df = scraper.raspar(texto="xxxxxx_inexistente")
         assert df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+
+    @responses.activate
+    def test_pagina_que_nao_e_de_resultados_levanta_erro(self, scraper, mocker):
+        """Sem a contagem e sem o aviso de busca vazia (manutenção, anti-robô), não vira 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("presidencia", "raspar/manutencao.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        with pytest.raises(ScraperError, match="indispon"):
+            scraper.raspar(texto="doenças raras")
+
+
+class TestFindNPags:
+    def test_um_registro_no_singular(self, scraper, mocker):
+        """Com um resultado só, o portal escreve "1 registro encontrado"."""
+        r0 = mocker.Mock(content="<p>1 registro encontrado</p>".encode())
+        assert scraper._find_n_pags(r0) == 1
 
 
 class TestConfiguracao:

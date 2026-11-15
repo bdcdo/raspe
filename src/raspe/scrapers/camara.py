@@ -13,6 +13,11 @@ from ..html_scraper import HTMLScraper
 class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
     colunas = ['link', 'titulo', 'descricao', 'ementa']
 
+    # O portal exibe 20 resultados por página e responde HTTP 500 a partir da
+    # página 501 (visto ao vivo em 2026-11-14).
+    RESULTADOS_POR_PAGINA = 20
+    LIMITE_PAGINAS = 500
+
     def __init__(self, debug: bool = True):
         super().__init__("CAMARA", debug)
         self.session.headers.update({
@@ -84,25 +89,23 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         r0.raise_for_status()
 
         r0s = self.soup_it(r0.content)
-        num_text = '0'
-        if r0s:
-            div_element = r0s.find('div', class_='busca-info__resultado busca-info__resultado--informado')
-            if div_element:
-                text = div_element.text.strip()
-                # Captura o número total (último número após "de")
-                match = re.search(r'de (\d+)(?!.*de)', text)
-                if not match:
-                    # Se não encontrou, tenta padrão alternativo
-                    match = re.search(r'de (\d+)$', text)
-                num_text = match.group(1) if match else '0'
-                self.logger.debug(f"Found full text: '{text}', extracted number: '{num_text}'")
+        div_element = r0s.find('div', class_='busca-info__resultado busca-info__resultado--informado')
+        # "Exibindo resultados de 1 a 20 de 59889": o total é o último número após "de".
+        numeros = re.findall(r'de (\d+)', div_element.get_text(" ", strip=True)) if div_element else []
+        if not numeros:
+            return self._confirmar_busca_vazia(r0s)
 
-        num = int(num_text)
-
+        num = int(numeros[-1])
         self.logger.debug(f"Extracted number of results: {num}")
 
-        # Convert results to pages (assuming 10 results per page)
-        pages = (num + 9) // 10  # Round up division
+        pages = (num + self.RESULTADOS_POR_PAGINA - 1) // self.RESULTADOS_POR_PAGINA
+        if pages > self.LIMITE_PAGINAS:
+            self.logger.warning(
+                f"Busca retornou {num:,} resultados, mas o portal da Câmara só exibe os "
+                f"{self.LIMITE_PAGINAS * self.RESULTADOS_POR_PAGINA:,} primeiros. "
+                "Divida a busca (por ano ou tipo de matéria, por exemplo) para coletar o restante."
+            )
+            pages = self.LIMITE_PAGINAS
         self.logger.debug(f"Calculated pages: {pages}")
         return pages
 

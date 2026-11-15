@@ -178,7 +178,8 @@ class ScraperNYT(BaseScraper):
 
         Raises:
             APIKeyError: Se a API key for inválida ou expirada (401).
-            APIError: Se ocorrer outro erro de API.
+            APIError: Se ocorrer outro erro de API ou se a resposta não trouxer
+                a contagem de resultados.
 
         Note:
             Erros 429 (rate limit) e 5xx são tratados automaticamente pelo
@@ -199,30 +200,35 @@ class ScraperNYT(BaseScraper):
 
         try:
             data = r0.json()
+        except ValueError as e:
+            raise APIError(
+                "Resposta da API do NYT não é JSON", status_code=r0.status_code, response_text=r0.text
+            ) from e
 
-            if data.get('status') != 'OK':
-                error_msg = data.get('message', str(data))
-                raise APIError(f"Resposta inválida da API: {error_msg}")
+        if not isinstance(data, dict):
+            raise APIError(f"Resposta inválida da API do NYT: {data}")
+        if data.get('status') != 'OK':
+            raise APIError(f"Resposta inválida da API do NYT: {data.get('message', data)}")
 
-            # API mudou de 'meta' para 'metadata' em 2024
-            meta = data.get('response', {}).get('meta', {})
-            if not meta:
-                meta = data.get('response', {}).get('metadata', {})
-            total_hits = meta.get('hits', 0)
+        # API mudou de 'meta' para 'metadata' em 2024
+        resposta = data.get('response')
+        if not isinstance(resposta, dict):
+            resposta = {}
+        meta = resposta.get('meta') or resposta.get('metadata') or {}
+        if not isinstance(meta.get('hits'), int):
+            raise APIError(
+                "Resposta da API do NYT sem a contagem de resultados (response.meta.hits)",
+                response_text=r0.text,
+            )
+        total_hits = meta['hits']
 
-            n_pags = (total_hits + self.RESULTS_PER_PAGE - 1) // self.RESULTS_PER_PAGE
+        n_pags = (total_hits + self.RESULTS_PER_PAGE - 1) // self.RESULTS_PER_PAGE
 
-            # API limita a 100 páginas
-            n_pags = min(n_pags, self.MAX_PAGES)
+        # API limita a 100 páginas
+        n_pags = min(n_pags, self.MAX_PAGES)
 
-            self.logger.info(f"Total de resultados: {total_hits}, páginas: {n_pags}")
-            return int(n_pags)
-
-        except (APIKeyError, APIError):
-            raise
-        except Exception as e:
-            self.logger.error(f"Erro ao extrair n_pags: {e}")
-            return 0
+        self.logger.info(f"Total de resultados: {total_hits}, páginas: {n_pags}")
+        return n_pags
 
     def _parse_page(self, path: str) -> pd.DataFrame:
         """Analisa uma página JSON e extrai os artigos.

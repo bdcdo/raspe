@@ -90,3 +90,40 @@ def _guess_extension(resp: requests.Response) -> str:
     if "html" in content_type:
         return "html"
     return "bin"
+
+
+def dump_html_enxuto(resp: requests.Response, path: Path, max_opcoes: int = 5) -> None:
+    """Salva uma página HTML sem o que não importa ao parser, para o sample ficar pequeno.
+
+    Remove ``<script>``, ``<style>``, ``<svg>`` e comentários, e corta cada
+    ``<select>`` nas primeiras ``max_opcoes`` opções (o filtro de autores do
+    IPEA sozinho passa de 800 KB). O resto da página fica como o site devolveu.
+
+    Args:
+        resp: Resposta HTML retornada por `requests`.
+        path: Caminho onde gravar o HTML.
+        max_opcoes: Quantas ``<option>`` manter em cada ``<select>``.
+    """
+    from bs4 import BeautifulSoup, Comment
+
+    soup = BeautifulSoup(resp.content, "html.parser")
+    for tag in soup(["script", "style", "svg"]):
+        tag.decompose()
+    for comentario in soup.find_all(string=lambda s: isinstance(s, Comment)):
+        comentario.extract()
+    for select in soup.find_all("select"):
+        for opcao in select.find_all("option")[max_opcoes:]:
+            opcao.decompose()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(str(soup), encoding="utf-8")
+
+
+def capturar_busca_vazia(raspador: Any, path: Path, **query: Any) -> None:
+    """Faz a busca inicial pelo próprio raspador e grava a página enxuta em ``path``.
+
+    Args:
+        raspador: Instância de um raspador HTTP (``BaseScraper``).
+        path: Caminho do sample, em geral ``.../no_results.html``.
+        **query: Parâmetros de busca, como em ``raspador.raspar()``.
+    """
+    dump_html_enxuto(raspador._set_r(raspador._set_query_base(**query)), path)

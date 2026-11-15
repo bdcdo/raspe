@@ -10,6 +10,7 @@ import pytest
 import responses
 from responses import registries
 
+from raspe.exceptions import ScraperError
 from raspe.scrapers.camara import ScraperCamaraDeputados
 from tests._helpers import load_sample_bytes
 
@@ -31,7 +32,7 @@ def scraper():
 class TestRasparContract:
     @responses.activate(registry=registries.OrderedRegistry)
     def test_typical_paginacao(self, scraper, mocker):
-        """15 resultados → 2 páginas."""
+        """25 resultados → 2 páginas (o portal exibe 20 por página)."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -74,6 +75,7 @@ class TestRasparContract:
 
     @responses.activate
     def test_no_results(self, scraper, mocker):
+        """Busca real sem resultados: a contagem vem como "de 0"."""
         mocker.patch("time.sleep")
         responses.add(
             responses.GET, API_URL,
@@ -83,6 +85,29 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="xxxxxx_inexistente")
         assert df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
+
+    @responses.activate
+    def test_pagina_que_nao_e_de_resultados_levanta_erro(self, scraper, mocker):
+        """Sem a contagem e sem o aviso de busca vazia (manutenção, anti-robô), não vira 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("presidencia", "raspar/manutencao.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        with pytest.raises(ScraperError, match="indispon"):
+            scraper.raspar(pesquisa="educação")
+
+
+class TestFindNPags:
+    def test_busca_acima_do_teto_do_portal_para_na_pagina_500(self, scraper, mocker, caplog):
+        """O portal só exibe 10.000 resultados (500 páginas de 20); a página 501 dá HTTP 500."""
+        r0 = mocker.Mock(content=(
+            b'<div class="busca-info__resultado busca-info__resultado--informado">'
+            b'<i>Exibindo resultados de 1 a 20 de 59889</i></div>'
+        ))
+        assert scraper._find_n_pags(r0) == 500
+        assert "59,889 resultados" in caplog.text
 
 
 class TestConfiguracao:

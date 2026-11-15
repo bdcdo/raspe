@@ -16,7 +16,8 @@ from pathlib import Path
 
 import requests
 
-from tests.fixtures.capture._util import attach_capture_hook  # noqa: E402
+from raspe.scrapers.ipea import ScraperIpea
+from tests.fixtures.capture._util import attach_capture_hook, capturar_busca_vazia as _capturar  # noqa: E402
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "ipea" / "samples" / "raspar"
 API_URL = (
@@ -45,22 +46,13 @@ def main() -> None:
         timeout=30,
     )
 
-    # Cenário no_results: termo improvável
-    session.get(
-        API_URL,
-        params={
-            "palavra_chave": "zzzzzzz_termo_inexistente_xyzabc",
-            "tipo": "",
-            "assunto": "",
-            "autor": "",
-            "timeperiods": "all",
-            "data-inicial": "",
-            "data-final": "",
-            "pagina": "1",
-        },
-        timeout=30,
-    )
+
+def capturar_busca_vazia() -> None:
+    """Grava ``no_results.html``: busca real sem resultados, feita pelo próprio raspador."""
+    raspador = ScraperIpea(debug=False)
+    _capturar(raspador, SAMPLES_DIR / "no_results.html", pesquisa="xqzwvkjh")
 
 
 if __name__ == "__main__":
     main()
+    capturar_busca_vazia()

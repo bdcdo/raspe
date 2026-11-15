@@ -26,7 +26,10 @@ uv pip install -e ".[dev]"
 python tests/fixtures/capture/presidencia.py
 ```
 
-Cada script grava em `tests/<scraper>/samples/<endpoint>/`. Os samples
+Cada script grava em `tests/<scraper>/samples/<endpoint>/`. Páginas grandes
+demais para o limite de 500 KB do hook `check-added-large-files` passam por
+`dump_html_enxuto` (em `_util.py`), que tira `<script>`, `<style>`, `<svg>`,
+comentários e o excesso de `<option>` e mantém o resto como o site devolveu. Os samples
 ficam **commitados no repositório** — não estão em `.gitignore`.
 
 ## Quando re-rodar

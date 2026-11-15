@@ -70,14 +70,14 @@ class ScraperIpea(BaseScraper, HTMLScraper):
         r0.raise_for_status()
 
         r0s = self.soup_it(r0.content)
-        num_text = '0'
-        if r0s:
-            container = r0s.find('div', class_="col clearfix")
-            h4 = container.find('h4') if container else None
-            h4_tag = h4.find('strong') if h4 else None
-            if h4_tag:
-                num_text = h4_tag.text
-                self.logger.debug(f"Found h4 text: '{num_text}'")
+        # "Resultado de 1 a 10 de <strong>3193</strong>"
+        container = r0s.find('div', class_="col clearfix")
+        h4 = container.find('h4') if container else None
+        h4_tag = h4.find('strong') if h4 else None
+        if not h4_tag:
+            return self._confirmar_busca_vazia(r0s)
+        num_text = h4_tag.get_text(strip=True)
+        self.logger.debug(f"Found h4 text: '{num_text}'")
 
         num = int(num_text)
 
