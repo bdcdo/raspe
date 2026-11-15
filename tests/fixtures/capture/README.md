@@ -33,9 +33,10 @@ A forma `-m` é necessária porque os scripts importam `tests.fixtures`. Rodado 
 
 Sem `--saida`, cada script grava em `tests/<scraper>/samples/<endpoint>/` e sobrescreve os samples commitados. Páginas grandes
 demais para o limite de 500 KB do hook `check-added-large-files` passam por
-`dump_html_enxuto` (em `_util.py`), que tira `<script>`, `<style>`, `<svg>`,
+`enxugar_html` (em `_util.py`), que tira `<script>`, `<style>`, `<svg>`,
 comentários e o excesso de `<option>` e mantém o resto como o site devolveu. A exceção é o
-`ipea.py`, que só esvazia os `<select>` (`_esvaziar_selects`) e grava o resto byte a byte. Os samples
+`ipea.py`, que só esvazia os `<select>` (`_esvaziar_selects`) e grava o resto byte a byte, e o `capes.py`, que
+corta a `page_02.html` nos primeiros cards (`_cortar_cards`). Os samples
 ficam **commitados no repositório**, fora do `.gitignore`.
 
 ## Quando re-rodar
@@ -74,4 +75,4 @@ tests/<scraper>/samples/<endpoint>/
 
 ## Helper compartilhado
 
-`_util.py` fornece `capturar_cenarios(scraper, cenarios, saida)`, que baixa cada cenário com a query e o método HTTP do próprio scraper, e `pasta_saida(padrao, descricao)`, que lê o `--saida` dos scripts. Fornece também `dump_response(resp, path)` e `attach_capture_hook(session, dir)`, que instrumenta uma `requests.Session` para salvar cada resposta automaticamente.
+`_util.py` fornece `capturar_cenarios(scraper, cenarios, saida)`, que baixa cada cenário com a query e o método HTTP do próprio scraper, e `pasta_saida(padrao, descricao)`, que lê o `--saida` dos scripts. Fornece também `enxugar_html(html)`, para passar como `enxugar` a `capturar_cenarios`, e `dump_response(resp, path)`, para a resposta que não sai de `raspar` (o 401 do NYT).
