@@ -59,8 +59,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `Ementa` e `Link` viraram `tipo`, `uf`, `numero_ano`, `situacao`, `ementa` e `link`.
 - **Incompatível:** parâmetro desconhecido em `raspar()` passou a levantar `ValidationError`, com os aceitos e o
   nome mais parecido. Antes era ignorado: `data_incio` virava uma busca sem filtro de data.
-- **Incompatível:** `pesquisa` passou a ser obrigatória e não vazia em `presidencia()`, `ipea()`, `capes()` e
-  `folha()`. Em `cfm()` e `nyt()` segue opcional.
+- **Incompatível:** `pesquisa` passou a ser obrigatória e não vazia em `presidencia()`, `ipea()`, `capes()`,
+  `folha()`, `saudelegis()`, `ans()` e `anvisa()`. Em `cfm()` e `nyt()` segue opcional. Nos três com navegador, o
+  termo vazio antes só gerava um aviso no log depois de abrir o navegador.
 - **Incompatível:** o modo lista (uma busca por valor) passou a valer só para `pesquisa`. Lista em outro parâmetro,
   como `cfm().raspar(uf=["SP", "RJ"])`, levanta `ValidationError`.
 - **Incompatível:** `saudelegis()`, `ans()` e `anvisa()` passaram a recusar `paginas` e lista em `pesquisa`, antes
@@ -117,6 +118,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigida a paginação da Câmara, que supunha 10 resultados por página (o portal exibe 20) e pedia páginas além
   da 500ª, que o portal não serve: buscas com mais de 10.000 resultados param na página 500, com aviso no log.
 - Corrigida a contagem de resultados do Senado acima de 999, que o separador de milhar truncava ("8.950" virava 8).
+- Corrigido o `nyt()` com `ano`, que preenchia as datas depois de conferir a ordem do período:
+  `ano=2024, data_fim="2023-06-01"` ia invertido à API. Agora levanta `ValidationError`.
+- Corrigido o `cfm()`, que descartava em silêncio o valor de um rótulo de card desconhecido: agora emite
+  `UserWarning` com o rótulo, porque ele indica mudança de layout do portal.
 
 ## [0.1.0] - 2025-05-15
 

@@ -67,10 +67,7 @@ class ScraperSaudeLegis(PlaywrightScraper):
         Args:
             **kwargs: Deve conter 'pesquisa' com o termo de busca.
         """
-        assunto = kwargs.get('pesquisa', '')
-
-        if not assunto:
-            self.logger.warning("Nenhum termo de busca (assunto) fornecido")
+        assunto = kwargs['pesquisa']
 
         # Aguarda o campo de formulário estar disponível
         self.logger.debug("Aguardando campo 'assunto'...")
