@@ -48,6 +48,32 @@ def dump_response(resp: requests.Response, path: Path) -> None:
     path.write_bytes(resp.content)
 
 
+def requisitar_sem_url(enviar: Callable[[], requests.Response], arquivo: str) -> requests.Response:
+    """Faz a requisição e, se ela falhar, levanta um erro que não cita a URL.
+
+    O ``HTTPError`` de ``raise_for_status`` e os erros de rede do ``requests``
+    trazem a URL completa na mensagem, e em alguns scrapers ela leva chave de
+    API (o ``api-key`` do NYT). Aqui a mensagem leva só o arquivo e o status.
+
+    Args:
+        enviar: Função sem argumentos que faz a requisição.
+        arquivo: Nome do sample, para identificar o cenário na mensagem.
+
+    Returns:
+        A resposta, já conferida como 2xx.
+
+    Raises:
+        RuntimeError: Se a requisição falhar ou não devolver 2xx.
+    """
+    try:
+        resp = enviar()
+    except requests.RequestException as e:
+        raise RuntimeError(f"{arquivo}: falha de rede ({type(e).__name__})") from None
+    if not resp.ok:
+        raise RuntimeError(f"{arquivo}: HTTP {resp.status_code}")
+    return resp
+
+
 def capturar_cenarios(
     scraper: BaseScraper,
     cenarios: Iterable[tuple[str, dict[str, Any], int]],
@@ -65,7 +91,10 @@ def capturar_cenarios(
     A linha impressa por cenário traz o valor do parâmetro de página e o
     ``_find_n_pags`` da resposta, para conferir se o termo cabe no cenário
     (``single_page`` tem de dar 1, ``no_results`` tem de dar 0). Ela não
-    imprime a URL, que em alguns scrapers leva chave de API.
+    imprime a URL, que em alguns scrapers leva chave de API, e as falhas
+    passam por :func:`requisitar_sem_url` pelo mesmo motivo. O
+    ``_find_n_pags`` roda antes de gravar: uma página de manutenção ou de
+    verificação anti-robô levanta ``ScraperError`` sem sobrescrever o sample.
 
     Args:
         scraper: Instância do scraper a exercitar.
@@ -82,15 +111,15 @@ def capturar_cenarios(
             time.sleep(scraper.sleep_time)
         query_base = scraper._set_query_base(**scraper._validar_parametros(**params))
         query = scraper._set_query_atual(query_base, pagina)
-        resp = scraper._set_r(query)
-        resp.raise_for_status()
+        resp = requisitar_sem_url(lambda q=query: scraper._set_r(q), arquivo)
+        n_pags = scraper._find_n_pags(resp)
         conteudo = resp.content if enxugar is None else enxugar(resp.content)
         (saida / arquivo).write_bytes(conteudo)
         print(
             f"{arquivo}: HTTP {resp.status_code}, {len(resp.content)} bytes recebidos, "
             f"{len(conteudo)} gravados, "
             f"{scraper.query_page_name}={query[scraper.query_page_name]}, "
-            f"_find_n_pags={scraper._find_n_pags(resp)}"
+            f"_find_n_pags={n_pags}"
         )
 
 

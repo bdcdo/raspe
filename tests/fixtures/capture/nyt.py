@@ -22,7 +22,8 @@ Notas operacionais:
 * Sem ``NYT_API_KEY`` no ambiente, ``ScraperNYT`` levanta ``APIKeyError``
   antes de qualquer requisição.
 * A chave vai na query string (``api-key``). Por isso o script nunca
-  imprime ``resp.url``, e só o body da resposta vai para o disco.
+  imprime ``resp.url``, as falhas saem por ``requisitar_sem_url`` (sem a
+  URL na mensagem) e só o body da resposta vai para o disco.
 * A API limita a 5 requisições por minuto; o script espera
   ``ScraperNYT.sleep_time`` segundos entre uma requisição e a seguinte.
 * As requisições saem da query do próprio ``ScraperNYT``, com a página
@@ -41,7 +42,7 @@ from typing import Any
 import requests
 
 from raspe.scrapers.nyt import ScraperNYT
-from tests.fixtures.capture._util import dump_response
+from tests.fixtures.capture._util import dump_response, requisitar_sem_url
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "nyt" / "samples" / "raspar"
 
@@ -85,8 +86,7 @@ def main() -> None:
     for i, (arquivo, params, pagina, hits_aceitos) in enumerate(CENARIOS):
         if i:
             time.sleep(scraper.sleep_time)
-        resp = _consultar(scraper, params, pagina)
-        resp.raise_for_status()
+        resp = requisitar_sem_url(lambda p=params, n=pagina: _consultar(scraper, p, n), arquivo)
         dump_response(resp, saida / arquivo)
         hits = _hits(resp)
         aviso = "" if hits in hits_aceitos else f"  AVISO: {hits} hits não cabe no cenário, troque o termo"
