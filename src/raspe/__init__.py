@@ -26,6 +26,8 @@ from .exceptions import (
     ScraperError,
     ValidationError,
 )
+from .scrapers.ans import ScraperANS
+from .scrapers.anvisa import ScraperANVISA
 from .scrapers.camara import ScraperCamaraDeputados
 from .scrapers.capes import ScraperCapes
 from .scrapers.cfm import ScraperCFM
@@ -33,6 +35,7 @@ from .scrapers.folha import ScraperFolha
 from .scrapers.ipea import ScraperIpea
 from .scrapers.nyt import ScraperNYT
 from .scrapers.presidencia import ScraperPresidencia
+from .scrapers.saudelegis import ScraperSaudeLegis
 from .scrapers.senado import ScraperSenadoFederal
 from .utils import check, expand, extract, remove_duplicates, validar_data, validar_intervalo_datas
 
@@ -183,7 +186,6 @@ def saudelegis(**kwargs):
         >>> import raspe
         >>> df = raspe.saudelegis().raspar(pesquisa="doença rara")
     """
-    from .scrapers.saudelegis import ScraperSaudeLegis
     return ScraperSaudeLegis(**kwargs)
 
 
@@ -208,7 +210,6 @@ def ans(**kwargs):
         >>> import raspe
         >>> df = raspe.ans().raspar(pesquisa="doença rara")
     """
-    from .scrapers.ans import ScraperANS
     return ScraperANS(**kwargs)
 
 
@@ -233,7 +234,6 @@ def anvisa(**kwargs):
         >>> import raspe
         >>> df = raspe.anvisa().raspar(pesquisa="doença rara")
     """
-    from .scrapers.anvisa import ScraperANVISA
     return ScraperANVISA(**kwargs)
 
 

@@ -14,14 +14,25 @@ O **raspe** foi desenvolvido para **pesquisadores** que precisam coletar grandes
 
 ## 🎯 O que o raspe faz?
 
-O raspe automatiza a coleta de dados de fontes oficiais brasileiras:
+O raspe automatiza a coleta de dados de 11 fontes:
 
+**Legislação federal**
 - 🏛️ **Presidência da República** - Leis, decretos e legislação federal
-- 📋 **Câmara dos Deputados** - Proposições e projetos de lei
-- 📜 **Senado Federal** - Projetos de lei e atividade legislativa
+- 📋 **Câmara dos Deputados** - Legislação federal na busca da Câmara
+- 📜 **Senado Federal** - Legislação federal na busca do Senado
+
+**Saúde**
+- 🩺 **CFM** - Normas do Conselho Federal de Medicina e dos CRMs
+- 💊 **SaudeLegis** - Normas sanitárias do Ministério da Saúde
+- 🏥 **ANS** - Atos da Agência Nacional de Saúde Suplementar
+- 🧪 **ANVISA** - Atos da Agência Nacional de Vigilância Sanitária
+
+**Pesquisa acadêmica**
 - 📊 **IPEA** - Estudos e pesquisas econômicas aplicadas
-- 📰 **Folha de São Paulo** - Notícias e artigos do jornal brasileiro
 - 🎓 **CAPES** - Metadados acadêmicos do Portal de Periódicos
+
+**Imprensa**
+- 📰 **Folha de São Paulo** - Notícias e artigos do jornal brasileiro
 - 🗽 **New York Times** - Artigos do jornal americano (requer API key gratuita)
 
 **O resultado:** Todos os dados organizados em tabelas prontas para análise no Excel, Python, R ou qualquer ferramenta de sua preferência.
@@ -85,7 +96,7 @@ dados.to_excel("leis_meio_ambiente.xlsx", index=False)
 # Pronto! Agora você tem um arquivo Excel com todos os resultados
 ```
 
-### Exemplo 2: Buscar projetos de lei sobre "educação" na Câmara
+### Exemplo 2: Buscar legislação federal sobre "educação" na Câmara
 
 ```python
 import raspe
@@ -94,7 +105,7 @@ camara = raspe.camara()
 dados = camara.raspar(pesquisa="educação")
 
 # Salvar em Excel
-dados.to_excel("projetos_educacao.xlsx", index=False)
+dados.to_excel("camara_educacao.xlsx", index=False)
 ```
 
 ### Exemplo 3: Buscar múltiplos temas de uma vez
@@ -102,12 +113,12 @@ dados.to_excel("projetos_educacao.xlsx", index=False)
 ```python
 import raspe
 
-# Buscar três temas diferentes ao mesmo tempo
+# Buscar três temas, um depois do outro
 senado = raspe.senado()
 dados = senado.raspar(pesquisa=["educação", "saúde", "segurança"])
 
 # O resultado terá uma coluna 'termo_busca' identificando cada tema
-dados.to_excel("projetos_multiplos.xlsx", index=False)
+dados.to_excel("senado_multiplos.xlsx", index=False)
 ```
 
 ### Exemplo 4: Limitar o número de páginas (para testes rápidos)
@@ -150,6 +161,8 @@ Três notebooks explicam esses exemplos célula por célula:
 - [`11_multiplas_fontes.ipynb`](notebooks/11_multiplas_fontes.ipynb): a mesma busca na Presidência, na Câmara e no Senado, comparadas;
 - [`12_analise_longitudinal.ipynb`](notebooks/12_analise_longitudinal.ipynb): a produção acadêmica sobre judicialização de medicamentos ano a ano.
 
+Há também um notebook por fonte, de [`01_presidencia.ipynb`](notebooks/01_presidencia.ipynb) a [`09_saudelegis.ipynb`](notebooks/09_saudelegis.ipynb), para nove das 11 fontes (ANS e ANVISA ainda não têm).
+
 ### Passo 1: Criar um arquivo Python
 
 1. Abra um editor de texto (pode ser o Bloco de Notas, mas recomendo o [Visual Studio Code](https://code.visualstudio.com/))
@@ -172,19 +185,84 @@ Abra o arquivo Excel gerado e analise os dados com as ferramentas que você já 
 
 ## 🔧 Fontes Disponíveis e Como Usar
 
+Todas as fontes seguem o mesmo padrão: crie o raspador e chame `.raspar(pesquisa=...)`. O que cada coluna do resultado significa está em [`docs/colunas.md`](docs/colunas.md).
+
 | Fonte | Comando | O que busca |
 |-------|---------|-------------|
 | Presidência | `raspe.presidencia()` | Leis, decretos e legislação federal |
-| Câmara | `raspe.camara()` | Proposições e projetos de lei da Câmara |
-| Senado | `raspe.senado()` | Projetos de lei e atividades do Senado |
+| Câmara | `raspe.camara()` | Legislação federal na busca da Câmara |
+| Senado | `raspe.senado()` | Legislação federal na busca do Senado |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
-| CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina |
+| CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina e dos CRMs |
 | Folha | `raspe.folha()` | Notícias da Folha de São Paulo |
 | CAPES | `raspe.capes()` | Metadados de artigos do Portal de Periódicos da CAPES |
 | NYT | `raspe.nyt(api_key="...")` | Artigos do New York Times (requer API key) |
 | **SaudeLegis** | `raspe.saudelegis()` | Normas do Ministério da Saúde (requer browser) |
 | **ANS** | `raspe.ans()` | Atos da Agência Nacional de Saúde (requer browser) |
 | **ANVISA** | `raspe.anvisa()` | Atos da Agência de Vigilância Sanitária (requer browser) |
+
+**Paginação e vários termos.** Os oito raspadores HTTP aceitam `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e uma **lista** em `pesquisa`: o raspador faz uma busca por termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha. SaudeLegis, ANS e ANVISA recusam os dois: coletam todas as páginas até um limite interno e recebem um termo por chamada.
+
+### Escolhendo a fonte pelo nome
+
+Se o nome da fonte vier de uma variável (de um arquivo de configuração, de um laço), use `raspe.scraper_manager.scraper()`:
+
+```python
+from raspe.scraper_manager import scraper
+
+resultados = {}
+for fonte in ["presidencia", "cfm", "capes"]:
+    resultados[fonte] = scraper(fonte).raspar(pesquisa="doença rara", paginas=range(1, 2))
+```
+
+O nome é o da factory (`"cfm"` para `raspe.cfm()`) e não diferencia maiúsculas de minúsculas. Parâmetros do construtor são repassados ao raspador, como em `scraper("nyt", api_key="...")` e `scraper("ans", headless=False)`.
+
+### Presidência, Câmara, Senado e IPEA
+
+```python
+import raspe
+
+df = raspe.presidencia().raspar(pesquisa="meio ambiente")
+df = raspe.camara().raspar(pesquisa="educação")
+df = raspe.senado().raspar(pesquisa="reforma tributária")
+df = raspe.ipea().raspar(pesquisa="desigualdade")
+```
+
+A Câmara e o Senado aceitam `ano`. A Câmara aceita também `tipo_materia`, com o tipo de norma escrito como no site da Câmara (ex.: `"Lei Ordinária"`):
+
+```python
+df = raspe.camara().raspar(pesquisa="saúde", ano=2023, tipo_materia="Lei Ordinária")
+df = raspe.senado().raspar(pesquisa="saúde", ano=2023)
+```
+
+As colunas da Câmara e do Senado, que ainda não estão em `docs/colunas.md`:
+
+| Fonte | Colunas |
+|-------|---------|
+| Câmara | `link`, `titulo`, `descricao`, `ementa`, `termo_busca` |
+| Senado | `titulo`, `link_norma`, `link_detalhes`, `descricao`, `trecho_descricao`, `termo_busca` |
+
+### CAPES (Portal de Periódicos)
+
+```python
+import raspe
+
+df = raspe.capes().raspar(pesquisa="natjus")
+df.to_excel("artigos_capes.xlsx", index=False)
+```
+
+### CFM (Conselho Federal de Medicina)
+
+Normas do CFM e dos Conselhos Regionais de Medicina (CRMs): resoluções, pareceres, emendas, normas e decisões.
+
+```python
+import raspe
+
+df = raspe.cfm().raspar(pesquisa="doença rara", uf="SP")
+df.to_excel("normas_cfm.xlsx", index=False)
+```
+
+Além de `pesquisa`, o CFM aceita `uf` (UF do CRM; vazio busca em todos), `revogada`, `numero` e `ano`.
 
 ---
 
@@ -364,7 +442,7 @@ Quando usar datas (como `data_inicio` e `data_fim`), você pode usar qualquer um
 
 ### "Quanto tempo leva para coletar os dados?"
 
-Depende da busca. Termos genéricos podem ter milhares de resultados e levar horas. Comece testando com `paginas=range(1, 6)` para ver uma amostra rápida.
+Depende da busca. Termos genéricos podem ter milhares de resultados e levar horas. Comece testando com `paginas=range(1, 6)` para ver uma amostra rápida (SaudeLegis, ANS e ANVISA não aceitam `paginas`).
 
 ### "Os dados vêm em que formato?"
 

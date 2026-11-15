@@ -8,9 +8,11 @@ classes de scraper. Os scrapers não devem fazer rede em seus testes — para
 
 import pytest
 
-from raspe.scraper_manager import scraper
+from raspe.schemas.documentacao import fabricas_por_raspador
+from raspe.scraper_manager import _MAPPING, scraper
 from raspe.scrapers.camara import ScraperCamaraDeputados
 from raspe.scrapers.ipea import IpeaScraper
+from raspe.scrapers.nyt import ScraperNYT
 from raspe.scrapers.presidencia import ScraperPresidencia
 from raspe.scrapers.senado import ScraperSenadoFederal
 
@@ -38,11 +40,37 @@ class TestScraperFactory:
         instance = scraper("camara")
         assert isinstance(instance, ScraperCamaraDeputados)
 
+    def test_nyt(self):
+        """O NYT exige API key — repassada via **kwargs ao construtor."""
+        instance = scraper("nyt", api_key="chave-de-teste")
+        assert isinstance(instance, ScraperNYT)
+
+    def test_kwargs_repassados_ao_construtor(self):
+        instance = scraper("ans", headless=False)
+        assert instance._headless is False
+
     def test_nome_case_insensitive(self):
         """A função normaliza o nome com .upper(), aceitando minúsculas/misturas."""
         assert isinstance(scraper("Presidencia"), ScraperPresidencia)
         assert isinstance(scraper("IPEA"), IpeaScraper)
 
     def test_nome_invalido_levanta_value_error(self):
-        with pytest.raises(ValueError, match="não é suportado"):
+        with pytest.raises(ValueError, match="Buscador 'desconhecido' ainda não é suportado"):
             scraper("desconhecido")
+
+    def test_erro_lista_todas_as_fontes_suportadas(self):
+        """A mensagem enumera todas as fontes do mapping, em ordem alfabética.
+
+        Conferir só uma fonte deixaria passar uma lista cortada ou escrita à
+        mão; o mapping, por sua vez, é travado contra as factories de `raspe`
+        em `test_mapping_bate_com_as_factories_publicas`.
+        """
+        with pytest.raises(ValueError) as exc:
+            scraper("desconhecido")
+        listadas = str(exc.value).split("Disponíveis: ", 1)[1].removesuffix(".").split(", ")
+        assert listadas == sorted(_MAPPING)
+
+    def test_mapping_bate_com_as_factories_publicas(self):
+        """Cada factory de `raspe` tem entrada em `scraper()`, com a mesma classe."""
+        esperado = {f.upper(): classe for classe, fabricas in fabricas_por_raspador().items() for f in fabricas}
+        assert {nome: classe.__name__ for nome, classe in _MAPPING.items()} == esperado
