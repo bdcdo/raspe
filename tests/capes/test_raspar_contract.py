@@ -6,13 +6,7 @@ público do Portal de Periódicos da CAPES
 usando ``requests`` com User-Agent realista. O HTML é Joomla! server-rendered
 com cards ``div.col-md-12.br-item[id^="conteudo-"]``.
 
-- ``page_01.html`` e ``page_02.html``: páginas 1 e 2 da busca
-  "natjus OR nat-jus" (41 resultados: 30 + 11).
-- ``single_page.html``: busca "natjus saude judicializacao" (17 resultados,
-  1 página).
-- ``no_results.html``: termo absurdo, sem ``nav.br-pagination``.
-
-Para recapturar: ``python -m tests.fixtures.capture.capes``.
+Termos de busca e contagens de cada sample: ``tests/fixtures/capture/capes.py``.
 """
 
 import pytest
@@ -30,6 +24,23 @@ API_URL = "https://www.periodicos.capes.gov.br/index.php/acervo/buscador.html"
 COLUNAS = OutputCapes.colunas()
 
 
+def _registrar(termo: str, *amostras: str) -> None:
+    """Registra as respostas de uma busca: a contagem, sem ``page``, e uma por página.
+
+    A contagem recebe a amostra da página 1, como no portal. Cada resposta só
+    casa com a query completa daquela requisição.
+    """
+    query = {"q": f"all:contains({termo})", "mode": "advanced", "source": "all"}
+    for pagina, amostra in [(None, amostras[0]), *enumerate(amostras, start=1)]:
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("capes", f"raspar/{amostra}.html"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+            match=[matchers.query_param_matcher(query if pagina is None else {**query, "page": str(pagina)})],
+        )
+
+
 @pytest.fixture
 def scraper():
     return ScraperCapes()
@@ -41,16 +52,7 @@ class TestRasparContract:
         """Página 1 dá a contagem (41 em cards de 30 → 2 páginas); raspar() baixa as duas."""
         mocker.patch("time.sleep")
 
-        query = {"q": "all:contains(natjus OR nat-jus)", "mode": "advanced", "source": "all"}
-        # A requisição da contagem vai sem "page"; depois vêm as páginas 1 e 2.
-        for sample, pagina in (("page_01", {}), ("page_01", {"page": "1"}), ("page_02", {"page": "2"})):
-            responses.add(
-                responses.GET, API_URL,
-                body=load_sample_bytes("capes", f"raspar/{sample}.html"),
-                status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({**query, **pagina})],
-            )
+        _registrar("natjus OR nat-jus", "page_01", "page_02")
 
         df = scraper.raspar(pesquisa="natjus OR nat-jus")
 
@@ -65,15 +67,7 @@ class TestRasparContract:
         """1 página → 17 resultados, com id, título e ano extraídos."""
         mocker.patch("time.sleep")
 
-        query = {"q": "all:contains(natjus saude judicializacao)", "mode": "advanced", "source": "all"}
-        for pagina in ({}, {"page": "1"}):
-            responses.add(
-                responses.GET, API_URL,
-                body=load_sample_bytes("capes", "raspar/single_page.html"),
-                status=200,
-                content_type="text/html; charset=utf-8",
-                match=[matchers.query_param_matcher({**query, **pagina})],
-            )
+        _registrar("natjus saude judicializacao", "single_page")
 
         df = scraper.raspar(pesquisa="natjus saude judicializacao")
 
@@ -118,30 +112,12 @@ class TestRasparContract:
             scraper.raspar(pesquisa="saude")
 
     @responses.activate
-    def test_query_params_corretos(self, scraper, mocker):
-        """A query usa 'all:contains({termo})', e paginas=range(1, 2) baixa só a página 1 de 2."""
+    def test_paginas_limita_a_coleta(self, scraper, mocker):
+        """paginas=range(1, 2) baixa só a página 1 de 2; um pedido da página 2 não casaria com nenhum mock."""
         mocker.patch("time.sleep")
+        _registrar("natjus OR nat-jus", "page_01")
 
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/page_01.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-            match=[matchers.query_param_matcher({
-                "q": "all:contains(saude)",
-                "mode": "advanced",
-                "source": "all",
-                "page": "1",
-            })],
-        )
-        responses.add(
-            responses.GET, API_URL,
-            body=load_sample_bytes("capes", "raspar/page_01.html"),
-            status=200,
-            content_type="text/html; charset=utf-8",
-        )
-
-        df = scraper.raspar(pesquisa="saude", paginas=range(1, 2))
+        df = scraper.raspar(pesquisa="natjus OR nat-jus", paginas=range(1, 2))
         assert len(df) == 30
 
 
