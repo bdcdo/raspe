@@ -33,6 +33,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   do IPEA e do NYT, que também passa pelas funções `raspe.<fonte>()`: `raspe.ipea(debug=False)`.
 
 ### Modificado
+- A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
+  `max_retry_after` dos raspadores HTTP.
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
   `Scraper{Fonte}` adotado pelos demais raspadores. Alias
   `IpeaScraper = ScraperIpea` mantido em `raspe.scrapers.ipea` por
@@ -63,6 +65,19 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigidos os raspadores da Câmara, do IPEA, do CFM e da Folha, que tratavam página de manutenção ou de
   verificação anti-robô como busca sem resultados: agora levantam `ScraperError`. O NYT levanta `APIError` quando
   a resposta não traz a contagem de resultados.
+- Corrigido `raspar()`, que pulava em silêncio as páginas com erro 5xx ou de rede e gravava respostas 429 como
+  páginas de resultados, truncando a coleta: cada página agora passa pelas mesmas tentativas da requisição inicial
+  e, se o erro persistir, a coleta para com `RateLimitError`, `APIError` ou o erro do `requests`. As tentativas
+  passam a cobrir também falhas de conexão e timeout.
+- Corrigido `raspar()` devolvendo resultado vazio quando nenhuma das páginas baixadas é lida (layout novo, página
+  de bloqueio): agora levanta `ScraperError`. Se só parte das páginas não render linhas, emite `UserWarning`
+  com os nomes dos arquivos.
+- Corrigido o modo lista de `raspar()`, em que o erro num valor descartava os já coletados: o valor que falha
+  fica de fora com `UserWarning`, e os demais voltam no resultado. Se todos falharem, o primeiro erro sobe. Depois
+  de um `RateLimitError`, os valores seguintes não são tentados e entram no aviso.
+- Corrigida a paginação da CAPES, que lia 20 itens por página do atributo `data-per-page` (o portal serve 30) e pedia
+  páginas vazias no fim: o tamanho da página agora vem dos itens da própria página 1.
+- Corrigido o timeout do CFM, cujo portal leva mais de um minuto para responder: o de leitura passou de 30 s para 120 s.
 - Corrigido o raspador do Senado, que sem navegador caía sempre na verificação anti-robô do site: agora resolve
   a prova de trabalho dessa verificação (a mesma conta que o navegador faz) e repete a busca.
 - Corrigida a paginação da Câmara, que supunha 10 resultados por página (o portal exibe 20) e pedia páginas além

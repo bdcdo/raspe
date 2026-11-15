@@ -10,6 +10,7 @@ import glob
 import logging
 import os
 import tempfile
+import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, ClassVar, Literal
@@ -17,6 +18,7 @@ from typing import Any, ClassVar, Literal
 import pandas as pd
 from tqdm import tqdm
 
+from raspe.exceptions import ScraperError
 from raspe.utils import validar_intervalo_datas
 
 
@@ -154,27 +156,52 @@ class AbstractScraper(ABC):
 
         Returns:
             pd.DataFrame: DataFrame consolidado com todos os dados analisados. Sem
-                dados, um DataFrame vazio com as colunas de ``self.colunas``.
+                arquivos, um DataFrame vazio com as colunas de ``self.colunas``.
+
+        Raises:
+            ScraperError: Se havia arquivos e nenhum rendeu linhas. Só se baixam
+                páginas quando a contagem diz que há resultados, então isso indica
+                layout novo ou páginas de bloqueio, não busca vazia.
+
+        Warns:
+            UserWarning: Se parte das páginas não rendeu linhas (erro de leitura ou
+                página vazia), porque o resultado pode estar incompleto.
         """
         self.logger.debug(f"Analisando dados de: {path}")
 
         result = []
+        sem_linhas = []
         arquivos = glob.glob(f"{path}/**/*.{self.type.lower()}", recursive=True)
-        arquivos = [f for f in arquivos if os.path.isfile(f)]
+        arquivos = sorted(f for f in arquivos if os.path.isfile(f))
+        if not arquivos:
+            return pd.DataFrame(columns=self.colunas)
 
         for file in tqdm(arquivos, desc="Processando documentos"):
             try:
                 single_result = self._parse_page(file)
             except Exception as e:
                 self.logger.error(f"Erro ao processar {file}: {e}")
-                single_result = None
+                sem_linhas.append(file)
                 continue
 
-            if single_result is not None:
+            if single_result is None or single_result.empty:
+                sem_linhas.append(file)
+            else:
                 result.append(single_result)
 
         if not result:
-            return pd.DataFrame(columns=self.colunas)
+            raise ScraperError(
+                f"{self.nome_buscador}: nenhuma das {len(arquivos)} páginas baixadas rendeu resultados, "
+                "embora a contagem indicasse que havia. O site pode ter mudado de layout ou devolvido "
+                f"páginas de bloqueio; os arquivos ficam em {path}."
+            )
+        if sem_linhas:
+            warnings.warn(
+                f"{self.nome_buscador}: {len(sem_linhas)} de {len(arquivos)} páginas baixadas não renderam "
+                "resultados (erro de leitura, página de bloqueio ou layout novo), e o resultado pode estar "
+                f"incompleto. Páginas: {', '.join(os.path.basename(f) for f in sem_linhas)}.",
+                stacklevel=3,
+            )
 
         return pd.concat(result, ignore_index=True)
 
