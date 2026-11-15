@@ -15,6 +15,11 @@ from raspe.playwright_scraper import PlaywrightScraper
 
 P = TypeVar("P", bound=PlaywrightScraper)
 
+
+class PlaywrightTimeoutFalso(Exception):
+    """Timeout do Playwright no navegador falso de ``navegador_falso``."""
+
+
 _TESTS_DIR = Path(__file__).parent
 
 
@@ -76,6 +81,8 @@ def navegador_falso(mocker: MockerFixture, raspador: P) -> P:
     A página falsa (``AsyncMock``) fica em ``raspador.pagina_falsa``; o teste
     define o HTML que ela devolve em ``pagina_falsa.content``. As esperas
     (``page_load_wait``, ``between_pages_wait`` e Cloudflare) são anuladas.
+    O timeout do Playwright vira ``PlaywrightTimeoutFalso``, para o contrato
+    rodar sem o extra ``browser``.
 
     Args:
         mocker: Fixture ``mocker`` do pytest-mock.
@@ -97,4 +104,5 @@ def navegador_falso(mocker: MockerFixture, raspador: P) -> P:
 
     mocker.patch.object(raspador, "_browser_context", _contexto_falso)
     mocker.patch.object(raspador, "_aguardar_cloudflare", mocker.AsyncMock())
+    mocker.patch.object(raspador, "_ensure_playwright", return_value={"PlaywrightTimeout": PlaywrightTimeoutFalso})
     return raspador
