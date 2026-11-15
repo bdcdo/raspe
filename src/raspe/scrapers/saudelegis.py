@@ -36,6 +36,8 @@ class ScraperSaudeLegis(PlaywrightScraper):
         ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
     """
 
+    colunas = ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
+
     def __init__(self, debug: bool = True, headless: bool = True):
         """Inicializa o ScraperSaudeLegis."""
         super().__init__(
@@ -155,8 +157,6 @@ class ScraperSaudeLegis(PlaywrightScraper):
         Returns:
             pd.DataFrame: Dados extraídos da página.
         """
-        columns = ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
-
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
@@ -166,12 +166,12 @@ class ScraperSaudeLegis(PlaywrightScraper):
 
             if not results_table:
                 self.logger.debug(f"Tabela não encontrada em {path}")
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             tbody = results_table.find('tbody')
             if not tbody:
                 self.logger.debug(f"Tbody não encontrado em {path}")
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             rows = tbody.find_all('tr')
             data = []
@@ -193,8 +193,8 @@ class ScraperSaudeLegis(PlaywrightScraper):
                 data.append([tipo_norma, numero, data_pub, origem, ementa, link_url])
 
             self.logger.debug(f"Extraídos {len(data)} registros de {path}")
-            return pd.DataFrame(data, columns=columns)
+            return pd.DataFrame(data, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro ao processar {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)

@@ -8,6 +8,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperSenadoFederal(BaseScraper, HTMLScraper):
+    colunas = ['titulo', 'link_norma', 'link_detalhes', 'descricao', 'trecho_descricao']
+
     def __init__(self, debug: bool = True):
         super().__init__("SENADO", debug)
         self.session.headers.update({
@@ -92,8 +94,6 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = ['titulo', 'link_norma', 'link_detalhes', 'descricao', 'trecho_descricao']
-
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
@@ -168,8 +168,8 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
                     )
                     continue
 
-            return pd.DataFrame(lista_infos, columns=columns)
+            return pd.DataFrame(lista_infos, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Error parsing page {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)

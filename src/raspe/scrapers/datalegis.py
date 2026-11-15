@@ -40,6 +40,8 @@ class ScraperDatalegis(PlaywrightScraper):
     _cod_modulo: str = ""
     _cod_menu: str = ""
 
+    colunas = ['url', 'titulo', 'descricao', 'situacao']
+
     def __init__(
         self,
         nome_buscador: str,
@@ -253,8 +255,6 @@ class ScraperDatalegis(PlaywrightScraper):
         Returns:
             pd.DataFrame: Dados extraídos da página.
         """
-        columns = ['url', 'titulo', 'descricao', 'situacao']
-
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
@@ -262,8 +262,8 @@ class ScraperDatalegis(PlaywrightScraper):
             registros = self._extrair_atos_do_html(html_content)
             self.logger.debug(f"Extraídos {len(registros)} atos de {path}")
 
-            return pd.DataFrame(registros, columns=columns)
+            return pd.DataFrame(registros, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro ao processar {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)

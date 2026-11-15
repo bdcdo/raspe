@@ -38,6 +38,8 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     SITES_VALIDOS = ('todos', 'online', 'jornal')
     LIMITE_MAX_RESULTADOS = 10000
 
+    colunas = ['link', 'titulo', 'resumo', 'data']
+
     def __init__(self, debug: bool = True):
         super().__init__("FOLHA", debug)
 
@@ -223,8 +225,6 @@ class ScraperFolha(BaseScraper, HTMLScraper):
         Returns:
             DataFrame com as colunas: link, titulo, resumo, data.
         """
-        columns = ['link', 'titulo', 'resumo', 'data']
-
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
@@ -235,7 +235,7 @@ class ScraperFolha(BaseScraper, HTMLScraper):
             lista_noticias = soup.find("ol", class_="u-list-unstyled c-search")
             if not lista_noticias:
                 self.logger.warning(f"Lista de notícias não encontrada em {path}")
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             noticias = lista_noticias.find_all("li")
 
@@ -264,8 +264,8 @@ class ScraperFolha(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Erro ao processar notícia: {e}")
                     continue
 
-            return pd.DataFrame(infos, columns=columns)
+            return pd.DataFrame(infos, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro ao analisar página {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)

@@ -12,7 +12,7 @@ import os
 import tempfile
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from tqdm import tqdm
@@ -44,7 +44,11 @@ class AbstractScraper(ABC):
         debug: Flag para modo de depuração.
         exclude_cols_from_dedup: Colunas a excluir na deduplicação.
         logger: Logger configurado para o scraper.
+        colunas: Colunas do DataFrame que o scraper devolve. Uma busca sem
+            resultados devolve um DataFrame vazio com estas colunas.
     """
+
+    colunas: ClassVar[list[str]] = []
 
     def __init__(self, nome_buscador: str, debug: bool = True):
         """Inicializa o AbstractScraper com configuração comum."""
@@ -149,7 +153,8 @@ class AbstractScraper(ABC):
             path: Caminho para o arquivo ou diretório contendo os dados a serem analisados.
 
         Returns:
-            pd.DataFrame: DataFrame consolidado com todos os dados analisados.
+            pd.DataFrame: DataFrame consolidado com todos os dados analisados. Sem
+                dados, um DataFrame vazio com as colunas de ``self.colunas``.
         """
         self.logger.debug(f"Analisando dados de: {path}")
 
@@ -169,7 +174,7 @@ class AbstractScraper(ABC):
                 result.append(single_result)
 
         if not result:
-            return pd.DataFrame()
+            return pd.DataFrame(columns=self.colunas)
 
         return pd.concat(result, ignore_index=True)
 

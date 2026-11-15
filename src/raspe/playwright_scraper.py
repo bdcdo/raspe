@@ -612,12 +612,13 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
                 total_paginas = min(total_paginas, self._max_pages)
                 self.logger.info(f"Total de páginas: {total_paginas}")
 
-                if total_paginas == 0:
+                if total_paginas:
+                    # Salva primeira página
+                    await self._salvar_html_pagina(1, download_dir)
+                else:
+                    # Segue para o fluxo normal: o _parse_data da pasta vazia devolve as
+                    # colunas da fonte, e o termo de busca e a limpeza da pasta valem igual.
                     self.logger.warning("Nenhum resultado encontrado")
-                    return pd.DataFrame()
-
-                # Salva primeira página
-                await self._salvar_html_pagina(1, download_dir)
 
                 # Navega pelas páginas restantes
                 for pagina in range(2, total_paginas + 1):

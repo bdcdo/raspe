@@ -7,6 +7,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
+    colunas = ['titulo', 'link', 'autores', 'data', 'assuntos']
+
     def __init__(self, download_path=None, debug: bool = True):
         super().__init__("IPEA", debug)
 
@@ -88,8 +90,6 @@ class ScraperIpea(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = ['titulo', 'link', 'autores', 'data', 'assuntos']
-
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
@@ -101,12 +101,12 @@ class ScraperIpea(BaseScraper, HTMLScraper):
 
             if not card_body:
                 # Return empty pandas DataFrame
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             container = card_body.find('div')
             if not container:
                 # Return empty pandas DataFrame
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             itens = container.find_all('div', class_="row")
 
@@ -139,12 +139,12 @@ class ScraperIpea(BaseScraper, HTMLScraper):
                     continue
 
             # Directly create a pandas DataFrame since the base scraper expects pandas
-            return pd.DataFrame(lista_infos, columns=columns)
+            return pd.DataFrame(lista_infos, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Error parsing page {path}: {e}")
             # Return empty pandas DataFrame
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
 
 
 # Alias mantido por retrocompatibilidade: a classe foi renomeada de

@@ -154,6 +154,14 @@ class TestParseData:
         df = s._parse_data(str(tmp_path))
         assert df.empty
 
+    def test_diretorio_vazio_traz_as_colunas_do_scraper(self, tmp_path):
+        """Busca sem resultados devolve as colunas esperadas, não um DataFrame sem colunas."""
+        s = _DummyScraper("pd2b")
+        s.colunas = ["path", "content"]
+        df = s._parse_data(str(tmp_path))
+        assert df.empty
+        assert list(df.columns) == ["path", "content"]
+
     def test_erro_em_arquivo_isolado_nao_aborta(self, tmp_path, mocker):
         """Se _parse_page levantar, o arquivo é ignorado mas os demais entram."""
         s = _DummyScraper("pd3")

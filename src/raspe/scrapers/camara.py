@@ -11,6 +11,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
+    colunas = ['link', 'titulo', 'descricao', 'ementa']
+
     def __init__(self, debug: bool = True):
         super().__init__("CAMARA", debug)
         self.session.headers.update({
@@ -107,8 +109,6 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = ['link', 'titulo', 'descricao', 'ementa']
-
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
@@ -119,11 +119,11 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
 
             resultado_busca = soup.find('div', class_='resultado-busca')
             if not resultado_busca or not isinstance(resultado_busca, Tag):
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             ul_element = resultado_busca.find('ul')
             if not ul_element or not isinstance(ul_element, Tag):
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             itens = ul_element.find_all('li')
 
@@ -153,11 +153,11 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Error parsing item in {path}: {e}")
                     continue
 
-            return pd.DataFrame(lista_infos, columns=columns)
+            return pd.DataFrame(lista_infos, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Error parsing page {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
 
     def _acessar_pagina_inicial(self):
         """Primeiro acessa a página inicial para estabelecer sessão"""

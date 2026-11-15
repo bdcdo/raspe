@@ -87,8 +87,8 @@ def padronizar(dados: pd.DataFrame, fonte: dict[str, Any]) -> pd.DataFrame:
         DataFrame com as colunas fonte, titulo, link e texto, uma linha por resultado.
     """
     colunas = [fonte["coluna_titulo"], fonte["coluna_link"], *fonte["colunas_texto"]]
-    # Busca sem resultado volta como DataFrame sem as colunas da fonte. O reindex cria as
-    # colunas que faltam, vazias, para que a seleção abaixo não levante KeyError.
+    # Uma fonte cuja coleta falhou volta como DataFrame sem as colunas da fonte. O reindex
+    # cria as colunas que faltam, vazias, para que a seleção abaixo não levante KeyError.
     dados = dados.reindex(columns=colunas).fillna("").astype(str)
     # Junta as colunas descritivas num texto só.
     primeira, *demais = fonte["colunas_texto"]

@@ -27,6 +27,12 @@ _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 class ScraperCapes(BaseScraper, HTMLScraper):
     """Raspador HTTP para o buscador do Portal de Periódicos da CAPES."""
 
+    colunas = [
+        'id', 'tipo', 'titulo', 'link', 'autores', 'ano', 'revista',
+        'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
+        'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
+    ]
+
     def __init__(self, debug: bool = True):
         super().__init__("capes", debug)
 
@@ -107,12 +113,6 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         return (total + per_page - 1) // per_page
 
     def _parse_page(self, path: str) -> pd.DataFrame:
-        columns = [
-            'id', 'tipo', 'titulo', 'link', 'autores', 'ano', 'revista',
-            'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
-            'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
-        ]
-
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
@@ -128,11 +128,11 @@ class ScraperCapes(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Erro parseando card em {path}: {e}")
                     continue
 
-            return pd.DataFrame(registros, columns=columns)
+            return pd.DataFrame(registros, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro parseando página {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
 
     def _parse_card(self, card) -> dict[str, Any]:
         out: dict[str, Any] = {}
