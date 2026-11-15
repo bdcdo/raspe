@@ -28,10 +28,10 @@ def test_nenhum_arquivo_versionado_esta_coberto_pelo_gitignore():
         pytest.skip("fora de um checkout git do raspe")
 
     resultado = subprocess.run(
-        # Só os ``.gitignore`` versionados contam. O ``--exclude-standard`` somaria o ignore
-        # global e o ``info/exclude`` de quem roda a suíte, que reprovariam arquivo legítimo
-        # do projeto. ``-z`` separa os caminhos por NUL, sem as aspas que o git põe em nome
-        # não ASCII.
+        # Só os ``.gitignore`` contam, versionados ou não: o git lê todos os do disco. O
+        # ``--exclude-standard`` somaria o ignore global e o ``info/exclude`` de quem roda a
+        # suíte, que reprovariam arquivo legítimo do projeto. ``-z`` separa os caminhos por
+        # NUL, sem as aspas que o git põe em nome não ASCII.
         ["git", "ls-files", "--cached", "--ignored", "--exclude-per-directory=.gitignore", "-z"],
         cwd=RAIZ_DO_REPOSITORIO,
         capture_output=True,
