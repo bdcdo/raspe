@@ -133,8 +133,8 @@ class TestAliasDeprecado:
 class TestNavegador:
     """Raspadores Playwright validam antes de abrir o navegador."""
 
-    def test_alias_avisa_e_chega_canonico_ao_navegador(self, mocker):
-        navegador = mocker.patch.object(ScraperSaudeLegis, "_raspar_async", new=AsyncMock(return_value=pd.DataFrame()))
+    def test_alias_avisa_e_chega_canonico_ao_navegador(self, mocker, tmp_path):
+        navegador = mocker.patch.object(ScraperSaudeLegis, "_baixar_async", new=AsyncMock(return_value=str(tmp_path)))
         with pytest.warns(DeprecationWarning, match="'assunto'.*'pesquisa'") as avisos:
             df = ScraperSaudeLegis().raspar(assunto="doença rara")
         assert avisos[0].filename == __file__
@@ -150,7 +150,7 @@ class TestNavegador:
         ],
     )
     def test_parametro_que_o_navegador_ignorava_agora_levanta(self, mocker, kwargs, mensagem):
-        navegador = mocker.patch.object(ScraperANS, "_raspar_async", new=AsyncMock())
+        navegador = mocker.patch.object(ScraperANS, "_baixar_async", new=AsyncMock())
         with pytest.raises(ValidationError, match=mensagem):
             ScraperANS().raspar(**kwargs)
         navegador.assert_not_awaited()
@@ -166,7 +166,7 @@ class TestNavegador:
         ],
     )
     def test_pesquisa_vazia_levanta_antes_de_abrir_o_navegador(self, mocker, classe, kwargs, mensagem):
-        navegador = mocker.patch.object(classe, "_raspar_async", new=AsyncMock())
+        navegador = mocker.patch.object(classe, "_baixar_async", new=AsyncMock())
         with pytest.raises(ValidationError, match=mensagem):
             classe().raspar(**kwargs)
         navegador.assert_not_awaited()

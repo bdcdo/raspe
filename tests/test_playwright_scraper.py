@@ -2,7 +2,7 @@
 
 O navegador não é aberto: ``_browser_context`` vira um context manager que só
 entrega uma página falsa (``AsyncMock``), e as esperas de ``asyncio.sleep`` e do
-Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``_raspar_async``
+Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``_baixar_async``
 (busca, contagem, pasta de download, ``_parse_data``, ``termo_busca``) sem rede.
 """
 
@@ -38,7 +38,9 @@ class _DummyPlaywright(PlaywrightScraper):
         raise AssertionError("sem resultados, nenhuma página deveria ser lida")
 
 
-def _raspador(mocker, pasta=None, debug: bool = False, classe=_DummyPlaywright) -> _DummyPlaywright:
+def _raspador(
+    mocker, pasta=None, debug: bool = False, classe: type[_DummyPlaywright] = _DummyPlaywright
+) -> _DummyPlaywright:
     """Raspador com navegador falso; ``pasta`` troca o ``download_path`` (padrão: mkdtemp)."""
     r = classe(debug=debug)
     if pasta is not None:
@@ -99,10 +101,11 @@ class _DuasPaginas(_DummyPlaywright):
 
 class TestAvisoDePaginaSemLinhas:
     def test_aviso_aponta_para_quem_chamou_raspar(self, mocker):
-        """O ``_parse_data`` roda dentro do loop do asyncio; o aviso não pode ficar com o asyncio."""
+        """O aviso do ``_parse_data`` não pode ficar com o asyncio, que roda o navegador."""
         raspador = _raspador(mocker, classe=_DuasPaginas)
         raspador.pagina_falsa.content.return_value = "cheia"
         with pytest.warns(UserWarning, match="1 de 2 páginas") as avisos:
             df = raspador.raspar(assunto="x")
         assert len(df) == 1
-        assert avisos[0].filename == __file__
+        [aviso] = [a for a in avisos if "1 de 2 páginas" in str(a.message)]
+        assert aviso.filename == __file__

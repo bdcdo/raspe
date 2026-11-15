@@ -575,14 +575,14 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
     # Método Principal de Raspagem
     # =========================================================================
 
-    async def _raspar_async(self, **kwargs) -> pd.DataFrame:
-        """Executa o processo completo de raspagem de forma assíncrona.
+    async def _baixar_async(self, **kwargs) -> str:
+        """Abre o navegador, faz a busca e salva o HTML de cada página.
 
         Args:
             **kwargs: Parâmetros de busca já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
-            pd.DataFrame: Dados raspados consolidados.
+            str: Pasta com as páginas salvas.
         """
         self.logger.info(f"Iniciando raspagem Playwright: {kwargs}")
 
@@ -630,7 +630,21 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
                 self.logger.error(f"Erro durante raspagem: {e}")
                 raise
 
-        # Processa arquivos salvos
+        return download_dir
+
+    def _raspar(self, **kwargs) -> pd.DataFrame:
+        """Baixa as páginas num loop do asyncio e as lê depois que ele termina.
+
+        A leitura fica fora do loop para que os avisos de :meth:`_parse_data`
+        apontem para quem chamou ``raspar()``, e não para o asyncio.
+
+        Args:
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
+
+        Returns:
+            pd.DataFrame: Dados raspados consolidados.
+        """
+        download_dir = asyncio.run(self._baixar_async(**kwargs))
         result = self._parse_data(download_dir)
 
         # Adiciona termo de busca se disponível
@@ -649,14 +663,3 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
         self.logger.info(f"Raspagem concluída: {len(result)} registros")
         return result
-
-    def _raspar(self, **kwargs) -> pd.DataFrame:
-        """Roda :meth:`_raspar_async` num loop do asyncio.
-
-        Args:
-            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
-
-        Returns:
-            pd.DataFrame: Dados raspados consolidados.
-        """
-        return asyncio.run(self._raspar_async(**kwargs))

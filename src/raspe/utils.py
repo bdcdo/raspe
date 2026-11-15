@@ -1,4 +1,3 @@
-import asyncio
 import inspect
 import os
 import re
@@ -11,14 +10,9 @@ from bs4 import BeautifulSoup as bs
 
 from raspe.exceptions import ValidationError
 
-# Diretórios cujos frames não são de quem usa o raspe: o do pacote, com separador
-# no fim para que um pacote vizinho de nome parecido (``raspe_extra``) não seja
-# confundido com ele, e o do asyncio, que fica entre o ``asyncio.run`` dos
-# raspadores com navegador e o código que roda dentro do loop.
-_DIRETORIOS_INTERNOS = (
-    os.path.dirname(os.path.abspath(__file__)) + os.sep,
-    os.path.dirname(os.path.abspath(asyncio.__file__)) + os.sep,
-)
+# Diretório do pacote ``raspe``, com separador no fim para que um pacote vizinho
+# de nome parecido (``raspe_extra``) não seja confundido com ele.
+_DIRETORIO_PACOTE = os.path.dirname(os.path.abspath(__file__)) + os.sep
 
 
 def nivel_de_pilha_fora_do_pacote() -> int:
@@ -29,9 +23,7 @@ def nivel_de_pilha_fora_do_pacote() -> int:
     arquivo interno do raspe, ele sumiria. A pilha até aqui varia (``raspar``,
     ``scrape``, raspadores com navegador), por isso o nível é contado subindo
     os frames até o primeiro fora do pacote, como faz o ``skip_file_prefixes``
-    do Python 3.12. Os frames do asyncio também são pulados: nos raspadores com
-    navegador, o aviso nasce dentro do loop, e o asyncio fica entre ele e quem
-    chamou ``raspar()``.
+    do Python 3.12.
 
     Returns:
         Valor de ``stacklevel`` para o ``warnings.warn`` chamado pela função que
@@ -41,7 +33,7 @@ def nivel_de_pilha_fora_do_pacote() -> int:
     # O primeiro frame é o desta função; o seguinte é o de quem vai chamar warn.
     frame = frame.f_back if frame is not None else None
     nivel = 1
-    while frame is not None and frame.f_code.co_filename.startswith(_DIRETORIOS_INTERNOS):
+    while frame is not None and frame.f_code.co_filename.startswith(_DIRETORIO_PACOTE):
         frame = frame.f_back
         nivel += 1
     return nivel
