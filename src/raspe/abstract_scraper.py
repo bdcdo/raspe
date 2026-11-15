@@ -58,12 +58,17 @@ class AbstractScraper(ABC):
         ...
 
     def _start_logger(self) -> None:
-        """Configura o logger para o scraper."""
+        """Configura o logger para o scraper.
+
+        O logger é compartilhado por todas as instâncias com o mesmo
+        ``nome_buscador``, então o handler só é criado na primeira; senão cada
+        nova instância repetiria as mensagens mais uma vez.
+        """
         self.logger = logging.getLogger(self.nome_buscador)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            self.logger.addHandler(handler)
         self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
 

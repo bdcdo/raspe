@@ -56,6 +56,14 @@ class TestInit:
         s = _DummyScraper("propagate_test")
         assert s.logger.propagate is False
 
+    def test_logger_nao_empilha_handler_por_instancia(self):
+        """Instâncias com o mesmo nome compartilham o logger; cada mensagem sai uma vez só."""
+        primeiro = _DummyScraper("handler_unico", debug=False)
+        segundo = _DummyScraper("handler_unico", debug=True)
+        assert primeiro.logger is segundo.logger
+        assert len(segundo.logger.handlers) == 1
+        assert segundo.logger.level == logging.DEBUG
+
 
 class TestValidarParametros:
     def test_passa_kwargs_sem_datas(self):

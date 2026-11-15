@@ -51,10 +51,9 @@ def coletar_publicacoes(termo: str) -> pd.DataFrame:
     Returns:
         DataFrame com as colunas de COLUNAS. Trabalhos sem ano legível ficam com ano vazio.
     """
-    raspador = raspe.capes()
-    # Deixa na tela só avisos e erros e apaga a pasta temporária das páginas baixadas.
+    # Apaga as páginas baixadas ao fim da busca e deixa na tela só avisos e erros.
+    raspador = raspe.capes(debug=False)
     raspador.logger.setLevel(logging.WARNING)
-    raspador.debug = False
     publicacoes = raspador.raspar(pesquisa=termo, paginas=PAGINAS)
 
     # O mesmo trabalho pode aparecer em duas páginas se o portal reordenar os resultados

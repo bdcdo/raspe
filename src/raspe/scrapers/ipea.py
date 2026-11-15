@@ -7,8 +7,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
-    def __init__(self, download_path=None):
-        super().__init__("IPEA")
+    def __init__(self, download_path=None, debug: bool = True):
+        super().__init__("IPEA", debug)
 
         self._api_base = "https://www.ipea.gov.br/portal/coluna-5/central-de-conteudo/busca-publicacoes"
         self._api_method: Literal['GET'] = 'GET'

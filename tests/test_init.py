@@ -6,6 +6,8 @@ podem ser instanciados sem que o pacote ``playwright`` esteja disponível em
 tempo de teste — só falham quando ``_ensure_playwright()`` é chamado.
 """
 
+import logging
+
 import pytest
 
 import raspe
@@ -61,6 +63,22 @@ class TestFactoriesPlaywright:
 
     def test_anvisa(self):
         assert isinstance(raspe.anvisa(), ScraperANVISA)
+
+
+@pytest.mark.parametrize("fabrica", [
+    "presidencia", "ipea", "senado", "camara", "cfm", "folha", "capes",
+    "saudelegis", "ans", "anvisa",
+])
+def test_fabricas_aceitam_debug(fabrica):
+    """``raspe.<fonte>(debug=False)`` desliga o modo de depuração já na construção."""
+    raspador = getattr(raspe, fabrica)(debug=False)
+    assert raspador.debug is False
+    assert raspador.logger.level == logging.INFO
+
+
+def test_nyt_aceita_debug():
+    raspador = raspe.nyt(api_key="chave-de-teste", debug=False)
+    assert raspador.debug is False
 
 
 class TestExports:

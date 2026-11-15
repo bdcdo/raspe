@@ -48,15 +48,16 @@ class ScraperNYT(BaseScraper):
     RESULTS_PER_PAGE = 10
     MAX_PAGES = 100
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None, debug: bool = True):
         """Inicializa o raspador do NYT.
 
         Args:
             api_key: Chave de API do NYT Developer Portal.
                      Pode ser passada diretamente ou via variável de ambiente NYT_API_KEY.
                      Obtenha em: https://developer.nytimes.com/get-started
+            debug: Se True, ativa logs de depuração e mantém arquivos baixados.
         """
-        super().__init__("NYT")
+        super().__init__("NYT", debug)
 
         # Tenta obter API key do parâmetro ou variável de ambiente
         resolved_api_key = api_key or os.environ.get('NYT_API_KEY')

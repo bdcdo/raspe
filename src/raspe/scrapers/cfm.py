@@ -23,8 +23,8 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         df = scraper.raspar(texto=termos)
     """
 
-    def __init__(self):
-        super().__init__("CFM")
+    def __init__(self, debug: bool = True):
+        super().__init__("CFM", debug)
 
         # Headers específicos do portal CFM
         self.session.headers.update({

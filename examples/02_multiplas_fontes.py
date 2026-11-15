@@ -138,10 +138,9 @@ def coletar_todas(fontes: list[dict[str, Any]]) -> dict[str, pd.DataFrame]:
     for fonte in fontes:
         print(f"Coletando {fonte['nome']} ({fonte['pesquisa']})")
         try:
-            raspador = fonte["criar"]()
-            # Deixa na tela só avisos e erros e apaga a pasta temporária das páginas baixadas.
+            # Apaga as páginas baixadas ao fim da busca e deixa na tela só avisos e erros.
+            raspador = fonte["criar"](debug=False)
             raspador.logger.setLevel(logging.WARNING)
-            raspador.debug = False
             bruto = raspador.raspar(pesquisa=fonte["pesquisa"], paginas=fonte["paginas"])
         except (requests.RequestException, raspe.ScraperError) as erro:
             # Uma fonte fora do ar não deve derrubar a coleta das outras.

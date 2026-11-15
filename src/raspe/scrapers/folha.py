@@ -38,8 +38,8 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     SITES_VALIDOS = ('todos', 'online', 'jornal')
     LIMITE_MAX_RESULTADOS = 10000
 
-    def __init__(self):
-        super().__init__("FOLHA")
+    def __init__(self, debug: bool = True):
+        super().__init__("FOLHA", debug)
 
         self.session.headers.update({
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",

@@ -27,8 +27,8 @@ _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 class ScraperCapes(BaseScraper, HTMLScraper):
     """Raspador HTTP para o buscador do Portal de Periódicos da CAPES."""
 
-    def __init__(self):
-        super().__init__("capes")
+    def __init__(self, debug: bool = True):
+        super().__init__("capes", debug)
 
         self._api_base = f"{_BASE_DOMAIN}/index.php/acervo/buscador.html"
         self._api_method: Literal['GET'] = 'GET'

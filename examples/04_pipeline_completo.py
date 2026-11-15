@@ -80,10 +80,9 @@ def coletar_termo(termo: str, paginas: range = PAGINAS) -> tuple[pd.DataFrame, d
     for tentativa in range(1, TENTATIVAS + 1):
         registro["tentativas"] = tentativa
         try:
-            raspador = raspe.ipea()
-            # Deixa na tela só avisos e erros e apaga a pasta temporária das páginas baixadas.
+            # Apaga as páginas baixadas ao fim da busca e deixa na tela só avisos e erros.
+            raspador = raspe.ipea(debug=False)
             raspador.logger.setLevel(logging.WARNING)
-            raspador.debug = False
             dados = raspador.raspar(pesquisa=termo, paginas=paginas)
         except raspe.ValidationError as erro:
             # Parâmetro inválido é erro de quem chamou: tentar de novo não muda o resultado.
