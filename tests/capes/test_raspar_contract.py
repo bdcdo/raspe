@@ -264,6 +264,37 @@ class TestResumo:
         html = load_sample("capes", "raspar/page_01.html")
         trecho = "suporte técnico aos"
         assert html.count(trecho) == 1, f"Trecho {trecho!r} sumiu do sample; recapturar e rever o caso."
-        html = html.replace("suporte técnico aos", substituto + " aos")
+        html = html.replace(trecho, substituto + " aos")
 
         assert _coluna_por_id(scraper, html, "resumo")["W3032714479"] == RESUMO_W3032714479
+
+
+class TestInstituicaoERevista:
+    """``instituicao`` e ``revista`` não se confundem com o destaque do termo buscado (issue #40).
+
+    Os metadados vêm em ``<b>`` dentro de um ``<p>`` (ano, instituição, revista),
+    e o destaque do termo buscado é outro ``<b>``, aninhado no da instituição ou
+    da revista. Cada caso confere antes que o trecho ainda existe no sample.
+    """
+
+    @pytest.mark.parametrize(("id_card", "trecho_html", "instituicao", "revista"), [
+        pytest.param(
+            "W7118417258", "<b>MINISTÉRIO DA <b>SAÚDE</b> </b>",
+            "MINISTÉRIO DA SAÚDE", "Epidemiologia e Serviços de Saúde",
+            id="destaque-na-instituicao-e-na-revista",
+        ),
+        pytest.param(
+            "W4387465478", "<b>Escola Nacional de <b>Saúde</b> Pública, Fundação Oswaldo Cruz </b>",
+            "Escola Nacional de Saúde Pública, Fundação Oswaldo Cruz", "Cadernos de Saúde Pública",
+            id="destaque-no-meio-da-instituicao",
+        ),
+    ])
+    @responses.activate
+    def test_metadados_com_termo_destacado(self, scraper, mocker, id_card, trecho_html, instituicao, revista):
+        mocker.patch("time.sleep")
+        html = load_sample("capes", "raspar/single_page.html")
+        assert trecho_html in html, f"Trecho {trecho_html!r} sumiu do sample; recapturar e rever o caso."
+        _registrar("natjus", html.encode("utf-8"))
+
+        df = scraper.raspar(pesquisa="natjus", paginas=range(1, 2)).set_index("id")
+        assert (df.at[id_card, "instituicao"], df.at[id_card, "revista"]) == (instituicao, revista)

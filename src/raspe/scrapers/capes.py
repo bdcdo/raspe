@@ -216,7 +216,9 @@ class ScraperCapes(BaseScraper, HTMLScraper):
                     out['topicos'] = span.get_text(strip=True)
                 continue
 
-            bs = p.find_all('b')
+            # Só os <b> filhos do <p>: o destaque do termo buscado é outro <b>,
+            # aninhado no da instituição ou da revista.
+            bs = p.find_all('b', recursive=False)
             if not bs or out['ano']:
                 continue
 
@@ -224,9 +226,9 @@ class ScraperCapes(BaseScraper, HTMLScraper):
             if re.fullmatch(r'\d{4}', ano_text):
                 out['ano'] = ano_text
             if len(bs) >= 2:
-                out['instituicao'] = bs[1].get_text(strip=True).rstrip('|').strip()
+                out['instituicao'] = _texto_exibido(bs[1]).rstrip('|').strip()
             if len(bs) >= 3:
-                out['revista'] = bs[2].get_text(strip=True).lstrip('|').strip()
+                out['revista'] = _texto_exibido(bs[2]).lstrip('|').strip()
 
         out['doi'] = ''
         out['link_editor'] = ''

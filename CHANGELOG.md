@@ -135,10 +135,12 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   vai para a coluna `rotulo`.
 - Corrigida a coluna `assuntos` do `ipea()`, que vinha com "Temas:", quebras de linha e temas repetidos: agora
   traz cada tema uma vez, separado por vírgula.
-- Corrigidas as colunas `titulo` e `resumo` de `raspe.capes()`, que não traziam o espaço que o navegador exibe em
-  volta do termo buscado (o portal o destaca com `<b>`). O título colava palavras (`E-NATJUSNA JUDICIALIZAÇÃO` agora
-  sai `E-NATJUS NA JUDICIALIZAÇÃO`), e o resumo inventava espaço (`e- NatJus` e `( NatJus )` agora saem `e-NatJus` e
-  `(NatJus)`) e mantinha quebras de linha do HTML. `<br>` e mudança de parágrafo viram espaço (#40).
+- Corrigidas as colunas `titulo`, `resumo`, `instituicao` e `revista` de `raspe.capes()`, que não traziam o espaço que
+  o navegador exibe em volta do termo buscado (o portal o destaca com `<b>`). O título colava palavras (`E-NATJUSNA
+  JUDICIALIZAÇÃO` agora sai `E-NATJUS NA JUDICIALIZAÇÃO`), e o resumo inventava espaço (`e- NatJus` e `( NatJus )`
+  agora saem `e-NatJus` e `(NatJus)`) e mantinha quebras de linha do HTML. `<br>` e mudança de parágrafo viram espaço.
+  Na instituição, o destaque colava palavras (`MINISTÉRIO DASAÚDE`), e a revista trazia só o termo destacado (`SAÚDE`
+  no lugar de `Epidemiologia e Serviços de Saúde`) (#40).
 
 ## [0.1.0] - 2025-05-15
 
