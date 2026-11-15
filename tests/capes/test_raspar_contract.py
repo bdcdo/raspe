@@ -9,6 +9,9 @@ com cards ``div.col-md-12.br-item[id^="conteudo-"]``.
 Termos de busca e contagens de cada sample: ``tests/fixtures/capture/capes.py``.
 """
 
+import os
+from datetime import datetime
+
 import pytest
 import responses
 from responses import matchers
@@ -95,6 +98,25 @@ class TestRasparContract:
         df = scraper.raspar(pesquisa="termo_inexistente_xyz123")
         assert df.empty
         assert list(df.columns) == COLUNAS
+
+    @responses.activate
+    def test_busca_por_lista_sem_resultados_no_mesmo_segundo(self, scraper, mocker, tmp_path):
+        """Relógio parado: dois termos sem resultado no mesmo segundo ganham um diretório cada (#43)."""
+        relogio = mocker.patch("raspe.abstract_scraper.datetime")
+        relogio.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
+
+        scraper.download_path = str(tmp_path)
+        termos = ["termo_inexistente_a", "termo_inexistente_b"]
+        for termo in termos:
+            _registrar(termo, "no_results")
+
+        df = scraper.raspar(pesquisa=termos)
+
+        assert df.empty
+        # Uma requisição por termo: o sample não tem paginação, então cada termo faz só a contagem.
+        assert len(responses.calls) == len(termos)
+        diretorios = os.listdir(os.path.join(scraper.download_path, scraper.nome_buscador))
+        assert len(diretorios) == len(termos)
 
     @responses.activate
     def test_pagina_sem_paginacao_nem_aviso_levanta_erro(self, scraper, mocker):

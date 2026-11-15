@@ -248,17 +248,23 @@ class AbstractScraper(ABC):
         return params
 
     def _create_download_dir(self) -> str:
-        """Cria um diretório para armazenar os arquivos baixados.
+        """Cria um diretório novo para os arquivos baixados de uma busca.
 
-        Gera um caminho único usando um timestamp para garantir que cada
-        sessão de scraping tenha seu próprio diretório.
+        O diretório fica em ``{download_path}/{nome_buscador}/`` e tem o nome
+        ``{AAAAMMDDHHMMSS}_{sufixo}``. O timestamp, com resolução de segundo,
+        ordena as buscas e ajuda a achar a pasta à mão. O sufixo aleatório,
+        gerado por ``tempfile.mkdtemp``, garante que cada chamada receba um
+        diretório próprio, mesmo quando várias caem no mesmo segundo, como os
+        termos de uma busca por lista.
 
         Returns:
             str: Caminho do diretório criado.
         """
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        path = f"{self.download_path}/{self.nome_buscador}/{timestamp}"
-        os.makedirs(path)
+        pai = os.path.join(self.download_path, self.nome_buscador)
+        # O pai é compartilhado entre as buscas; a unicidade vem do mkdtemp.
+        os.makedirs(pai, exist_ok=True)
+        path = tempfile.mkdtemp(prefix=f"{timestamp}_", dir=pai)
         self.logger.debug(f"Criando diretório de download em {path}")
         return path
 
@@ -276,7 +282,7 @@ class AbstractScraper(ABC):
     def _limpar_download(self, path: str) -> None:
         """Apaga a pasta de uma busca e, se for a do raspe, a raiz temporária vazia.
 
-        Remove ``path`` (``{download_path}/{nome_buscador}/{timestamp}``). Se o
+        Remove ``path`` (``{download_path}/{nome_buscador}/{timestamp}_{sufixo}``). Se o
         ``download_path`` é a raiz criada pelo ``mkdtemp()``, remove também a
         pasta da fonte e a raiz, quando ficam vazias. Numa pasta escolhida pelo
         usuário, só a pasta da busca sai.

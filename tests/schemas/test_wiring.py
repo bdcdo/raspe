@@ -7,7 +7,6 @@ dos raspadores com navegador, e a saída divergente do schema avisa sem jogar
 fora os dados.
 """
 
-import tempfile
 from datetime import date
 from typing import Literal
 from unittest.mock import AsyncMock
@@ -182,18 +181,15 @@ class TestListaDePesquisa:
     @responses.activate
     def test_cada_item_da_lista_vira_termo_busca(self, mocker, tmp_path):
         mocker.patch("time.sleep")
-        # O diretório de download leva o horário em segundos; sem a pausa real
-        # entre requisições, os dois itens cairiam no mesmo diretório.
-        mocker.patch.object(
-            ScraperPresidencia, "_create_download_dir", side_effect=lambda: tempfile.mkdtemp(dir=tmp_path)
-        )
         responses.add(
             responses.POST, URL_PRESIDENCIA,
             body=load_sample_bytes("presidencia", "raspar/single_page.html"),
             status=200,
             content_type="text/html; charset=utf-8",
         )
-        df = ScraperPresidencia().raspar(pesquisa=["meio ambiente", "saúde"])
+        raspador = ScraperPresidencia()
+        raspador.download_path = str(tmp_path)
+        df = raspador.raspar(pesquisa=["meio ambiente", "saúde"])
         assert list(df.columns) == OutputPresidencia.colunas()
         assert set(df["termo_busca"]) == {"meio ambiente", "saúde"}
 
