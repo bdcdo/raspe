@@ -135,28 +135,11 @@ class ScraperFolha(BaseScraper, HTMLScraper):
 
         return query
 
-    def _verificar_limite_resultados(self, num_results: int) -> None:
-        """Emite warning se o número de resultados atingiu o limite máximo.
-
-        A busca da Folha tem um limite de 10.000 resultados. Se esse limite
-        for atingido, provavelmente existem mais resultados não capturados.
-
-        Args:
-            num_results: Número de resultados retornados pela busca.
-        """
-        if num_results >= self.LIMITE_MAX_RESULTADOS:
-            self.logger.warning(
-                f"Busca retornou {num_results:,} resultados (limite máximo). "
-                "Provavelmente existem mais resultados. "
-                "Considere dividir a busca em períodos menores usando "
-                "data_inicio e data_fim."
-            )
-
     def _find_n_pags(self, r0) -> int:
         """Extrai o número total de páginas da resposta inicial.
 
         Procura pela contagem de resultados na div com classe c-search__result.
-        Emite um warning se o número de resultados atingir o limite máximo.
+        Avisa (``UserWarning``) se o número de resultados atingir o limite máximo.
         """
         r0.raise_for_status()
 
@@ -172,8 +155,11 @@ class ScraperFolha(BaseScraper, HTMLScraper):
             return self._confirmar_busca_vazia(soup)
 
         num_results = int(match.group())
-        self._verificar_limite_resultados(num_results)
-        pages = (num_results + 24) // 25
+        # A busca da Folha para em 10.000 resultados, e a contagem também: chegar
+        # ao teto já indica que pode haver mais.
+        if num_results >= self.LIMITE_MAX_RESULTADOS:
+            self._avisar_teto(num_results, self.LIMITE_MAX_RESULTADOS)
+        pages = self._paginas_para(num_results, 25)
         self.logger.debug(f"Encontrados {num_results} resultados, {pages} páginas")
         return pages
 

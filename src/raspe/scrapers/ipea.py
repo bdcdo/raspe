@@ -101,7 +101,7 @@ class ScraperIpea(BaseScraper, HTMLScraper):
 
         self.logger.debug(f"Extracted number of results: {num}")
 
-        pages = (num + 9) // 10
+        pages = self._paginas_para(num, 10)
         self.logger.debug(f"Calculated pages: {pages}")
         return pages
 

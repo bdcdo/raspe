@@ -107,14 +107,14 @@ class TestRasparContract:
 
 
 class TestFindNPags:
-    def test_busca_acima_do_teto_do_portal_para_na_pagina_500(self, scraper, mocker, caplog):
+    def test_busca_acima_do_teto_do_portal_para_na_pagina_500(self, scraper, mocker):
         """O portal só exibe 10.000 resultados (500 páginas de 20); a página 501 dá HTTP 500."""
         r0 = mocker.Mock(content=(
             b'<div class="busca-info__resultado busca-info__resultado--informado">'
             b'<i>Exibindo resultados de 1 a 20 de 59889</i></div>'
         ))
-        assert scraper._find_n_pags(r0) == 500
-        assert "59,889 resultados" in caplog.text
+        with pytest.warns(UserWarning, match="59,889 resultados, mas o limite é 10,000"):
+            assert scraper._find_n_pags(r0) == 500
 
 
 class TestConfiguracao:

@@ -247,10 +247,8 @@ class ScraperNYT(BaseScraper):
             )
         total_hits: int = meta['hits']
 
-        n_pags = (total_hits + self.RESULTS_PER_PAGE - 1) // self.RESULTS_PER_PAGE
-
-        # API limita a 100 páginas
-        n_pags = min(n_pags, self.MAX_PAGES)
+        # A API só entrega as 100 primeiras páginas.
+        n_pags = self._paginas_para(total_hits, self.RESULTS_PER_PAGE, self.MAX_PAGES * self.RESULTS_PER_PAGE)
 
         self.logger.info(f"Total de resultados: {total_hits}, páginas: {n_pags}")
         return n_pags

@@ -34,7 +34,6 @@ Exemplo de uso:
 """
 
 import asyncio
-import math
 import os
 import time
 from abc import abstractmethod
@@ -151,6 +150,8 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         # Estratégia de paginação padrão
         self._pagination_strategy: PaginationStrategy = PaginationStrategy.NONE
         self._max_pages: int = 100  # Limite de segurança
+        # Páginas da contagem da última busca; o aviso de teto sai em _raspar.
+        self._total_paginas: int = 0
         # Resultados por página, lido da contagem por _paginas_pela_contagem.
         self._por_pagina: int = 1
 
@@ -459,7 +460,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
             int: Número de páginas (0 se o total é 0).
         """
         self._por_pagina, quantos = (int(n.replace('.', '')) for n in (fim, total))
-        return math.ceil(quantos / self._por_pagina) if quantos else 0
+        return self._paginas_para(quantos, self._por_pagina)
 
     def _inicio_da_pagina(self, numero: int) -> int:
         """Posição do primeiro resultado da página ``numero`` (11 na página 2, com 10 por página).
@@ -638,6 +639,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
                 # Determina paginação
                 total_paginas = await self._encontrar_total_paginas()
+                self._total_paginas = total_paginas
                 total_paginas = min(total_paginas, self._max_pages)
                 self.logger.info(f"Total de páginas: {total_paginas}")
 
@@ -699,7 +701,9 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         """Baixa as páginas num loop do asyncio e as lê depois que ele termina.
 
         A leitura fica fora do loop para que os avisos de :meth:`_parse_data`
-        apontem para quem chamou ``raspar()``, e não para o asyncio.
+        apontem para quem chamou ``raspar()``, e não para o asyncio, e o aviso de
+        teto de páginas sai daqui pelo mesmo motivo: atribuído ao asyncio, sairia
+        uma vez só por sessão.
 
         Args:
             **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
@@ -709,6 +713,8 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         """
         download_dir = self._rodar_async(**kwargs)
         result = self._ler_e_limpar(download_dir)
+        if self._total_paginas > self._max_pages:
+            self._avisar_teto(self._total_paginas, self._max_pages, "páginas de resultados")
 
         # Adiciona termo de busca se disponível
         termo_param = next(

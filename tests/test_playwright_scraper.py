@@ -136,6 +136,39 @@ class TestAvisoDePaginaSemLinhas:
         assert aviso.filename == __file__
 
 
+class _MuitasPaginas(_DuasPaginas):
+    """A contagem (8 páginas) passa do teto de páginas do raspador (2)."""
+
+    def __init__(self, debug: bool = False):
+        super().__init__(debug=debug)
+        self._max_pages = 2
+
+    async def _encontrar_total_paginas(self) -> int:
+        return 8
+
+    def _parse_page(self, path: str) -> pd.DataFrame:
+        return pd.DataFrame([{"titulo": "t", "link": "l"}])
+
+
+class TestAvisoDeTeto:
+    def test_para_no_teto_e_avisa_quem_chamou_raspar(self, mocker):
+        """Atribuído ao asyncio, o aviso de teto sairia uma vez só por sessão."""
+        raspador = _raspador(mocker, classe=_MuitasPaginas)
+        raspador.pagina_falsa.content.return_value = "<html></html>"
+        with pytest.warns(UserWarning, match="8 páginas de resultados, mas o limite é 2") as avisos:
+            df = raspador.raspar(assunto="x")
+        assert len(df) == 2
+        [aviso] = [a for a in avisos if "8 páginas" in str(a.message)]
+        assert aviso.filename == __file__
+
+    def test_aviso_virando_erro_nao_deixa_a_pasta(self, mocker):
+        raspador = _raspador(mocker, classe=_MuitasPaginas)
+        raspador.pagina_falsa.content.return_value = "<html></html>"
+        with pytest.raises(UserWarning):
+            raspador.raspar(assunto="x")
+        assert not os.path.exists(raspador.download_path)
+
+
 def _raspar_dentro_de_um_loop(raspador: _DummyPlaywright, **kwargs) -> pd.DataFrame:
     """Chama ``raspar()`` como numa célula do Jupyter ou do Colab, com um loop do asyncio já rodando."""
 

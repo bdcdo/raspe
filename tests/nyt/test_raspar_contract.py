@@ -191,6 +191,15 @@ class TestRasparContract:
         scraper.raspar(pesquisa="election", data_inicio="2024-01-01", data_fim="2024-12-31")
 
 
+class TestTetoDePaginas:
+    def test_acima_de_100_paginas_para_no_teto_e_avisa(self, scraper, mocker):
+        """A API só entrega as 100 primeiras páginas: o corte não é mais silencioso."""
+        r0 = mocker.Mock(status_code=200)
+        r0.json.return_value = {"status": "OK", "response": {"meta": {"hits": 5000}}}
+        with pytest.warns(UserWarning, match="5,000 resultados, mas o limite é 1,000"):
+            assert scraper._find_n_pags(r0) == 100
+
+
 class TestValidacao:
     @responses.activate
     def test_texto_avisa_e_vira_pesquisa(self, scraper, mocker):

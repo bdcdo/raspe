@@ -145,7 +145,7 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         # atributo fica só de reserva.
         per_page_attr = str(nav.get('data-per-page', '') or '').strip()
         per_page = len(soup.select(self._SELETOR_CARD)) or (int(per_page_attr) if per_page_attr.isdigit() else 0) or 20
-        return (total + per_page - 1) // per_page
+        return self._paginas_para(total, per_page)
 
     def _parse_page(self, path: str) -> pd.DataFrame:
         with open(path, 'r', encoding='utf-8') as f:
