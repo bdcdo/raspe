@@ -9,6 +9,7 @@ scrapers baseados em Selenium (SeleniumScraper).
 import glob
 import logging
 import os
+import sys
 import tempfile
 import warnings
 from abc import ABC, abstractmethod
@@ -23,7 +24,95 @@ from raspe.utils import validar_intervalo_datas
 
 
 class _HandlerRaspe(logging.StreamHandler):
-    """Handler de console que o raspe põe no logger de cada fonte."""
+    """Handler de console do raspe, no logger pai ``raspe``.
+
+    Escreve sempre no ``sys.stderr`` do momento (como o ``logging.lastResort``),
+    para a saída acompanhar trocas do ``stderr`` feitas depois da importação,
+    como as do Jupyter e do ``capsys`` do pytest.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.stream = sys.stderr
+        super().emit(record)
+
+
+def _configurar_logger_raspe() -> None:
+    """Põe o handler de console no logger ``raspe``. Roda uma vez, na importação.
+
+    O logger ``raspe`` não propaga para o root (evita linhas duplicadas quando o
+    usuário configura o ``logging``) e começa em DEBUG, para o filtro ficar com
+    cada instância (ver ``_LoggerDaInstancia``). Depois disso o raspe não mexe
+    mais nele: ``logging.getLogger("raspe").setLevel(logging.WARNING)`` silencia
+    todas as fontes, e outras mudanças do usuário também ficam.
+    """
+    raiz = logging.getLogger("raspe")
+    raiz.addHandler(_HandlerRaspe())
+    raiz.propagate = False
+    if raiz.level == logging.NOTSET:
+        raiz.setLevel(logging.DEBUG)
+
+
+_configurar_logger_raspe()
+
+
+class _LoggerDaInstancia(logging.LoggerAdapter):
+    """Logger de uma instância de raspador, com nível próprio.
+
+    As instâncias de uma fonte compartilham o logger ``raspe.<FONTE>``. O nível
+    (DEBUG com ``debug=True``, INFO sem) fica no adaptador, então criar uma nova
+    instância não muda o que as anteriores mostram. O resto da API de
+    ``logging.Logger`` (``addHandler``, ``handlers``...) vai para o logger da fonte.
+
+    Args:
+        logger: Logger ``raspe.<FONTE>``, compartilhado pelas instâncias da fonte.
+        nivel: Nível mínimo das mensagens desta instância.
+    """
+
+    def __init__(self, logger: logging.Logger, nivel: int):
+        super().__init__(logger, {})
+        self.level = nivel
+
+    def __getattr__(self, nome: str) -> Any:
+        return getattr(self.logger, nome)
+
+    def isEnabledFor(self, level: int) -> bool:
+        """Diz se uma mensagem de nível ``level`` sai por esta instância.
+
+        Args:
+            level: Nível da mensagem.
+
+        Returns:
+            bool: True se passa pelo nível da instância e pelo dos loggers pais.
+        """
+        return level >= self.level and self.logger.isEnabledFor(level)
+
+    def getEffectiveLevel(self) -> int:
+        """Nível efetivo: o mais alto entre o da instância e o dos loggers pais.
+
+        Returns:
+            int: Nível efetivo.
+        """
+        return max(self.level, self.logger.getEffectiveLevel())
+
+    def setLevel(self, level: int | str) -> None:
+        """Muda o nível só desta instância (o ``LoggerAdapter`` mudaria o logger compartilhado).
+
+        Args:
+            level: Nível, como ``logging.WARNING`` ou ``"WARNING"``.
+
+        Raises:
+            ValueError: Se ``level`` for um nome de nível desconhecido.
+        """
+        if isinstance(level, str):
+            niveis = logging.getLevelNamesMapping()
+            if level not in niveis:
+                raise ValueError(f"Nível de log desconhecido: {level!r}")
+            level = niveis[level]
+        self.level = level
 
 
 class AbstractScraper(ABC):
@@ -45,7 +134,8 @@ class AbstractScraper(ABC):
         download_path: Diretório base para arquivos temporários.
         debug: Flag para modo de depuração.
         exclude_cols_from_dedup: Colunas a excluir na deduplicação.
-        logger: Logger configurado para o scraper.
+        logger: Logger da instância (``logging.LoggerAdapter`` sobre ``raspe.<nome_buscador>``),
+            com nível próprio.
         colunas: Colunas do DataFrame que o scraper devolve. Uma busca sem
             resultados devolve um DataFrame vazio com estas colunas.
     """
@@ -70,19 +160,15 @@ class AbstractScraper(ABC):
     def _start_logger(self) -> None:
         """Configura o logger para o scraper.
 
-        O logger é compartilhado por todas as instâncias com o mesmo
-        ``nome_buscador``. Cada nova instância troca o handler do raspe em vez
-        de acrescentar outro, para as mensagens não saírem repetidas; trocar
-        (em vez de reaproveitar) mantém a saída no ``sys.stderr`` atual.
+        As mensagens vão para o logger ``raspe.<nome_buscador>``, filho de
+        ``raspe``, que tem o handler de console. O nível é de cada instância
+        (ver ``_LoggerDaInstancia``). Para silenciar o raspe inteiro, use
+        ``logging.getLogger("raspe").setLevel(logging.WARNING)``.
         """
-        self.logger = logging.getLogger(self.nome_buscador)
-        for antigo in [h for h in self.logger.handlers if isinstance(h, _HandlerRaspe)]:
-            self.logger.removeHandler(antigo)
-        handler = _HandlerRaspe()
-        handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        self.logger.addHandler(handler)
-        self.logger.propagate = False
-        self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
+        self.logger = _LoggerDaInstancia(
+            logging.getLogger(f"raspe.{self.nome_buscador}"),
+            logging.DEBUG if self.debug else logging.INFO,
+        )
 
     def _validar_parametros(self, **kwargs) -> dict[str, Any]:
         """Valida e normaliza parâmetros de busca antes da raspagem.

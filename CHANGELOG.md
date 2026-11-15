@@ -35,6 +35,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
   `max_retry_after` dos raspadores HTTP.
+- Os logs dos raspadores saem pelo logger `raspe.<FONTE>` (antes, `<FONTE>`), filho de `raspe`, que tem o handler de
+  console, configurado uma vez na importação. `logging.getLogger("raspe").setLevel(logging.WARNING)` silencia o raspe
+  inteiro. `raspador.logger` passou a ser um `logging.LoggerAdapter` com o nível da instância; o resto da API de
+  `Logger` (`addHandler`, `handlers`...) vai para `raspe.<FONTE>`.
 - Classe `IpeaScraper` renomeada para `ScraperIpea`, alinhando ao padrão
   `Scraper{Fonte}` adotado pelos demais raspadores. Alias
   `IpeaScraper = ScraperIpea` mantido em `raspe.scrapers.ipea` por
@@ -56,6 +60,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   (paralelização, cache, uso de `old_page_name`).
 - Corrigida a busca sem resultados, que devolvia um `DataFrame` sem colunas: agora traz as colunas da fonte
   (listadas no novo atributo de classe `colunas` de cada raspador), mais `termo_busca`.
+- Corrigido o nível de log de um raspador, que mudava ao criar outra instância da mesma fonte (valia o `debug` da
+  última): agora cada instância tem o seu, e `raspador.logger.setLevel()` também só vale para ela.
 - Corrigidas as mensagens de log repetidas ao criar mais de um raspador da mesma fonte: cada instância
   acrescentava mais um handler ao logger compartilhado.
 - Corrigido `raspar()` devolvendo `DataFrame` vazio quando a requisição inicial esbarra em 429 ou 5xx
