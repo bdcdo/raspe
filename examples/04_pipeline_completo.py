@@ -89,12 +89,11 @@ def coletar_termo(termo: str, paginas: range = PAGINAS) -> tuple[pd.DataFrame, d
             # Parâmetro inválido é erro de quem chamou: tentar de novo não muda o resultado.
             registro["erro"] = f"{type(erro).__name__}: {erro}"
             return pd.DataFrame(), registro
-        except requests.RequestException as erro:
-            # Timeout, conexão recusada e erro HTTP costumam ser passageiros. Só falhas da
-            # requisição de contagem chegam aqui. Erro 429 ou 5xx que persiste na contagem faz
-            # o raspe devolver a busca vazia, e a falha de uma página depois da contagem faz o
-            # raspe seguir sem ela; nos dois casos o erro aparece no log, que o nível WARNING
-            # mantém na tela.
+        except (requests.RequestException, raspe.ScraperError) as erro:
+            # Timeout, conexão recusada, erro HTTP e erro 429 ou 5xx que persiste costumam ser
+            # passageiros. Só falhas da requisição de contagem chegam aqui. A falha de uma página
+            # depois da contagem faz o raspe seguir sem ela; o erro aparece no log, que o nível
+            # WARNING mantém na tela.
             registro["erro"] = f"{type(erro).__name__}: {erro}"
             if tentativa < TENTATIVAS:
                 print(f"  Falha na tentativa {tentativa} ({type(erro).__name__}); nova tentativa em {espera} s.")

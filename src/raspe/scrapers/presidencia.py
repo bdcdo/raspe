@@ -68,26 +68,17 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
         r0.raise_for_status()
 
         r0s = self.soup_it(r0.content)
-        num_text = '0'
-        if r0s:
-            h4_tag = r0s.find('h4')
-            if h4_tag:
-                num_text = h4_tag.text
-                self.logger.debug(f"Found h4 text: '{num_text}'")
+        h4_tag = r0s.find('h4')
+        num_text = h4_tag.text if h4_tag else ''
+        self.logger.debug(f"Found h4 text: '{num_text}'")
 
-        num = 0
-        # Pattern specifically for "1.006 resultados encontrados" (handling thousands separator)
-        match = re.search(r'([\d.]+)\s+resultados?\s+encontrados?', num_text, re.IGNORECASE)
-        if match:
-            # Remove dots used as thousands separators
-            num_str = match.group(1).replace('.', '')
-            num = int(num_str)
-        else:
-            # Fallback to first number (with thousands separator handling)
-            match = re.search(r'[\d.]+', num_text)
-            if match:
-                num_str = match.group(0).replace('.', '')
-                num = int(num_str)
+        # "1.006 resultados encontrados"; na falta, o primeiro número do h4.
+        # O ponto é separador de milhar.
+        match = (re.search(r'([\d.]+)\s+resultados?\s+encontrados?', num_text, re.IGNORECASE)
+                 or re.search(r'(\d[\d.]*)', num_text))
+        if not match:
+            return self._confirmar_busca_vazia(r0s)
+        num = int(match.group(1).replace('.', ''))
 
         self.logger.debug(f"Extracted number of results: {num}")
 

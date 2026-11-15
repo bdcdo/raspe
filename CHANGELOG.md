@@ -50,6 +50,11 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
   (paralelização, cache, uso de `old_page_name`).
+- Corrigido `raspar()` devolvendo `DataFrame` vazio quando a requisição inicial esbarra em 429 ou 5xx
+  persistentes: agora levanta `RateLimitError` ou `APIError`.
+- Corrigidos os raspadores da Presidência, do Senado e da CAPES, que tratavam página de manutenção ou de
+  verificação anti-robô como busca sem resultados: agora levantam `ScraperError`.
+- Corrigida a contagem de resultados do Senado acima de 999, que o separador de milhar truncava ("8.950" virava 8).
 
 ## [0.1.0] - 2025-05-15
 

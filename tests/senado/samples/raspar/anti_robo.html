@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width">
+<title>Verificação de segurança — Senado Federal</title>
+<style>
+  * { box-sizing: border-box; }
+  body { background: #f1f1f1; color: #222; margin: 0; padding: 0; min-height: 100vh; font-family: Arial, Helvetica, sans-serif; }
+
+  .sf-header { background: #00315c; padding: 16px 24px; }
+  .sf-header svg { display: block; height: 23px; width: auto; }
+  .sf-stripe-green { height: 4px; width: 100%; background: #00824a; }
+  .sf-stripe-yellow { height: 4px; width: 100%; background: #fae042; }
+
+  main.sf-main { min-height: calc(100vh - 31px - 46px); display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+
+  #progress {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    padding: 40px 36px;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+  }
+
+  .sf-state { display: none; flex-direction: column; align-items: center; gap: 22px; }
+  .sf-state.active { display: flex; }
+
+  .sf-spinner { width: 64px; height: 64px; border-radius: 50%; border: 4px solid #cef1fc; border-top-color: #0095da; animation: spin 1.1s linear infinite; }
+  .sf-check { width: 64px; height: 64px; border-radius: 50%; background: #00824a; display: flex; align-items: center; justify-content: center; }
+  .sf-error-icon { width: 64px; height: 64px; border-radius: 50%; background: #cf4840; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 30px; font-weight: 700; }
+
+  .sf-title { font-size: 20px; font-weight: 600; color: #00315c; }
+  .sf-sub { font-size: 15px; color: #666; line-height: 1.5; }
+  .sf-error .sf-title { color: #ad443d; }
+
+  @keyframes spin {
+    to { transform:rotate(360deg); }
+  }
+
+  .sf-footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 12px; color: #999; padding: 14px 0; border-top: 1px solid #e5e5e5; background: #fff; }
+
+  iframe { display: none; }
+</style>
+
+<form method="post" target="post" action="/_challenge" name="challenge">
+  <input type="hidden" name="ip" value="203.0.113.10">
+  <input type="hidden" name="ts" value="1794707774">
+  <input type="hidden" name="diff" value="3">
+  <input type="hidden" name="tries" value="">
+</form>
+
+<header class="sf-header">
+  <svg xmlns="http://www.w3.org/2000/svg" width="168.462" height="22.776"><defs><clipPath id="a"><path d="M0 0h608.93v608.93H0V0z"></path></clipPath></defs><g fill="#fff"><path fill-rule="evenodd" d="M168.463 22.776H0V0h168.463zm-1.055-21.72h-20.666V21.72h20.666zm-21.69 20.664H1.054V1.054h144.662zm19.018-5.407l-1.367-.005c-5.877-4.272-9.567-4.272-14.244 0-.793-.002-2.384 0-2.384 0v1.76h20.666v-1.76h-.708V9.67h.708v-.43l-.707-.002v-.325h.708v-.23h-.707V2.515h-1.964"></path><path d="M26.016 7.947c-.46-.52-1.177-.825-2.037-.825-1.287 0-2.358.836-2.358 1.944 0 1.166.765 1.673 1.45 2.203.67.494 1.908 1.166 1.908 2.202 0 .92-.624 1.355-1.438 1.355-.777 0-1.307-.378-1.79-.72l-.507.685c.588.576 1.53.86 2.32.86 1.32 0 2.557-.85 2.557-2.156 0-1.06-.66-1.815-1.79-2.64-1.06-.765-1.567-1.2-1.567-1.79 0-.635.46-1.12 1.283-1.12.495 0 1.025.295 1.427.59l.54-.59zm6.61-.684h-4.064v8.247h4.57l.002-.824h-3.428v-3.112h2.862v-.823h-2.862V8.09h2.92v-.825zm34.29 8.39c2.544 0 4.123-1.946 4.123-4.407-.002-2.31-1.745-4.124-4.125-4.124s-4.123 1.815-4.123 4.124c0 2.46 1.578 4.407 4.123 4.407m0-.826c-2.133 0-2.863-1.968-2.863-3.58 0-1.545.825-3.3 2.863-3.3 2.037 0 2.862 1.755 2.862 3.3 0 1.612-.73 3.58-2.862 3.58M53.888 7.263v8.246h2.452c2.92 0 4.665-1.638 4.665-4.37 0-1.98-1.155-3.877-4.477-3.877h-2.64zm1.144.825h1.52c2.166 0 3.19 1.19 3.19 3.028.002 2.415-1.117 3.57-3.437 3.57h-1.273V8.088zm-6.99-.825l-3.36 8.246h1.11l.88-2.427h3.148l.847 2.426h1.32l-3.075-8.247h-.87zm-1.05 4.995c.448-1.142.884-2.285 1.308-3.77h.023c.413 1.485.813 2.628 1.225 3.77h-2.556zm-4.527-4.995h-.943v6.574h-.024c-.553-.824-3.593-4.43-5.407-6.574h-.847v8.247h.943V8.947h.024c.493.72 3.568 4.418 5.36 6.56l.895.002V7.262zm38.177 0h-4.064v8.246h1.143v-3.463h2.863v-.825H77.72V8.088h2.922v-.825zm9.108 0v8.246h2.45c2.922 0 4.666-1.638 4.666-4.37 0-1.98-1.155-3.877-4.478-3.877H89.75zm1.143.825h1.52c2.167 0 3.192 1.19 3.192 3.028 0 2.415-1.12 3.57-3.44 3.57h-1.272V8.088zm-3.76-.825H83.07v8.246h4.57v-.824h-3.428v-3.112h2.863v-.823h-2.863V8.09h2.92v-.825zm15.988 0h-4.063v8.246h4.57v-.824H100.2v-3.112h2.862v-.823H100.2V8.09h2.92v-.825zm12.627 0l-3.36 8.246h1.11l.884-2.427h3.146l.85 2.426h1.32l-3.076-8.247h-.873zm-1.047 4.995c.447-1.142.883-2.285 1.307-3.77h.024c.412 1.485.813 2.628 1.226 3.77H114.7zm-8.874 3.25l1.142.002v-3.417h1.214l1.908 3.56 1.155-.355-2.05-3.51c.788-.507 1.378-1.19 1.378-2.405 0-1.425-1.048-2.12-2.39-2.12h-2.357v8.246zm1.142-7.42h.978c.766 0 1.402.39 1.402 1.403 0 .696-.27 1.78-1.732 1.78h-.648V8.087zm14.497 7.421h4.57v-.824h-3.428V7.263h-1.142v8.246z"></path><g clip-path="url(#a)" transform="matrix(1.25 0 0 -1.25 -291.006 -329.982)"><path stroke="#fff" stroke-width="1.25" d="M0 0h-15m593.93 0h15M0-566.93h-15m593.93 0h15M6 6v15m0-593.93v-15M572.93 6v15m0-593.93v-15"></path><path stroke="#000" stroke-width=".25" d="M0 0h-15m593.93 0h15M0-566.93h-15m593.93 0h15M6 6v15m0-593.93v-15M572.93 6v15m0-593.93v-15"></path></g></g></svg>
+</header>
+<div class="sf-stripe-green"></div>
+<div class="sf-stripe-yellow"></div>
+
+<main class="sf-main">
+  <div id="progress">
+
+    <div id="state-checking" class="sf-state active">
+      <div class="sf-spinner"></div>
+      <div class="sf-title">Verificando sua conexão</div>
+      <div class="sf-sub" id="checkingMsg">Estamos confirmando que este acesso é legítimo antes de liberar o conteúdo. Isso leva apenas alguns segundos.</div>
+    </div>
+
+    <div id="state-success" class="sf-state">
+      <div class="sf-check">
+        <svg width="30" height="24" viewBox="0 0 30 24" fill="none">
+          <path d="M2 13l8 8L28 3" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </div>
+      <div class="sf-title">Conexão verificada</div>
+      <div class="sf-sub" id="successMsg">Tudo certo. Você será redirecionado automaticamente em instantes.</div>
+    </div>
+
+    <div id="state-error" class="sf-state sf-error">
+      <div class="sf-error-icon">!</div>
+      <div class="sf-title">Não foi possível verificar</div>
+      <div class="sf-sub" id="errorMsg">Tente novamente ou use outro navegador.</div>
+    </div>
+
+  </div>
+</main>
+
+<iframe srcdoc="" src="about:blank" name="post"></iframe>
+
+<script>
+  "use strict";
+
+  function showState(name, message) {
+    document.querySelectorAll(".sf-state").forEach(el => el.classList.remove("active"));
+    let el = document.getElementById("state-" + name);
+    el.classList.add("active");
+    if (message !== undefined) {
+      let msgEl = el.querySelector(".sf-sub");
+      if (msgEl) msgEl.innerText = message;
+    }
+  }
+
+  async function challenge(diff, ip, ts) {
+    let te = new TextEncoder();
+    let tries = 0;
+
+    for (; tries < 10000000; tries++) {
+      let input = [ip, location.hostname, ts, tries].join(";");
+      let hash = await crypto.subtle.digest("SHA-256", te.encode(input));
+      let y = new Uint8Array(hash);
+
+      let i = 0;
+      while (i < diff / 2) {
+        if (y[i] > 0x0F) break;
+        if ((i * 2) + 1 >= diff) return tries;
+        if (y[i++] > 0) break;
+        if ((i * 2) >= diff) return tries;
+      }
+
+      if (tries % 1000 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+  }
+
+  async function startChallenge(form) {
+    showState("checking");
+
+    if (!("subtle" in window.crypto)) {
+      if (location.protocol !== "https:") {
+        showState("error", "Sem suporte a WebCrypto. É necessário acessar via conexão HTTPS.");
+      } else {
+        showState("error", "Seu navegador não tem suporte a WebCrypto, necessário para concluir a verificação.");
+      }
+      return;
+    }
+
+    let backoff = 0;
+
+    let tryOnce = () => {
+      if (backoff > 8) {
+        showState("error", "Falha ao enviar após várias tentativas. Tente recarregar a página.");
+        return;
+      }
+
+      setTimeout(async () => submitAnswer(form), 1000 * (Math.pow(2, backoff++) - 1));
+    };
+
+    form.addEventListener("error", tryOnce);
+
+    let iframe = document.querySelector("iframe");
+    iframe.addEventListener("load", () => {
+      location.hash.length ? location.reload() : location.replace(location);
+    });
+
+    tryOnce();
+  }
+
+  async function submitAnswer(form) {
+    let tries = await challenge(
+      parseInt(form.diff.value, 10),
+      form.ip.value,
+      form.ts.value
+    );
+
+    if (tries === undefined) {
+      showState("error", "Não foi possível calcular o desafio. Tente novamente ou use outro navegador.");
+      return;
+    }
+
+    form.tries.value = tries;
+
+    showState("success");
+
+    form.submit();
+  }
+
+  window.addEventListener("load", () => startChallenge(document.forms.challenge));
+</script>
+
+<noscript>
+  JavaScript is required to use this page.
+</noscript>
+
+<footer class="sf-footer">Senado Federal</footer>

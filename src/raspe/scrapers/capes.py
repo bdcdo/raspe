@@ -86,12 +86,13 @@ class ScraperCapes(BaseScraper, HTMLScraper):
 
         nav = soup.find('nav', class_='br-pagination')
         if not nav:
-            return 0
+            # A busca sem resultados não traz a paginação, só o aviso.
+            return self._confirmar_busca_vazia(soup)
 
         total_attr = str(nav.get('data-total', '') or '')
         total_digits = total_attr.replace('.', '').replace(',', '')
         if not total_digits:
-            return 0
+            return self._confirmar_busca_vazia(soup)
 
         total = int(total_digits)
         if total == 0:

@@ -5,6 +5,8 @@ manualmente replicando a estrutura HTML observada nas respostas da
 pesquisa de legislação da Presidência da República (POST AJAX para
 ``resultado_pesquisa_legislacao.php``). O sample no_results.html simula a
 ausência de ``div.card-body.p-0`` que o parser usa para iterar.
+O sample manutencao.html é real: a resposta (HTTP 200) que o servidor deu
+em 2026-11-14 com o sistema fora do ar.
 
 O scraper usa ``session.verify=False`` (cadeia SSL incompleta no servidor
 real) — testamos apenas essa configuração isoladamente; o ``responses``
@@ -15,6 +17,7 @@ import pytest
 import responses
 from responses import matchers, registries
 
+from raspe.exceptions import ScraperError
 from raspe.scrapers.presidencia import ScraperPresidencia
 from tests._helpers import load_sample_bytes
 
@@ -96,6 +99,20 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
+
+    @responses.activate
+    def test_pagina_de_manutencao_levanta_erro(self, scraper, mocker):
+        """Página "Sistema indisponível" (HTTP 200) não pode virar 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.POST, API_URL,
+            body=load_sample_bytes("presidencia", "raspar/manutencao.html"),
+            status=200,
+            content_type="text/html; charset=utf-8",
+        )
+
+        with pytest.raises(ScraperError, match="indispon"):
+            scraper.raspar(pesquisa="meio ambiente")
 
     @responses.activate
     def test_payload_post_formato_form(self, scraper, mocker):

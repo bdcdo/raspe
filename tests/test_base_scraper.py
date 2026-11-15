@@ -523,8 +523,8 @@ class TestSetR:
 
 class TestGetNPags:
     @responses.activate(registry=registries.OrderedRegistry)
-    def test_erro_persistente_retorna_zero(self, mocker):
-        """Quando _request_with_retry levanta APIError, _get_n_pags devolve 0."""
+    def test_erro_persistente_levanta_api_error(self, mocker):
+        """5xx persistente na requisição inicial falha alto, em vez de virar 0 páginas."""
         mocker.patch("time.sleep")
         for _ in range(3):
             responses.add(
@@ -533,11 +533,12 @@ class TestGetNPags:
             )
 
         scraper = _DummyHTTPScraper()
-        assert scraper._get_n_pags({"q": "x"}) == 0
+        with pytest.raises(APIError):
+            scraper.raspar(termo="x")
 
     @responses.activate(registry=registries.OrderedRegistry)
-    def test_rate_limit_persistente_retorna_zero(self, mocker):
-        """Rate limit que esgota retries também é absorvido por _get_n_pags."""
+    def test_rate_limit_persistente_levanta_rate_limit_error(self, mocker):
+        """429 persistente na requisição inicial falha alto, em vez de virar 0 páginas."""
         mocker.patch("time.sleep")
         for _ in range(3):
             responses.add(
@@ -546,4 +547,5 @@ class TestGetNPags:
             )
 
         scraper = _DummyHTTPScraper()
-        assert scraper._get_n_pags({"q": "x"}) == 0
+        with pytest.raises(RateLimitError):
+            scraper.raspar(termo="x")
