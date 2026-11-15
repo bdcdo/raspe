@@ -298,3 +298,37 @@ class TestInstituicaoERevista:
 
         df = scraper.raspar(pesquisa="natjus", paginas=range(1, 2)).set_index("id")
         assert (df.at[id_card, "instituicao"], df.at[id_card, "revista"]) == (instituicao, revista)
+
+    @pytest.mark.parametrize(("amostra", "id_card", "trecho_html", "revista"), [
+        pytest.param(
+            "single_page", "W7171691214", "<b>| Revista de Epidemiologia e <b>Saúde</b>",
+            "Revista de Epidemiologia e Saúde Pública - RESP",
+            id="sem-instituicao",
+        ),
+        pytest.param(
+            "page_01", "W3032714479", "<b>| Revista Derecho y Salud | Universidad Blas Pascal </b>",
+            "Revista Derecho y Salud | Universidad Blas Pascal",
+            id="sem-instituicao-com-barra-no-nome-da-revista",
+        ),
+    ])
+    @responses.activate
+    def test_card_sem_instituicao(self, scraper, mocker, amostra, id_card, trecho_html, revista):
+        """Sem instituição, o card traz ano e revista; o ``|`` inicial marca a revista."""
+        mocker.patch("time.sleep")
+        html = load_sample("capes", f"raspar/{amostra}.html")
+        assert trecho_html in html, f"Trecho {trecho_html!r} sumiu do sample; recapturar e rever o caso."
+        _registrar("natjus", html.encode("utf-8"))
+
+        df = scraper.raspar(pesquisa="natjus", paginas=range(1, 2)).set_index("id")
+        assert (df.at[id_card, "instituicao"], df.at[id_card, "revista"]) == ("", revista)
+
+    @responses.activate
+    def test_nenhum_card_fica_sem_revista(self, scraper, mocker):
+        """Todo card do sample tem revista, e nenhuma vaza para ``instituicao``."""
+        mocker.patch("time.sleep")
+        _registrar("natjus", "single_page")
+
+        df = scraper.raspar(pesquisa="natjus", paginas=range(1, 2))
+        assert len(df) == 17
+        assert (df["revista"] != "").all()
+        assert not df["instituicao"].str.startswith("|").any()
