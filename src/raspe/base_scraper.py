@@ -152,9 +152,7 @@ class BaseScraper(AbstractScraper):
                 return pd.DataFrame(columns=[*self.colunas, 'termo_busca'])
             # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
             # vazio (colunas object) com os demais alargaria os tipos das colunas.
-            result = pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
-
-            return result
+            return pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
         # Fallback para busca única
         else:
             path_result = self._download_data(**kwargs)

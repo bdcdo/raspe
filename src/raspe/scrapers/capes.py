@@ -113,8 +113,6 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         return (total + per_page - 1) // per_page
 
     def _parse_page(self, path: str) -> pd.DataFrame:
-        columns = self.colunas
-
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 html_content = f.read()
@@ -130,11 +128,11 @@ class ScraperCapes(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Erro parseando card em {path}: {e}")
                     continue
 
-            return pd.DataFrame(registros, columns=columns)
+            return pd.DataFrame(registros, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro parseando página {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
 
     def _parse_card(self, card) -> dict[str, Any]:
         out: dict[str, Any] = {}

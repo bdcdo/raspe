@@ -92,8 +92,6 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = self.colunas
-
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
@@ -104,11 +102,11 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
             card_body = soup.find('div', class_='card-body p-0')
 
             if not card_body:
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             container = card_body.find('div')
             if not container:
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             itens = container.find_all('div')
 
@@ -131,8 +129,8 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Error parsing item in {path}: {e}")
                     continue
 
-            return pd.DataFrame(lista_infos, columns=columns)
+            return pd.DataFrame(lista_infos, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Error parsing page {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)

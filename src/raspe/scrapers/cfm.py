@@ -177,8 +177,6 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         Returns:
             pd.DataFrame: DataFrame com as normas extraídas
         """
-        columns = self.colunas
-
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 html_content = file.read()
@@ -188,13 +186,13 @@ class ScraperCFM(BaseScraper, HTMLScraper):
 
             if not results_div:
                 self.logger.debug(f"Div 'resultsNormas' não encontrada em {path}")
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             articles = results_div.find_all('article')
 
             if not articles:
                 self.logger.debug(f"Nenhum artigo encontrado em {path}")
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             parsed_articles = []
 
@@ -207,11 +205,11 @@ class ScraperCFM(BaseScraper, HTMLScraper):
                     self.logger.warning(f"Erro ao processar artigo em {path}: {e}")
                     continue
 
-            return pd.DataFrame(parsed_articles, columns=columns)
+            return pd.DataFrame(parsed_articles, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro ao analisar página {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
 
     def _parse_article(self, article) -> dict[str, str] | None:
         """Extrai informações de um artigo individual.

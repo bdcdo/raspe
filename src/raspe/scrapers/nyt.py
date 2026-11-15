@@ -234,8 +234,6 @@ class ScraperNYT(BaseScraper):
             DataFrame com as colunas: titulo, url, data_publicacao, secao,
             desk, tipo, resumo, autor, palavras, imagem_url.
         """
-        columns = self.colunas
-
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -243,7 +241,7 @@ class ScraperNYT(BaseScraper):
             docs = data.get('response', {}).get('docs', [])
 
             if not docs:
-                return pd.DataFrame(columns=columns)
+                return pd.DataFrame(columns=self.colunas)
 
             articles = []
             for doc in docs:
@@ -282,8 +280,8 @@ class ScraperNYT(BaseScraper):
                 }
                 articles.append(article)
 
-            return pd.DataFrame(articles, columns=columns)
+            return pd.DataFrame(articles, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Erro ao processar {path}: {e}")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=self.colunas)
