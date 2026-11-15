@@ -149,7 +149,7 @@ class ScraperIpea(BaseScraper, HTMLScraper):
                     titulo = anchor.text.strip()
                     autores = autores_div.text.strip() if autores_div else ''
                     data = p_element.text.strip() if p_element else ''
-                    assuntos = assuntos_div.text.strip() if assuntos_div else ''
+                    assuntos = self._limpar_assuntos(assuntos_div) if assuntos_div else ''
 
                     lista_infos.append([titulo, link, autores, data, assuntos])
                 except Exception as e:
@@ -163,6 +163,17 @@ class ScraperIpea(BaseScraper, HTMLScraper):
             self.logger.error(f"Error parsing page {path}: {e}")
             # Return empty pandas DataFrame
             return pd.DataFrame(columns=self.colunas)
+
+    @staticmethod
+    def _limpar_assuntos(assuntos_div) -> str:
+        """Junta os temas do card, sem o rótulo "Temas:" e sem repetir tema.
+
+        O portal põe cada tema duas vezes no ``div.assuntos``, ora como link, ora
+        como texto solto, e separa os temas com ``<span>, </span>``.
+        """
+        # Os <span> são o rótulo "Temas:" e as vírgulas; os temas são o resto do texto.
+        temas = (texto.strip() for texto in assuntos_div.find_all(string=True) if texto.parent.name != 'span')
+        return ', '.join(dict.fromkeys(tema for tema in temas if tema))
 
 
 # Alias mantido por retrocompatibilidade: a classe foi renomeada de

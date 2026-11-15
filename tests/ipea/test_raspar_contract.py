@@ -18,6 +18,8 @@ O ``div.autores`` vem vazio no HTML do site, por isso a coluna ``autores``
 sai vazia nos samples.
 """
 
+from pathlib import Path
+
 import pytest
 import responses
 from responses import matchers, registries
@@ -176,6 +178,20 @@ class TestRasparContract:
         )
 
         scraper.raspar(pesquisa="telemedicina")
+
+
+class TestParsePage:
+    def test_assuntos_sem_rotulo_quebras_nem_repeticao(self, scraper):
+        """O ``div.assuntos`` traz "Temas:", quebras de linha e cada tema duas vezes.
+
+        ``assuntos`` fica com cada tema uma vez, na ordem em que aparece,
+        separados por vírgula.
+        """
+        caminho = Path(__file__).parent / "samples" / "raspar" / "single_page.html"
+        df = scraper._parse_page(str(caminho))
+        assert df["assuntos"].tolist() == [
+            "Ciência. Pesquisa. Metodologia. Análise Estatística, Economia da Saúde, Saúde"
+        ]
 
 
 class TestDownloadPathDescontinuado:

@@ -116,17 +116,22 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
                 if i % 2 == 1:
                     continue
                 try:
-                    links = item.find_all('a')
+                    titulo = item.select_one('h4 a')
                     paragraphs = item.find_all('p')
 
-                    if len(links) >= 2 and len(paragraphs) >= 2:
-                        nome = links[0].text.strip()
-                        link = links[0]['href']
-                        ficha = links[1]['href']
+                    if titulo and len(paragraphs) >= 2:
+                        link = titulo['href']
+                        # Selos como "Veto Parcial" vêm num <span class="badge"> dentro do link do nome.
+                        rotulo = ', '.join(selo.extract().get_text(strip=True)
+                                           for selo in titulo.select('span.badge'))
+                        nome = titulo.text.strip()
+                        # A ficha é o botão "Ficha"; os outros links do card citam leis na ementa.
+                        ficha = next((a['href'] for a in item.select('a.btn')
+                                      if a.get_text(strip=True) == 'Ficha'), '')
                         revogacao = paragraphs[0].text
                         descricao = paragraphs[1].text
 
-                        lista_infos.append([nome, link, ficha, revogacao, descricao])
+                        lista_infos.append([nome, rotulo, link, ficha, revogacao, descricao])
                 except Exception as e:
                     self.logger.warning(f"Error parsing item in {path}: {e}")
                     continue

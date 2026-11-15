@@ -20,6 +20,10 @@ real) — testamos apenas essa configuração isoladamente; o ``responses``
 mock não verifica TLS.
 """
 
+import re
+from pathlib import Path
+
+import pandas as pd
 import pytest
 import responses
 from responses import matchers, registries
@@ -36,6 +40,7 @@ API_URL = (
 # Igualdade, não subconjunto: com o wiring do schema, raspar() devolve
 # exatamente as colunas de OutputPresidencia, na ordem de colunas().
 COLUNAS = OutputPresidencia.colunas()
+SAMPLES = Path(__file__).parent / "samples" / "raspar"
 
 
 @pytest.fixture
@@ -189,6 +194,43 @@ class TestRasparContract:
         )
 
         scraper.raspar(pesquisa="fenilcetonúria")
+
+
+class TestParsePage:
+    """Campos de cada ato, lidos dos samples reais da busca "telemedicina"."""
+
+    @pytest.fixture
+    def atos(self, scraper):
+        return pd.concat(
+            [scraper._parse_page(str(SAMPLES / sample)) for sample in ("page_01.html", "page_02.html")],
+            ignore_index=True,
+        )
+
+    def test_ficha_e_a_do_proprio_ato(self, atos):
+        """A ficha vem do botão "Ficha", não do primeiro link da ementa.
+
+        Em 9 dos 10 atos de ``page_01.html`` a ementa cita outra lei com link
+        para a ficha dela. O número na ficha tem de ser o do nome do ato.
+        """
+        assert len(atos) == 19
+        for nome, ficha in zip(atos["nome"], atos["ficha"]):
+            numero = re.search(r"nº ([\d.]+)", nome).group(1).replace(".", "")
+            assert f"&numero={numero}&" in ficha, (nome, ficha)
+
+    def test_ficha_do_primeiro_ato(self, atos):
+        assert atos["ficha"][0] == (
+            "https://legislacao.presidencia.gov.br/atos"
+            "?tipo=LEI&numero=15367&ano=2026&data=30/03/2026&ato=ac7g3Z610djpWTbc2"
+        )
+
+    def test_rotulo_veto_parcial_sai_do_nome(self, atos):
+        """O selo "Veto Parcial" do portal vai para ``rotulo``, e ``nome`` fica só com o ato."""
+        assert not atos["nome"].str.contains("Veto").any()
+        lei = atos[atos["nome"] == "Lei nº 14.724 de 14 de novembro de 2023"]
+        assert lei["rotulo"].tolist() == ["Veto Parcial"]
+        # 1 ato com o selo em page_01 e 6 em page_02; os outros 12 vêm sem rótulo.
+        assert (atos["rotulo"] == "Veto Parcial").sum() == 7
+        assert (atos["rotulo"] == "").sum() == 12
 
 
 class TestConfiguracao:

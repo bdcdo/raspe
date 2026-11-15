@@ -16,12 +16,16 @@ class OutputPresidencia(OutputBase):
         description="Nome do ato, com tipo, número e ano.",
         examples=["Decreto nº 12.725 de 18 de novembro de 2025"],
     )
+    rotulo: str = Field(
+        description='Selo que o portal põe ao lado do nome, como "Veto Parcial"; vazio quando não há.',
+        examples=["Veto Parcial"],
+    )
     link: str = Field(
         description="Endereço do texto do ato, como o portal o devolve.",
         examples=["https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12725.htm"],
     )
     ficha: str = Field(
-        description="Endereço da ficha do ato no portal.",
+        description='Endereço da ficha do ato no portal, do botão "Ficha"; vazio quando o card não o traz.',
         examples=[
             "https://legislacao.presidencia.gov.br/atos"
             "?tipo=DEC&numero=12725&ano=2025&data=18/11/2025&ato=499cXVU9UNZpWT45a"
