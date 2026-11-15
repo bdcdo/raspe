@@ -11,7 +11,7 @@ O gráfico precisa do matplotlib (pip install matplotlib). Sem ele, o script sal
 tabelas e avisa que pulou o gráfico.
 
 Requisições: uma para contar os resultados e uma por página, até 21. Em outubro de 2026 a
-busca tinha 18 páginas de 30 trabalhos, e a coleta levou cerca de um minuto.
+busca tinha 18 páginas de 20 trabalhos, e a coleta levou cerca de um minuto.
 """
 
 import logging
@@ -127,9 +127,9 @@ def main() -> None:
     print(f"Sem ano legível: {publicacoes['ano'].isna().sum()}.\n")
     print(por_ano.to_string())
 
-    # A CAPES devolve 30 trabalhos por página (outubro de 2026). Se todas as páginas do teto
+    # A CAPES devolve 20 trabalhos por página (outubro de 2026). Se todas as páginas do teto
     # vieram cheias, é provável que a busca tenha mais páginas do que o teto deixou coletar.
-    if len(publicacoes) >= 30 * len(PAGINAS):
+    if len(publicacoes) >= 20 * len(PAGINAS):
         print(f"\nAviso: a coleta chegou ao teto de {len(PAGINAS)} páginas e a série pode estar incompleta.")
 
     PASTA_DADOS.mkdir(exist_ok=True)

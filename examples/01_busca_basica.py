@@ -32,12 +32,18 @@ def main() -> None:
     """Executa a busca, mostra os primeiros resultados e salva os arquivos."""
     raspador = raspe.presidencia()
     # Por padrão o raspador imprime cada passo da coleta e guarda as páginas baixadas numa
-    # pasta temporária. As duas linhas abaixo deixam na tela só avisos e erros e apagam a
-    # pasta temporária ao fim da busca.
+    # pasta temporária. As duas linhas abaixo deixam na tela só avisos e erros e apagam as
+    # páginas baixadas ao fim da busca.
     raspador.logger.setLevel(logging.WARNING)
     raspador.debug = False
 
     normas = raspador.raspar(pesquisa=TERMO, paginas=PAGINAS)
+
+    # Quando o site está fora do ar, ele responde com uma página de aviso e o raspador volta
+    # vazio. Parar aqui evita um erro confuso adiante e não sobrescreve a tabela salva.
+    if normas.empty:
+        raise SystemExit(f"Nenhuma norma encontrada para {TERMO}. Se o termo está certo, o site pode "
+                         "estar fora do ar; tente de novo mais tarde.")
 
     print(f"\n{len(normas)} normas encontradas para {TERMO}.\n")
     print(normas[["nome", "revogacao"]].head(10).to_string())
