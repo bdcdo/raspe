@@ -110,15 +110,19 @@ class TestAvisoDePaginaSemLinhas:
         assert aviso.filename == __file__
 
 
+def _raspar_dentro_de_um_loop(raspador: _DummyPlaywright, **kwargs) -> pd.DataFrame:
+    """Chama ``raspar()`` como numa célula do Jupyter ou do Colab, com um loop do asyncio já rodando."""
+
+    async def _celula_do_notebook() -> pd.DataFrame:
+        return raspador.raspar(**kwargs)
+
+    return asyncio.run(_celula_do_notebook())
+
+
 class TestRasparComLoopAtivo:
     def test_funciona_dentro_de_um_loop_do_asyncio(self, mocker):
-        """No Jupyter e no Colab já há um loop rodando na thread de quem chama ``raspar()``."""
         raspador = _raspador(mocker)
-
-        async def _celula_do_notebook() -> pd.DataFrame:
-            return raspador.raspar(assunto="x")
-
-        df = asyncio.run(_celula_do_notebook())
+        df = _raspar_dentro_de_um_loop(raspador, assunto="x")
         assert df.empty
         assert raspador.buscas == [{"assunto": "x"}]
 
@@ -126,10 +130,6 @@ class TestRasparComLoopAtivo:
         """O erro levantado na thread do navegador sobe em ``raspar()``, e o contexto do navegador fecha."""
         raspador = _raspador(mocker)
         raspador.pagina_falsa.goto.side_effect = TimeoutError("portal fora do ar")
-
-        async def _celula_do_notebook() -> pd.DataFrame:
-            return raspador.raspar(assunto="x")
-
         with pytest.raises(TimeoutError, match="portal fora do ar"):
-            asyncio.run(_celula_do_notebook())
+            _raspar_dentro_de_um_loop(raspador, assunto="x")
         assert raspador._page is None
