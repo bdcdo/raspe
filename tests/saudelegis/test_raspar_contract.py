@@ -7,6 +7,7 @@ de páginas, e as seguintes, as páginas salvas.
 """
 
 import asyncio
+import sys
 
 import pytest
 
@@ -29,7 +30,11 @@ def _raspador(mocker, *htmls: str) -> ScraperSaudeLegis:
 
 class TestRaspar:
     def test_typical_le_as_duas_paginas(self, mocker):
-        """O rodapé "Mostrando 1 a 10 de 14 registros" dá duas páginas; a segunda vem pelo link numerado."""
+        """O rodapé "Mostrando 1 a 10 de 14 registros" dá duas páginas; a segunda vem pelo link numerado.
+
+        Roda sem o Playwright, como com só o extra ``dev``: o navegador falso não o importa.
+        """
+        mocker.patch.dict(sys.modules, dict.fromkeys(["playwright", "playwright.async_api", "playwright_stealth"]))
         raspador = _raspador(mocker, _sample("page_01.html"), _sample("page_01.html"), _sample("page_02.html"))
         df = raspador.raspar(pesquisa="doença rara")
         assert len(df) == 14
