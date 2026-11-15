@@ -8,14 +8,13 @@ Cloudflare são anuladas. Assim dá para exercitar o fluxo de ``raspar``
 
 import asyncio
 import os
-from contextlib import asynccontextmanager
 
 import pandas as pd
 import pytest
 
 from raspe.exceptions import ScraperError
 from raspe.playwright_scraper import PlaywrightScraper
-from tests._helpers import load_sample
+from tests._helpers import load_sample, navegador_falso
 
 
 class _DummyPlaywright(PlaywrightScraper):
@@ -48,20 +47,8 @@ def _raspador(
     r = classe(debug=debug)
     if pasta is not None:
         r.download_path = str(pasta)
-    r.page_load_wait = r.between_pages_wait = 0
-    r.pagina_falsa = mocker.AsyncMock()
+    navegador_falso(mocker, r)
     r.pagina_falsa.content.return_value = "<html><body>Nenhum resultado encontrado</body></html>"
-
-    @asynccontextmanager
-    async def _contexto_falso():
-        r._page = r.pagina_falsa
-        try:
-            yield r._page
-        finally:
-            r._page = None
-
-    mocker.patch.object(r, "_browser_context", _contexto_falso)
-    mocker.patch.object(r, "_aguardar_cloudflare", mocker.AsyncMock())
     return r
 
 

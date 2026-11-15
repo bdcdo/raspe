@@ -11,11 +11,19 @@ Exemplo:
 """
 
 import asyncio
+import math
+import re
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
 from raspe.schemas.saudelegis import InputSaudeLegis, OutputSaudeLegis
+
+if TYPE_CHECKING:
+    from bs4 import BeautifulSoup
+
+_CONTAGEM = re.compile(r'Mostrando\s+\d+\s+a\s+(\d+)\s+de\s+(\d+)\s+registro')
 
 
 class ScraperSaudeLegis(PlaywrightScraper):
@@ -83,47 +91,51 @@ class ScraperSaudeLegis(PlaywrightScraper):
 
         # Clica no botão de busca
         self.logger.debug("Clicando no botão de busca...")
-        selector_botao = 'input[type="submit"][value="Buscar"], input.ui-button'
+        selector_botao = 'input[type="submit"][value="Consultar"]'
         await self._clicar_elemento(selector_botao)
 
         self.logger.info("Busca executada")
 
     async def _encontrar_total_paginas(self) -> int:
-        """Determina o número total de páginas de resultados.
+        """Calcula o número de páginas pelo rodapé da tabela de resultados.
+
+        O rodapé diz "Mostrando 1 a 10 de 14 registros.", e os links do
+        paginador só mostram uma janela de até cinco páginas. O rodapé lido é o
+        primeiro depois da tabela ``form:grid``, porque a tabela de origens tem
+        rodapé próprio.
 
         Returns:
-            int: Número de páginas encontradas.
+            int: Número de páginas (0 se não há tabela de resultados ou contagem).
         """
-        self._ensure_playwright()
-
-        try:
-            # Procura links de paginação numérica
-            pagination_links = await self._page.query_selector_all(
-                "a[id*='form:'][id*='paginator']"
-            )
-
-            page_numbers = []
-            for link in pagination_links:
-                text = await link.text_content()
-                if text and text.strip().isdigit():
-                    page_numbers.append(int(text.strip()))
-
-            if page_numbers:
-                total = max(page_numbers)
-                self.logger.debug(f"Páginas encontradas via links: {total}")
-                return total
-
-            # Se não houver paginação, verifica se há resultados
-            table = await self._page.query_selector("#form\\:grid")
-            if table:
-                self.logger.debug("Tabela encontrada, assumindo 1 página")
-                return 1
-
+        soup = self.soup_it(await self._obter_html())
+        tabela = soup.find('table', id='form:grid')
+        rodape = tabela.find_next('div', class_='dataTables_info') if tabela else None
+        contagem = _CONTAGEM.search(rodape.get_text(' ')) if rodape else None
+        if not contagem:
             return 0
+        # Lido na primeira página, o "a 10" é o tamanho da página.
+        fim, total = (int(n) for n in contagem.groups())
+        return math.ceil(total / fim) if total else 0
 
-        except Exception as e:
-            self.logger.warning(f"Erro ao determinar páginas: {e}")
-            return 1
+    def _confirmar_busca_vazia(self, soup: "BeautifulSoup") -> int:
+        """Confirma a busca vazia sem a tabela de origens, escondida em toda página.
+
+        A tabela de origens diz "Nenhum Registro Encontrado" mesmo quando há
+        resultados, e deixaria passar como busca vazia qualquer página do portal.
+
+        Args:
+            soup: Página da resposta, já analisada.
+
+        Returns:
+            int: Sempre 0.
+
+        Raises:
+            ScraperError: Se a página não traz o aviso de busca sem resultados.
+        """
+        tabela_origens = soup.find(id='form:grid-origens')
+        if tabela_origens:
+            tabela_origens.decompose()
+        return super()._confirmar_busca_vazia(soup)
 
     async def _paginar_por_numero(self, numero: int) -> bool:
         """Navega para página específica via link numerado.
