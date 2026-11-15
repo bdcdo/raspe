@@ -203,13 +203,13 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     def _parse_page(self, path: str) -> pd.DataFrame:
         """Analisa uma página de resultados da Folha.
 
-        Extrai link, título, resumo e data de cada notícia.
+        Extrai as colunas de ``self.colunas`` de cada notícia.
 
         Args:
             path: Caminho do arquivo HTML salvo.
 
         Returns:
-            DataFrame com as colunas: link, titulo, resumo, data.
+            DataFrame com as colunas de ``self.colunas``.
         """
         try:
             with open(path, 'r', encoding='utf-8') as f:
