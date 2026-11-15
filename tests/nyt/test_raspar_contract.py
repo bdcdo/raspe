@@ -89,7 +89,7 @@ class TestRasparContract:
                 match=[matchers.query_param_matcher({**query_base, "page": page})],
             )
 
-        df = scraper.raspar(texto="politics", paginas=paginas)
+        df = scraper.raspar(pesquisa="politics", paginas=paginas)
 
         assert len(responses.calls) == 1 + len(esperado)
         docs_por_sample = {"page_01.json": 2, "page_02.json": 1}

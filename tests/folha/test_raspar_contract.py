@@ -159,15 +159,16 @@ class TestRasparContract:
             scraper.raspar(pesquisa="educação")
 
     @responses.activate
-    def test_sem_contagem_retorna_vazio(self, scraper, mocker):
-        """Sem ``div.c-search__result`` e sem o número, nenhuma página é baixada.
+    def test_sem_contagem_levanta_erro(self, scraper, mocker):
+        """Sem ``div.c-search__result`` e sem o número, a busca falha alto.
 
         Parte do sample page_01, que tem 25 notícias, e tira a classe do
         container da contagem e o número de "28 Resultados para". Sem o
         container, ``_find_n_pags`` procura "N resultado" em qualquer texto
-        da página; o número só aparecia ali, então a contagem vira 0. O
-        contrato fixa que a falta da contagem dá DataFrame vazio, sem
-        exceção, mesmo com as notícias na página.
+        da página; o número só aparecia ali, e a página não traz o aviso de
+        busca vazia. O contrato fixa que a falta da contagem levanta
+        ``ScraperError``, mesmo com as notícias na página, em vez de
+        devolver um DataFrame vazio.
         """
         mocker.patch("time.sleep")
         html = load_sample_bytes("folha", "raspar/page_01.html").decode("utf-8")
@@ -184,10 +185,10 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="Elevidys")
+        with pytest.raises(ScraperError, match="contagem de resultados"):
+            scraper.raspar(pesquisa="Elevidys")
 
-        assert df.empty
-        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        # Só a requisição inicial: nenhuma página é pedida.
         assert len(responses.calls) == 1
 
 

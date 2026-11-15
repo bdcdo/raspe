@@ -118,13 +118,14 @@ class TestRasparContract:
             scraper.raspar(pesquisa="educação")
 
     @responses.activate
-    def test_sem_div_col_clearfix_retorna_vazio(self, scraper, mocker):
-        """Sem ``div.col.clearfix``, a contagem vira 0 e nenhuma página é baixada.
+    def test_sem_div_col_clearfix_levanta_erro(self, scraper, mocker):
+        """Sem ``div.col.clearfix``, a busca falha alto e nenhuma página é baixada.
 
         Parte do sample single_page, que tem 1 publicação, e tira só a
         classe do container da contagem. ``_find_n_pags`` não tem outro
-        lugar onde procurar o número; o contrato fixa que a falta dele dá
-        DataFrame vazio, sem exceção, em vez de um parse parcial.
+        lugar onde procurar o número, e a página não traz o aviso de busca
+        vazia; o contrato fixa que a falta da contagem levanta
+        ``ScraperError`` em vez de devolver um DataFrame vazio.
         """
         mocker.patch("time.sleep")
         trecho = '<div class="col clearfix">'
@@ -141,10 +142,10 @@ class TestRasparContract:
             content_type="text/html; charset=utf-8",
         )
 
-        df = scraper.raspar(pesquisa="telemedicina")
+        with pytest.raises(ScraperError, match="contagem de resultados"):
+            scraper.raspar(pesquisa="telemedicina")
 
-        assert df.empty
-        # Só a requisição inicial: com 0 páginas, nenhuma página é pedida.
+        # Só a requisição inicial: nenhuma página é pedida.
         assert len(responses.calls) == 1
 
     @responses.activate

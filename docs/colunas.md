@@ -59,10 +59,10 @@ Schema: `OutputFolha`.
 
 | Coluna | Tipo | Descrição | Exemplo |
 | --- | --- | --- | --- |
-| `link` | texto | Endereço da notícia. | https://www1.folha.uol.com.br/cotidiano/2024/01/noticia-1.shtml |
-| `titulo` | texto | Título da notícia. | Educação pública avança em 2024 |
-| `resumo` | texto | Resumo que a busca mostra abaixo do título. | Pesquisa mostra ampliação de vagas no ensino médio em todo o país. |
-| `data` | texto | Data e hora de publicação, como a busca as mostra. | 15.jan.2024 às 10h00 |
+| `link` | texto | Endereço da notícia. | https://www1.folha.uol.com.br/equilibrioesaude/2026/08/anvisa-aprova-novo-remedio-para-distrofia-muscular-de-duchenne.shtml |
+| `titulo` | texto | Título da notícia. | Anvisa aprova novo remédio para distrofia muscular de Duchenne |
+| `resumo` | texto | Resumo que a busca mostra abaixo do título. | Em 2024, a Anvisa também aprovou o Elevidys, uma terapia gênica para o tratamento da distrofia muscular de Duchenne. ... |
+| `data` | texto | Data e hora de publicação, como a busca as mostra. | 13.ago.2026 às 14h20 |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
 ## `raspe.ipea()`
@@ -71,11 +71,11 @@ Schema: `OutputIpea`.
 
 | Coluna | Tipo | Descrição | Exemplo |
 | --- | --- | --- | --- |
-| `titulo` | texto | Título da publicação. | Texto para Discussão 2900 |
-| `link` | texto | Endereço da publicação no portal do IPEA. | https://www.ipea.gov.br/portal/publicacao-1.html |
-| `autores` | texto | Autores, como o portal os lista. | João da Silva; Maria Souza |
-| `data` | texto | Data de publicação por extenso. | 15 de janeiro de 2024 |
-| `assuntos` | texto | Assuntos, separados por vírgula. | Economia, Pobreza |
+| `titulo` | texto | Título da publicação. | Regras do governo brasileiro sobre serviços de telessaúde : revisão integrativa |
+| `link` | texto | Endereço da publicação no portal do IPEA. | https://www.ipea.gov.br/portal/publicacao-item?id=61d484f0-c674-4e16-a421-3e7a22e842d7 |
+| `autores` | texto | Autores, como o portal os lista; vazio quando o portal deixa o campo em branco. |  |
+| `data` | texto | Data de publicação, como o portal a mostra: mês abreviado e ano, ou só o ano. | Jun-2015 |
+| `assuntos` | texto | Assuntos, separados por vírgula. | Economia da Saúde |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
 ## `raspe.nyt()`
@@ -102,11 +102,11 @@ Schema: `OutputPresidencia`.
 
 | Coluna | Tipo | Descrição | Exemplo |
 | --- | --- | --- | --- |
-| `nome` | texto | Nome do ato, com tipo, número e ano. | Decreto nº 11.000/2024 |
-| `link` | texto | Endereço do texto do ato, como o portal o devolve. | /atos/decreto-11000-2024.html |
-| `ficha` | texto | Endereço da ficha do ato no portal. | /fichas/decreto-11000-2024.html |
-| `revogacao` | texto | Situação de revogação informada pelo portal. | Sem revogação |
-| `descricao` | texto | Ementa do ato. | Dispõe sobre política ambiental nacional. |
+| `nome` | texto | Nome do ato, com tipo, número e ano. | Decreto nº 12.725 de 18 de novembro de 2025 |
+| `link` | texto | Endereço do texto do ato, como o portal o devolve. | https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12725.htm |
+| `ficha` | texto | Endereço da ficha do ato no portal. | https://legislacao.presidencia.gov.br/atos?tipo=DEC&numero=12725&ano=2025&data=18/11/2025&ato=499cXVU9UNZpWT45a |
+| `revogacao` | texto | Situação de revogação informada pelo portal. | Não consta revogação expressa |
+| `descricao` | texto | Ementa do ato. | Aprova a Política Nacional de Defesa, a Estratégia Nacional de Defesa e o Livro Branco de Defesa Nacional. |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
 ## `raspe.saudelegis()`
