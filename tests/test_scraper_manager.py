@@ -85,7 +85,7 @@ class TestScraperFactory:
         assert isinstance(scraper("IPEA"), IpeaScraper)
 
     def test_nome_invalido_levanta_value_error(self):
-        with pytest.raises(ValueError, match="não é suportado"):
+        with pytest.raises(ValueError, match="Buscador 'desconhecido' ainda não é suportado"):
             scraper("desconhecido")
 
     def test_erro_lista_todas_as_fontes_suportadas(self):

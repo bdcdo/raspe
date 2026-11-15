@@ -5,7 +5,7 @@ Permite escolher a fonte dinamicamente, a partir de uma string.
 útil quando o nome da fonte vem de configuração ou entrada do usuário.
 """
 
-from typing import Type
+from typing import Any, Type
 
 from .abstract_scraper import AbstractScraper
 from .scrapers.ans import ScraperANS
@@ -39,7 +39,7 @@ _MAPPING: dict[str, Type[AbstractScraper]] = {
 }
 
 
-def scraper(nome_buscador: str, **kwargs) -> AbstractScraper:
+def scraper(nome_buscador: str, **kwargs: Any) -> AbstractScraper:
     """Retorna o raspador correspondente à fonte solicitada.
 
     Args:
@@ -59,14 +59,12 @@ def scraper(nome_buscador: str, **kwargs) -> AbstractScraper:
         >>> scraper("ans", headless=False)  # doctest: +SKIP
     """
 
-    nome = nome_buscador.upper()
-
     try:
-        klas = _MAPPING[nome]
+        klas = _MAPPING[nome_buscador.upper()]
     except KeyError as exc:
         suportados = ", ".join(sorted(_MAPPING))
         raise ValueError(
-            f"Buscador '{nome}' ainda não é suportado. Disponíveis: {suportados}."
+            f"Buscador '{nome_buscador}' ainda não é suportado. Disponíveis: {suportados}."
         ) from exc
 
     return klas(**kwargs)

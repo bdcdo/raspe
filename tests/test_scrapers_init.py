@@ -81,7 +81,7 @@ _SEM_PLAYWRIGHT = textwrap.dedent(
     assert not carregados, f"Playwright carregado no import: {carregados}"
 
     try:
-        instancias[1].raspar(termo="doença rara")
+        instancias[1].raspar(pesquisa="doença rara")
     except DriverNotInstalledError:
         pass
     else:
