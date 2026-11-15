@@ -1,9 +1,13 @@
 """Script ad-hoc para capturar samples do scraper Câmara dos Deputados.
 
-Como executar (faz requisições reais à internet — fora do CI):
+Como executar (faz requisições reais à internet, fora do CI), a partir
+da raiz do repositório:
 
-    cd /caminho/para/raspe
-    uv run python tests/fixtures/capture/camara.py
+    uv run python -m tests.fixtures.capture.camara
+
+A forma ``-m`` é necessária porque o script importa ``tests.fixtures``;
+rodado como arquivo, o Python não põe a raiz do repositório no
+``sys.path``.
 
 Captura só ``no_results.html`` (busca real sem resultados, enxuta por
 ``dump_html_enxuto``). Os demais samples de ``tests/camara/samples/raspar/``

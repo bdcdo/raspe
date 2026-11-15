@@ -27,13 +27,22 @@ class OutputFolha(OutputBase):
 
     link: str = Field(
         description="Endereço da notícia.",
-        examples=["https://www1.folha.uol.com.br/cotidiano/2024/01/noticia-1.shtml"],
+        examples=[
+            "https://www1.folha.uol.com.br/equilibrioesaude/2026/08/"
+            "anvisa-aprova-novo-remedio-para-distrofia-muscular-de-duchenne.shtml"
+        ],
     )
-    titulo: str = Field(description="Título da notícia.", examples=["Educação pública avança em 2024"])
+    titulo: str = Field(
+        description="Título da notícia.",
+        examples=["Anvisa aprova novo remédio para distrofia muscular de Duchenne"],
+    )
     resumo: str = Field(
         description="Resumo que a busca mostra abaixo do título.",
-        examples=["Pesquisa mostra ampliação de vagas no ensino médio em todo o país."],
+        examples=[
+            "Em 2024, a Anvisa também aprovou o Elevidys, uma terapia gênica para o tratamento "
+            "da distrofia muscular de Duchenne. ..."
+        ],
     )
     data: str = Field(
-        description="Data e hora de publicação, como a busca as mostra.", examples=["15.jan.2024 às 10h00"]
+        description="Data e hora de publicação, como a busca as mostra.", examples=["13.ago.2026 às 14h20"]
     )
