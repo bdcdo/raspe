@@ -64,6 +64,16 @@ class TestInit:
         assert len(segundo.logger.handlers) == 1
         assert segundo.logger.level == logging.DEBUG
 
+    def test_logger_mantem_handler_do_usuario_e_usa_stderr_atual(self, capsys):
+        """Um handler alheio no logger não suprime o do raspe, e a saída vai para o stderr atual."""
+        alheio = logging.NullHandler()
+        logging.getLogger("handler_alheio").addHandler(alheio)
+        s = _DummyScraper("handler_alheio", debug=False)
+        s.logger.warning("aviso único")
+        assert alheio in s.logger.handlers
+        assert len(s.logger.handlers) == 2
+        assert capsys.readouterr().err.count("aviso único") == 1
+
 
 class TestValidarParametros:
     def test_passa_kwargs_sem_datas(self):
