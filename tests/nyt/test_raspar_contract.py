@@ -214,6 +214,13 @@ class TestValidacao:
         with pytest.raises(ValidationError, match=mensagem):
             scraper.raspar(pesquisa="election", ano=2024, **datas)
 
+    @responses.activate
+    @pytest.mark.parametrize("ano", [24, 0])
+    def test_ano_sem_quatro_digitos_levanta_antes_da_api(self, scraper, ano):
+        """``ano=24`` dava erro de formato de data, e ``ano=0`` desligava o filtro em silêncio."""
+        with pytest.raises(ValidationError, match="'ano' precisa ter quatro dígitos"):
+            scraper.raspar(pesquisa="election", ano=ano)
+
     def test_sort_fora_da_lista_levanta(self, scraper):
         with pytest.raises(ValidationError, match="'sort'"):
             scraper.raspar(pesquisa="x", sort="aleatorio")

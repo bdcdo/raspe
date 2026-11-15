@@ -169,7 +169,7 @@ class IntervaloDatasMixin(InputBase):
 class AnoMixin(InputBase):
     """Filtro por ano. Schemas concretos redeclaram o campo para dizer o que o ano filtra."""
 
-    ano: int | None = Field(default=None, description="Ano.", examples=[2024])
+    ano: int | None = Field(default=None, description="Ano, com quatro dígitos.", examples=[2024])
 
     @field_validator("ano", mode="before")
     @classmethod

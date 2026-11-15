@@ -141,7 +141,7 @@ class ScraperNYT(BaseScraper):
         """
         kwargs = super()._validar_parametros(**kwargs)
         ano = kwargs.get('ano')
-        if ano:
+        if ano is not None:
             nome_inicio = 'data_inicio' if kwargs.get('data_inicio') else 'ano'
             nome_fim = 'data_fim' if kwargs.get('data_fim') else 'ano'
             kwargs['data_inicio'] = kwargs.get('data_inicio') or f"{ano}-01-01"
