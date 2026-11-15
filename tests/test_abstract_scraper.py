@@ -11,9 +11,12 @@ from typing import Literal
 
 import pandas as pd
 import pytest
+from pydantic import Field
 
 from raspe.abstract_scraper import AbstractScraper, _HandlerRaspe
 from raspe.exceptions import ScraperError, ValidationError
+from raspe.schemas.base import OutputBase, PesquisaObrigatoriaMixin
+from raspe.schemas.documentacao import descobrir_raspadores
 
 
 class _DummyScraper(AbstractScraper):
@@ -28,7 +31,7 @@ class _DummyScraper(AbstractScraper):
         with open(path, "r", encoding="utf-8") as f:
             return pd.DataFrame({"path": [path], "content": [f.read()]})
 
-    def raspar(self, **kwargs) -> pd.DataFrame:
+    def _raspar(self, **kwargs) -> pd.DataFrame:
         # Implementação trivial para satisfazer o ABC
         return pd.DataFrame()
 
@@ -246,9 +249,10 @@ class TestParseData:
             s, "_parse_page",
             side_effect=lambda p: pd.DataFrame(columns=["content"]) if p.endswith("b.html") else original_parse(p),
         )
-        with pytest.warns(UserWarning, match=r"1 de 2 páginas .*b\.html"):
+        with pytest.warns(UserWarning, match=r"1 de 2 páginas .*b\.html") as avisos:
             df = s._parse_data(str(tmp_path))
         assert len(df) == 1
+        assert avisos[0].filename == __file__
 
     def test_nenhuma_pagina_lida_levanta_erro(self, tmp_path, mocker):
         """Se todas as páginas falham no _parse_page, o resultado não pode parecer busca vazia."""
@@ -267,3 +271,54 @@ class TestScrapeAlias:
         result = s.scrape(termo="x")
         mock_raspar.assert_called_once_with(termo="x")
         assert len(result) == 1
+
+
+class _InputDummy(PesquisaObrigatoriaMixin):
+    """Entrada mínima para exercitar o ``raspar()`` da base."""
+
+
+class _OutputDummy(OutputBase):
+    """Saída mínima: uma coluna da fonte, mais ``termo_busca``."""
+
+    valor: str = Field(description="Valor.", examples=["x"])
+
+
+class _DummyComSchema(_DummyScraper):
+    schema_entrada = _InputDummy
+    schema_saida = _OutputDummy
+
+
+class TestRasparUnico:
+    """``AbstractScraper.raspar`` valida, chama ``_raspar`` e confere a saída, para todo raspador."""
+
+    def test_parametro_invalido_levanta_sem_chamar_raspar(self, mocker):
+        s = _DummyComSchema("unico_invalido")
+        coleta = mocker.patch.object(s, "_raspar")
+        with pytest.raises(ValidationError, match="'desconhecido': parâmetro desconhecido"):
+            s.raspar(pesquisa="x", desconhecido=1)
+        coleta.assert_not_called()
+
+    def test_raspar_recebe_os_parametros_validados_e_a_saida_e_conferida(self, mocker):
+        s = _DummyComSchema("unico_conferido")
+        coleta = mocker.patch.object(
+            s, "_raspar", return_value=pd.DataFrame({"termo_busca": ["x"], "valor": ["v"]})
+        )
+        df = s.raspar(pesquisa="x")
+        coleta.assert_called_once_with(pesquisa="x")
+        assert list(df.columns) == ["valor", "termo_busca"]
+
+    def test_saida_vazia_ganha_as_colunas_do_schema(self, mocker):
+        s = _DummyComSchema("unico_vazio")
+        mocker.patch.object(s, "_raspar", return_value=pd.DataFrame())
+        assert list(s.raspar(pesquisa="x").columns) == ["valor", "termo_busca"]
+
+    def test_sem_schema_devolve_o_resultado_como_veio(self, mocker):
+        s = _DummyScraper("unico_sem_schema")
+        esperado = pd.DataFrame({"qualquer": [1]})
+        mocker.patch.object(s, "_raspar", return_value=esperado)
+        assert s.raspar(termo="x") is esperado
+
+    @pytest.mark.parametrize("classe", descobrir_raspadores(), ids=lambda classe: classe.__name__)
+    def test_nenhum_raspador_sobrescreve_raspar(self, classe):
+        """Sobrescrever ``raspar`` pularia a validação ou a conferência; o ponto de extensão é ``_raspar``."""
+        assert classe.raspar is AbstractScraper.raspar

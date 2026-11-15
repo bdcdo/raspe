@@ -35,6 +35,7 @@ from tqdm import tqdm
 
 from raspe.abstract_scraper import AbstractScraper
 from raspe.exceptions import APIError, RateLimitError, ScraperError
+from raspe.schemas.base import _nivel_de_pilha_fora_do_pacote
 from raspe.utils import start_session
 
 
@@ -103,38 +104,17 @@ class BaseScraper(AbstractScraper):
     def api_method(self) -> Literal['GET', 'POST']:
         ...
 
-    def raspar(self, **kwargs) -> pd.DataFrame:
-        """Método principal para executar o processo de raspagem de dados.
+    def _raspar(self, **kwargs) -> pd.DataFrame:
+        """Baixa e lê as páginas de resultado, uma busca por item quando um parâmetro é lista.
+
+        Exceções e avisos estão documentados em :meth:`AbstractScraper.raspar`.
 
         Args:
-            **kwargs: Parâmetros de busca para o raspador. Se algum parâmetro for
-                uma lista/tupla, o raspador processará cada valor na sequência.
-                Nos raspadores com ``schema_entrada``, só ``pesquisa`` aceita lista.
-                O parâmetro especial 'paginas' pode ser um objeto range para
-                especificar as páginas.
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
             pd.DataFrame: DataFrame combinado com todos os dados raspados.
-
-        Raises:
-            ValueError: Se múltiplos parâmetros forem fornecidos como listas/tuplas.
-            ValidationError: Se algum parâmetro for inválido ou desconhecido
-                pelo ``schema_entrada`` do raspador.
-            RateLimitError: Se alguma requisição esbarrar em rate limit (429) persistente.
-            APIError: Se alguma requisição esbarrar em erro de servidor (5xx) persistente.
-            requests.RequestException: Se uma página falhar com outro erro HTTP ou de rede.
-            ScraperError: Se a resposta inicial não for uma página de resultados
-                (manutenção ou verificação anti-robô, nos raspadores que detectam isso)
-                ou se nenhuma página baixada render resultados.
-
-        Warns:
-            UserWarning: No modo lista, quando parte dos valores falha. Os valores que
-                deram certo voltam no resultado; se todos falharem, o primeiro erro sobe.
         """
-
-        # Valida parâmetros antes de iniciar
-        kwargs = self._validar_parametros(**kwargs)
-
         self.logger.info(f"Iniciando raspagem com parâmetros {kwargs}")
         # Suporte a lista de valores de busca
         list_keys = [k for k, v in kwargs.items() if isinstance(v, (list, tuple)) and k != "paginas"]
@@ -181,12 +161,12 @@ class BaseScraper(AbstractScraper):
                 )
                 if nao_tentados:
                     aviso += f". Por causa do rate limit, ficaram sem coletar: {nao_tentados!r}"
-                warnings.warn(aviso, stacklevel=2)
+                warnings.warn(aviso, stacklevel=_nivel_de_pilha_fora_do_pacote())
             if not dfs:
-                return self._conferir_saida(pd.DataFrame(columns=[*self.colunas, 'termo_busca']))
+                return pd.DataFrame(columns=[*self.colunas, 'termo_busca'])
             # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
             # vazio (colunas object) com os demais alargaria os tipos das colunas.
-            return self._conferir_saida(pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True))
+            return pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
         # Fallback para busca única
         else:
             path_result = self._download_data(**kwargs)
@@ -206,7 +186,7 @@ class BaseScraper(AbstractScraper):
             if self.debug is False:
                 self._limpar_download(path_result)
 
-            return self._conferir_saida(result)
+            return result
 
     def _download_data(self, **kwargs) -> str:
         self.logger.debug("Definindo consulta")
