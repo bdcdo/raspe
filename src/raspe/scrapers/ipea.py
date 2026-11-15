@@ -1,5 +1,6 @@
+import re
 import warnings
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
 
@@ -7,6 +8,9 @@ from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
 from ..schemas.ipea import InputIpea, OutputIpea
 from ..utils import nivel_de_pilha_fora_do_pacote
+
+if TYPE_CHECKING:
+    from bs4 import Tag
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
@@ -165,14 +169,20 @@ class ScraperIpea(BaseScraper, HTMLScraper):
             return pd.DataFrame(columns=self.colunas)
 
     @staticmethod
-    def _limpar_assuntos(assuntos_div) -> str:
-        """Junta os temas do card, sem o rótulo "Temas:" e sem repetir tema.
+    def _limpar_assuntos(assuntos_div: "Tag") -> str:
+        """Junta os temas do ``div.assuntos`` sem o rótulo "Temas:" e sem repetir tema.
 
-        O portal põe cada tema duas vezes no ``div.assuntos``, ora como link, ora
-        como texto solto, e separa os temas com ``<span>, </span>``.
+        O portal escreve "Temas:" antes da lista, separa os temas com vírgula,
+        quebra linha entre eles e repete alguns, ora como link, ora como texto solto.
+
+        Args:
+            assuntos_div: O ``div.assuntos`` do card.
+
+        Returns:
+            Os temas, cada um uma vez, na ordem em que aparecem, separados por ", ".
         """
-        # Os <span> são o rótulo "Temas:" e as vírgulas; os temas são o resto do texto.
-        temas = (texto.strip() for texto in assuntos_div.find_all(string=True) if texto.parent.name != 'span')
+        sem_rotulo = re.sub(r'^\s*Temas:', '', assuntos_div.get_text())
+        temas = (' '.join(parte.split()) for parte in sem_rotulo.split(','))
         return ', '.join(dict.fromkeys(tema for tema in temas if tema))
 
 

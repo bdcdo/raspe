@@ -1,4 +1,5 @@
 import re
+import warnings
 from typing import Any, Literal
 
 import pandas as pd
@@ -7,6 +8,7 @@ import urllib3
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
 from ..schemas.presidencia import InputPresidencia, OutputPresidencia
+from ..utils import nivel_de_pilha_fora_do_pacote
 
 
 class ScraperPresidencia(BaseScraper, HTMLScraper):
@@ -99,6 +101,7 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
                 html_content = file.read()
 
             lista_infos = []
+            sem_ficha: list[str] = []
 
             soup = BeautifulSoup(html_content, 'html.parser')
             card_body = soup.find('div', class_='card-body p-0')
@@ -121,23 +124,35 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
 
                     if titulo and len(paragraphs) >= 2:
                         link = titulo['href']
-                        # Selos como "Veto Parcial" vêm num <span class="badge"> dentro do link do nome.
+                        # Selos como "Veto Parcial" vêm num <span class="badge"> no título, colados ao nome.
                         rotulo = ', '.join(selo.extract().get_text(strip=True)
-                                           for selo in titulo.select('span.badge'))
+                                           for selo in item.select('h4 span.badge'))
                         nome = titulo.text.strip()
                         # A ficha é o botão "Ficha"; os outros links do card citam leis na ementa.
-                        ficha = next((a['href'] for a in item.select('a.btn')
+                        ficha = next((a.get('href', '') for a in item.select('a.btn')
                                       if a.get_text(strip=True) == 'Ficha'), '')
+                        if not ficha:
+                            sem_ficha.append(nome)
                         revogacao = paragraphs[0].text
                         descricao = paragraphs[1].text
 
-                        lista_infos.append([nome, rotulo, link, ficha, revogacao, descricao])
+                        lista_infos.append([nome, link, ficha, revogacao, descricao, rotulo])
                 except Exception as e:
                     self.logger.warning(f"Error parsing item in {path}: {e}")
                     continue
 
-            return pd.DataFrame(lista_infos, columns=self.colunas)
+            df = pd.DataFrame(lista_infos, columns=self.colunas)
 
         except Exception as e:
             self.logger.error(f"Error parsing page {path}: {e}")
             return pd.DataFrame(columns=self.colunas)
+
+        # Fora dos try: com warnings virando erro, o aviso não pode descartar os atos.
+        if sem_ficha:
+            warnings.warn(
+                f"Presidência: {len(sem_ficha)} ato(s) sem o botão \"Ficha\", com a coluna ficha vazia: "
+                f"{sem_ficha}. O portal pode ter mudado de layout.",
+                UserWarning,
+                stacklevel=nivel_de_pilha_fora_do_pacote(),
+            )
+        return df

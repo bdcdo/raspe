@@ -103,11 +103,11 @@ Schema: `OutputPresidencia`.
 | Coluna | Tipo | Descrição | Exemplo |
 | --- | --- | --- | --- |
 | `nome` | texto | Nome do ato, com tipo, número e ano. | Decreto nº 12.725 de 18 de novembro de 2025 |
-| `rotulo` | texto | Selo que o portal põe ao lado do nome, como "Veto Parcial"; vazio quando não há. | Veto Parcial |
 | `link` | texto | Endereço do texto do ato, como o portal o devolve. | https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12725.htm |
-| `ficha` | texto | Endereço da ficha do ato no portal, do botão "Ficha"; vazio quando o card não o traz. | https://legislacao.presidencia.gov.br/atos?tipo=DEC&numero=12725&ano=2025&data=18/11/2025&ato=499cXVU9UNZpWT45a |
+| `ficha` | texto | Endereço da ficha do ato, do botão "Ficha"; vazio, com `UserWarning`, se o card não o traz. | https://legislacao.presidencia.gov.br/atos?tipo=DEC&numero=12725&ano=2025&data=18/11/2025&ato=499cXVU9UNZpWT45a |
 | `revogacao` | texto | Situação de revogação informada pelo portal. | Não consta revogação expressa |
 | `descricao` | texto | Ementa do ato. | Aprova a Política Nacional de Defesa, a Estratégia Nacional de Defesa e o Livro Branco de Defesa Nacional. |
+| `rotulo` | texto | Selo que o portal põe ao lado do nome, como "Veto Parcial"; vazio quando não há. | Veto Parcial |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
 ## `raspe.saudelegis()`
