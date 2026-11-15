@@ -113,7 +113,7 @@ dados.to_excel("camara_educacao.xlsx", index=False)
 ```python
 import raspe
 
-# Buscar três temas, um depois do outro (lista vale só para os raspadores HTTP)
+# Buscar três temas, um depois do outro
 senado = raspe.senado()
 dados = senado.raspar(pesquisa=["educação", "saúde", "segurança"])
 
@@ -126,7 +126,7 @@ dados.to_excel("senado_multiplos.xlsx", index=False)
 ```python
 import raspe
 
-# Buscar apenas as primeiras 5 páginas (para testar rapidamente; só nos raspadores HTTP)
+# Buscar apenas as primeiras 5 páginas (para testar rapidamente)
 senado = raspe.senado()
 dados = senado.raspar(pesquisa="reforma tributária", paginas=range(1, 6))
 
@@ -258,7 +258,7 @@ Normas do CFM e dos Conselhos Regionais de Medicina (CRMs): resoluções, parece
 ```python
 import raspe
 
-df = raspe.cfm().raspar(pesquisa="doença rara", uf="SP", ano=2023)
+df = raspe.cfm().raspar(pesquisa="doença rara", uf="SP")
 df.to_excel("normas_cfm.xlsx", index=False)
 ```
 

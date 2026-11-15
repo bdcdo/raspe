@@ -1,9 +1,9 @@
 """Testes para as factory functions exportadas em raspe.__init__.
 
 Cada função é um wrapper trivial que instancia a classe scraper correspondente.
-Os scrapers Playwright (saudelegis, ans, anvisa) são lazy nos imports, portanto
-podem ser instanciados sem que o pacote ``playwright`` esteja disponível em
-tempo de teste — só falham quando ``_ensure_playwright()`` é chamado.
+Os scrapers Playwright (saudelegis, ans, anvisa) carregam o pacote ``playwright``
+só quando o navegador abre, portanto podem ser instanciados sem ele em tempo de
+teste.
 """
 
 import logging

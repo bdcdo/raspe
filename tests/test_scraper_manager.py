@@ -8,18 +8,12 @@ classes de scraper. Os scrapers não devem fazer rede em seus testes — para
 
 import pytest
 
-import raspe
+from raspe.schemas.documentacao import fabricas_por_raspador
 from raspe.scraper_manager import _MAPPING, scraper
-from raspe.scrapers.ans import ScraperANS
-from raspe.scrapers.anvisa import ScraperANVISA
 from raspe.scrapers.camara import ScraperCamaraDeputados
-from raspe.scrapers.capes import ScraperCapes
-from raspe.scrapers.cfm import ScraperCFM
-from raspe.scrapers.folha import ScraperFolha
 from raspe.scrapers.ipea import IpeaScraper
 from raspe.scrapers.nyt import ScraperNYT
 from raspe.scrapers.presidencia import ScraperPresidencia
-from raspe.scrapers.saudelegis import ScraperSaudeLegis
 from raspe.scrapers.senado import ScraperSenadoFederal
 
 
@@ -46,34 +40,10 @@ class TestScraperFactory:
         instance = scraper("camara")
         assert isinstance(instance, ScraperCamaraDeputados)
 
-    def test_capes(self):
-        instance = scraper("capes")
-        assert isinstance(instance, ScraperCapes)
-
-    def test_cfm(self):
-        instance = scraper("cfm")
-        assert isinstance(instance, ScraperCFM)
-
-    def test_folha(self):
-        instance = scraper("folha")
-        assert isinstance(instance, ScraperFolha)
-
     def test_nyt(self):
         """O NYT exige API key — repassada via **kwargs ao construtor."""
         instance = scraper("nyt", api_key="chave-de-teste")
         assert isinstance(instance, ScraperNYT)
-
-    def test_saudelegis(self):
-        instance = scraper("saudelegis")
-        assert isinstance(instance, ScraperSaudeLegis)
-
-    def test_ans(self):
-        instance = scraper("ans")
-        assert isinstance(instance, ScraperANS)
-
-    def test_anvisa(self):
-        instance = scraper("anvisa")
-        assert isinstance(instance, ScraperANVISA)
 
     def test_kwargs_repassados_ao_construtor(self):
         instance = scraper("ans", headless=False)
@@ -93,26 +63,14 @@ class TestScraperFactory:
 
         Conferir só uma fonte deixaria passar uma lista cortada ou escrita à
         mão; o mapping, por sua vez, é travado contra as factories de `raspe`
-        em `test_cobre_todas_as_factories_publicas`.
+        em `test_mapping_bate_com_as_factories_publicas`.
         """
         with pytest.raises(ValueError) as exc:
             scraper("desconhecido")
         listadas = str(exc.value).split("Disponíveis: ", 1)[1].removesuffix(".").split(", ")
         assert listadas == sorted(_MAPPING)
 
-    def test_cobre_todas_as_factories_publicas(self):
-        """O mapping não pode ficar para trás das factories de `raspe`.
-
-        Toda factory pública (`raspe.cfm()`, `raspe.ans()`, ...) deve ter
-        entrada correspondente em `scraper()`, com o mesmo nome em maiúsculas.
-
-        As factories saem de `raspe.__all__`, e não de uma lista escrita aqui:
-        com a lista à mão, uma factory nova entraria no `__all__` sem entrar no
-        teste, e o mapping voltaria a ficar defasado sem ninguém notar. O filtro
-        por `__module__ == "raspe"` separa as funções definidas no próprio
-        `raspe/__init__.py` dos utilitários e das exceções que ele reexporta de
-        `raspe.utils` e `raspe.exceptions`.
-        """
-        factories = {nome for nome in raspe.__all__ if getattr(raspe, nome).__module__ == "raspe"}
-
-        assert {nome.upper() for nome in factories} == set(_MAPPING)
+    def test_mapping_bate_com_as_factories_publicas(self):
+        """Cada factory de `raspe` tem entrada em `scraper()`, com a mesma classe."""
+        esperado = {f.upper(): classe for classe, fabricas in fabricas_por_raspador().items() for f in fabricas}
+        assert {nome: classe.__name__ for nome, classe in _MAPPING.items()} == esperado
