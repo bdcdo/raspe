@@ -16,7 +16,8 @@ from pathlib import Path
 import requests
 
 from raspe.scrapers.folha import ScraperFolha
-from tests.fixtures.capture._util import attach_capture_hook, capturar_busca_vazia as _capturar  # noqa: E402
+from tests.fixtures.capture._util import attach_capture_hook
+from tests.fixtures.capture._util import capturar_busca_vazia as _capturar  # noqa: E402
 
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "folha" / "samples" / "raspar"
 API_URL = "https://search.folha.uol.com.br/search"

@@ -220,7 +220,7 @@ class ScraperNYT(BaseScraper):
                 "Resposta da API do NYT sem a contagem de resultados (response.meta.hits)",
                 response_text=r0.text,
             )
-        total_hits = meta['hits']
+        total_hits: int = meta['hits']
 
         n_pags = (total_hits + self.RESULTS_PER_PAGE - 1) // self.RESULTS_PER_PAGE
 
