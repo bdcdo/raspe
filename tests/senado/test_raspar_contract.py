@@ -2,10 +2,13 @@
 
 ``no_results.html`` e ``anti_robo.html`` são reais (2026-11-14). A busca sem
 resultados não traz o link da coleção com a contagem, só o aviso "Nenhum
-resultado encontrado" (capturada com navegador, porque o ``requests`` cai na
-verificação anti-robô). ``anti_robo.html`` é essa verificação, servida com
-HTTP 200; o IP do cliente foi trocado por um IP de documentação.
+resultado encontrado" (capturada com navegador). ``anti_robo.html`` é a
+verificação anti-robô, servida com HTTP 200, que o raspador resolve sozinho;
+o IP do cliente foi trocado por um IP de documentação.
 """
+
+import hashlib
+from urllib.parse import parse_qs
 
 import pytest
 import requests
@@ -17,6 +20,7 @@ from raspe.scrapers.senado import ScraperSenadoFederal
 from tests._helpers import load_sample_bytes
 
 API_URL = "https://www6g.senado.leg.br/busca"
+DESAFIO_URL = "https://www6g.senado.leg.br/_challenge"
 COLUNAS_OBRIGATORIAS = {"titulo", "link_norma", "link_detalhes", "descricao", "trecho_descricao"}
 
 
@@ -81,10 +85,47 @@ class TestRasparContract:
         assert df.empty
         assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
-    @responses.activate
-    def test_verificacao_anti_robo_levanta_erro(self, scraper, mocker):
-        """A verificação anti-robô (HTTP 200) não pode virar 0 resultados."""
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_resolve_a_verificacao_anti_robo_e_segue(self, scraper, mocker):
+        """Resolve a prova de trabalho, envia a resposta e repete a busca."""
         mocker.patch("time.sleep")
+        respostas_ao_desafio = []
+
+        def _desafio(request):
+            respostas_ao_desafio.append({k: v[0] for k, v in parse_qs(request.body).items()})
+            return (200, {}, "<!doctype html><html><body>OK</body></html>")
+
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("senado", "raspar/anti_robo.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        responses.add_callback(responses.POST, DESAFIO_URL, callback=_desafio)
+        for sample in ("page_01", "page_01", "page_02"):
+            responses.add(
+                responses.GET, API_URL,
+                body=load_sample_bytes("senado", f"raspar/{sample}.html"),
+                status=200, content_type="text/html; charset=utf-8",
+            )
+
+        df = scraper.raspar(pesquisa="tributário")
+        assert len(df) == 3
+
+        (campos,) = respostas_ao_desafio
+        assert campos["ip"] == "203.0.113.10"
+        entrada = f"{campos['ip']};www6g.senado.leg.br;{campos['ts']};{campos['tries']}"
+        assert hashlib.sha256(entrada.encode()).hexdigest().startswith("0" * int(campos["diff"]))
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_verificacao_anti_robo_persistente_levanta_erro(self, scraper, mocker):
+        """Se a verificação volta depois de resolvida, não pode virar 0 resultados."""
+        mocker.patch("time.sleep")
+        responses.add(
+            responses.GET, API_URL,
+            body=load_sample_bytes("senado", "raspar/anti_robo.html"),
+            status=200, content_type="text/html; charset=utf-8",
+        )
+        responses.add(responses.POST, DESAFIO_URL, body="OK", status=200)
         responses.add(
             responses.GET, API_URL,
             body=load_sample_bytes("senado", "raspar/anti_robo.html"),
@@ -92,6 +133,18 @@ class TestRasparContract:
         )
         with pytest.raises(ScraperError, match="Verificação de segurança"):
             scraper.raspar(pesquisa="meio ambiente")
+
+    @pytest.mark.parametrize("inputs, erro", [
+        ('<input name="ip" value="203.0.113.10"><input name="ts" value="1">', "mudou de formato"),
+        ('<input name="ip" value="203.0.113.10"><input name="ts" value="1"><input name="diff" value="64">',
+         "não teve solução"),
+    ])
+    def test_desafio_fora_do_formato_ou_sem_solucao_levanta_erro(self, scraper, inputs, erro):
+        """Formulário mudado ou desafio impossível viram ``ScraperError``, sem POST nem nova busca."""
+        scraper.MAX_TENTATIVAS_DESAFIO = 100
+        form = scraper.soup_it(f'<form name="challenge" action="/_challenge">{inputs}</form>').form
+        with pytest.raises(ScraperError, match=erro):
+            scraper._resolver_desafio(form, API_URL)
 
     def test_contagem_com_separador_de_milhar(self, scraper):
         """O site mostra a contagem como "8.950" (markup real de 2026-11-14)."""

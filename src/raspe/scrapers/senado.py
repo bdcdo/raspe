@@ -1,14 +1,22 @@
+import hashlib
 import re
 from typing import Any, Literal
+from urllib.parse import urljoin, urlparse
 
 import pandas as pd
+import requests
+from bs4 import Tag
 
 from ..base_scraper import BaseScraper
+from ..exceptions import ScraperError
 from ..html_scraper import HTMLScraper
 
 
 class ScraperSenadoFederal(BaseScraper, HTMLScraper):
     colunas = ['titulo', 'link_norma', 'link_detalhes', 'descricao', 'trecho_descricao']
+
+    # Teto de tentativas da prova de trabalho anti-robô, o mesmo do script da página.
+    MAX_TENTATIVAS_DESAFIO = 10_000_000
 
     def __init__(self, debug: bool = True):
         super().__init__("SENADO", debug)
@@ -46,6 +54,76 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
     @property
     def api_method(self) -> Literal['GET'] | Literal['POST']:
         return self._api_method
+
+    def _set_r(self, query_atual) -> requests.Response:
+        """Faz a requisição e, se cair na verificação anti-robô, resolve o desafio e repete.
+
+        A verificação do Senado (HTTP 200, título "Verificação de segurança") é uma
+        prova de trabalho que o navegador resolve sozinho: achar ``tries`` tal que o
+        SHA-256 de ``"<ip>;<host>;<ts>;<tries>"`` comece com ``diff`` zeros
+        hexadecimais, e enviar a resposta por POST a ``/_challenge``. Depois disso o
+        site libera o IP.
+
+        Args:
+            query_atual: Parâmetros da busca.
+
+        Returns:
+            requests.Response: A resposta da busca, já sem a verificação.
+
+        Raises:
+            ScraperError: Se o desafio não puder ser resolvido ou se a verificação
+                continuar depois de resolvida.
+        """
+        r = super()._set_r(query_atual)
+        form = self._form_desafio(r)
+        if form is None:
+            return r
+        self.logger.info("Verificação anti-robô do Senado: resolvendo o desafio")
+        self._resolver_desafio(form, r.url)
+        r = super()._set_r(query_atual)
+        if self._form_desafio(r) is not None:
+            raise ScraperError(
+                "ScraperSenadoFederal: a verificação anti-robô do site (\"Verificação de segurança\") "
+                "continuou depois de resolvida. Tente de novo mais tarde."
+            )
+        return r
+
+    def _form_desafio(self, r: requests.Response) -> Tag | None:
+        """Devolve o formulário do desafio anti-robô, ou None se a resposta não é a verificação."""
+        if b'challenge' not in r.content:
+            return None
+        form = self.soup_it(r.content).find('form', attrs={'name': 'challenge'})
+        return form if isinstance(form, Tag) else None
+
+    def _resolver_desafio(self, form: Tag, url_pagina: str) -> None:
+        """Calcula a prova de trabalho do formulário ``challenge`` e envia a resposta.
+
+        Args:
+            form: Formulário ``challenge`` da página de verificação.
+            url_pagina: URL que serviu a verificação; dá o host do hash e a base do POST.
+
+        Raises:
+            ScraperError: Se o formulário mudou de formato ou se não há solução
+                dentro de ``MAX_TENTATIVAS_DESAFIO``.
+        """
+        campos = {i['name']: i.get('value', '') for i in form.find_all('input') if i.get('name')}
+        try:
+            prefixo = '0' * int(campos['diff'])
+            inicio = hashlib.sha256(f"{campos['ip']};{urlparse(url_pagina).hostname};{campos['ts']};".encode())
+        except (KeyError, ValueError) as e:
+            raise ScraperError(f"ScraperSenadoFederal: o desafio anti-robô mudou de formato ({e!r})") from e
+
+        for tentativa in range(self.MAX_TENTATIVAS_DESAFIO):
+            h = inicio.copy()
+            h.update(str(tentativa).encode())
+            if h.hexdigest().startswith(prefixo):
+                break
+        else:
+            raise ScraperError("ScraperSenadoFederal: o desafio anti-robô não teve solução no teto de tentativas")
+
+        campos['tries'] = str(tentativa)
+        url = urljoin(url_pagina, str(form.get('action') or '/_challenge'))
+        self.session.post(url, data=campos, timeout=self.timeout).raise_for_status()
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         pesquisa = kwargs.get('pesquisa')
