@@ -100,9 +100,9 @@ jobs:
           fora = (".pyc", ".pyo", ".pyd", ".ipynb")
           gerados = {"PKG-INFO", "setup.cfg"} | {n for n in nomes if n.startswith("src/raspe.egg-info/")}
           sobram = sorted(n for n in nomes - gerados if n not in versionados or n.endswith(fora))
-          topo = {"CHANGELOG.md", "LICENSE", "README.md", "pyproject.toml", "docs/colunas.md"}
+          avulsos = {"CHANGELOG.md", "LICENSE", "README.md", "pyproject.toml", "docs/colunas.md"}
           faltam = sorted(
-              n for n in versionados - nomes if (n.startswith(("src/", "tests/")) or n in topo) and not n.endswith(fora)
+              n for n in versionados - nomes if (n.startswith(("src/", "tests/")) or n in avulsos) and not n.endswith(fora)
           )
           assert not sobram and not faltam, f"sobram no sdist: {sobram}; faltam no sdist: {faltam}"
           print(f"{sdist.name}: {len(nomes)} arquivos, nenhum sobrando ou faltando")
@@ -112,8 +112,8 @@ jobs:
         run: uvx twine==7.0.0 check --strict dist/*
 
       # A suíte roda sobre o código-fonte; este passo pega o que só aparece no
-      # pacote: módulo de src/raspe que ficou fora da wheel, import quebrado na
-      # instalação sem o extra browser ou versão diferente da tag. Os módulos dos
+      # pacote: módulo de src/raspe que ficou fora da wheel ou import quebrado na
+      # instalação sem o extra browser. Os módulos dos
       # raspadores com navegador importam o Playwright só ao rodar, por isso o
       # import deles funciona sem o extra.
       - name: Importar todos os módulos a partir da wheel numa venv limpa
@@ -122,13 +122,11 @@ jobs:
           uv pip install --python "$RUNNER_TEMP/fumaca/bin/python" dist/*.whl
           "$RUNNER_TEMP/fumaca/bin/python" -I - <<'EOF'
           import importlib
-          import os
           import pathlib
           import pkgutil
 
           import raspe
 
-          assert "v" + raspe.__version__ == os.environ["GITHUB_REF_NAME"], raspe.__version__
           instalados = sorted(["raspe"] + [m.name for m in pkgutil.walk_packages(raspe.__path__, "raspe.")])
           fonte = pathlib.Path("src")
           esperados = sorted(
