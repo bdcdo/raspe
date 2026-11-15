@@ -13,8 +13,6 @@ rodado como arquivo, o Python não põe a raiz do repositório no
 re-commitados quando o HTML do Portal de Periódicos da CAPES mudar.
 
 As requisições saem da sessão e da query do próprio ``ScraperCapes``.
-A linha impressa por cenário traz o ``_find_n_pags`` da resposta: se
-``single_page`` não der 1 ou ``no_results`` não der 0, troque o termo.
 
 Cenários capturados:
 
