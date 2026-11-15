@@ -9,8 +9,13 @@ repos:
         exclude: ^examples/datasets/
       - id: end-of-file-fixer
       - id: check-yaml
+      # Sem estes argumentos, os dois hooks olham o índice e o estado de merge,
+      # e no checkout do CI passariam sem examinar os arquivos. O porquê de
+      # cada um está em tests/test_pre_commit_config.py, que exige os dois.
       - id: check-added-large-files
+        args: ["--enforce-all"]
       - id: check-merge-conflict
+        args: ["--assume-in-merge"]
       - id: debug-statements
 
   - repo: https://github.com/pycqa/isort
@@ -59,8 +64,8 @@ repos:
         files: ^(src|tests)/
         pass_filenames: false
         args: ["-q", "-p", "no:cacheprovider"]
-      # O hook pytest acima só dispara com arquivo de src/ ou tests/ no commit, e o repo não
-      # tem CI: um `git add -f .coverage` isolado passaria. Este roda em todo commit, com a
+      # O hook pytest acima só dispara com arquivo de src/ ou tests/ no commit: um
+      # `git add -f .coverage` isolado passaria no commit local. Este roda em todo commit, com a
       # mesma regra de tests/test_repositorio.py, e não depende do .venv, para não travar
       # commit só de documentação.
       - id: gitignore-versionado
