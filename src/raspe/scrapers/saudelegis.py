@@ -41,7 +41,7 @@ class ScraperSaudeLegis(PlaywrightScraper):
     ``DeprecationWarning``.
     """
 
-    colunas = ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
+    colunas = OutputSaudeLegis.colunas_da_fonte()
     schema_entrada = InputSaudeLegis
     schema_saida = OutputSaudeLegis
 

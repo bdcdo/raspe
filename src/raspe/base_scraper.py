@@ -109,6 +109,7 @@ class BaseScraper(AbstractScraper):
         Args:
             **kwargs: Parâmetros de busca para o raspador. Se algum parâmetro for
                 uma lista/tupla, o raspador processará cada valor na sequência.
+                Nos raspadores com ``schema_entrada``, só ``pesquisa`` aceita lista.
                 O parâmetro especial 'paginas' pode ser um objeto range para
                 especificar as páginas.
 

@@ -23,7 +23,7 @@ Novos scrapers devem:
 4. Declarar `schema_entrada` e `schema_saida` (em `src/raspe/schemas/`), registrar em `tests/schemas/test_schema_coverage.py` e regerar `docs/colunas.md` com `python -m raspe.schemas.documentacao`
 5. Declarar as colunas do resultado no atributo de classe `colunas` e usá-lo no
    `_parse_page()`; a busca sem resultados devolve um `DataFrame` vazio com essas colunas.
-   Com `schema_saida`, `colunas` mais `termo_busca` são os campos do schema de saída
+   Com `schema_saida`, usar `colunas = OutputXx.colunas_da_fonte()`, para o schema ser a fonte única
 6. No `_find_n_pags()`, quando a página não traz o marcador de contagem, devolver
    `self._confirmar_busca_vazia(soup)` (de `HTMLScraper`) em vez de 0: ele só aceita 0
    se a página traz o aviso de busca vazia e levanta `ScraperError` em página de

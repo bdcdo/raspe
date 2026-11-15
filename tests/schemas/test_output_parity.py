@@ -3,7 +3,7 @@
 Três conferências por raspador registrado em ``ESPERADOS``:
 
 - o atributo de classe ``colunas`` (que o parser e a busca sem resultados
-  usam), mais ``termo_busca``, é ``Output.colunas()``, na mesma ordem;
+  usam), mais ``termo_busca``, é ``Output.colunas()`` do schema registrado;
 - as colunas que ``_parse_page`` tira da amostra ``typical``, mais
   ``termo_busca`` (que ``raspar()`` acrescenta), são as colunas de
   ``Output.colunas()``, na mesma ordem;

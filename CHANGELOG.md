@@ -31,9 +31,11 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionados os notebooks `10_pipeline_completo.ipynb`, `11_multiplas_fontes.ipynb` e `12_analise_longitudinal.ipynb`, que reaproveitam as funções de `examples/` e explicam cada etapa.
 - Adicionado o parâmetro `debug` aos raspadores da Presidência, do Senado, da Câmara, da CAPES, do CFM, da Folha,
   do IPEA e do NYT, que também passa pelas funções `raspe.<fonte>()`: `raspe.ipea(debug=False)`.
-- Schemas pydantic de entrada e saída em `raspe.schemas` para presidencia, ipea, capes, cfm, folha, nyt, saudelegis, ans e anvisa. O de entrada descreve os parâmetros de `raspar()`; o de saída, as colunas do DataFrame. Cada raspador aponta para os seus em `schema_entrada` e `schema_saida`. Câmara e Senado ficam sem schema até a reescrita sobre as APIs oficiais.
-- `docs/colunas.md`, gerado dos schemas de saída por `python -m raspe.schemas.documentacao`, com coluna, tipo, descrição e exemplo de cada fonte.
-- Dependência `pydantic>=2`.
+- Adicionados schemas pydantic de entrada e saída em `raspe.schemas` (atributos `schema_entrada` e `schema_saida`)
+  para todos os raspadores menos Câmara e Senado, que aguardam a reescrita sobre as APIs oficiais.
+- Adicionado `docs/colunas.md`, com coluna, tipo, descrição e exemplo de cada fonte, gerado dos schemas por
+  `python -m raspe.schemas.documentacao`.
+- Adicionada a dependência `pydantic>=2`.
 
 ### Modificado
 - A espera pedida pelo header `Retry-After` de um 429 passou a ter teto de 5 minutos, configurável no atributo
@@ -50,13 +52,21 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
 - Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
-- **Incompatível:** o termo de busca passou a se chamar `pesquisa` em todos os raspadores com schema. Os nomes antigos continuam aceitos, com `DeprecationWarning`, e serão removidos: `texto` em `cfm()` e `nyt()`, `assunto` em `saudelegis()` e `termo` em `ans()` e `anvisa()`. Passar o nome antigo e `pesquisa` juntos levanta `ValidationError`.
-- **Incompatível:** as colunas do `cfm()` foram renomeadas para snake_case ASCII: `Tipo` para `tipo`, `UF` para `uf`, `Nº/Ano` para `numero_ano`, `Situação` para `situacao`, `Ementa` para `ementa` e `Link` para `link`.
-- **Incompatível:** `raspar()` levanta `ValidationError`, com a lista dos parâmetros aceitos e a sugestão do nome mais parecido, quando recebe parâmetro desconhecido. Antes o parâmetro era ignorado em silêncio, e um erro de digitação como `data_incio` virava uma busca sem filtro.
-- **Incompatível:** `pesquisa` passou a ser obrigatória em `presidencia()`, `ipea()`, `capes()` e `folha()`. Em `cfm()` e `nyt()` continua opcional, porque esses portais aceitam busca só por filtro.
-- **Incompatível:** `saudelegis()`, `ans()` e `anvisa()` recusam `paginas` e lista em `pesquisa`, que antes eram ignorados em silêncio.
-- **Incompatível:** `paginas` precisa ser um `range` crescente, não vazio e começando em 1.
-- **Incompatível:** `sort` do `nyt()` aceita só `newest`, `oldest`, `relevance` e `best`, os valores da Article Search API.
+- **Incompatível:** renomeado para `pesquisa` o termo de busca de `cfm()` e `nyt()` (antes `texto`), de
+  `saudelegis()` (antes `assunto`) e de `ans()` e `anvisa()` (antes `termo`). Os nomes antigos seguem aceitos, com
+  `DeprecationWarning`; passar o antigo e `pesquisa` juntos levanta `ValidationError`.
+- **Incompatível:** renomeadas as colunas do `cfm()` para snake_case ASCII: `Tipo`, `UF`, `Nº/Ano`, `Situação`,
+  `Ementa` e `Link` viraram `tipo`, `uf`, `numero_ano`, `situacao`, `ementa` e `link`.
+- **Incompatível:** parâmetro desconhecido em `raspar()` passou a levantar `ValidationError`, com os aceitos e o
+  nome mais parecido. Antes era ignorado: `data_incio` virava uma busca sem filtro de data.
+- **Incompatível:** `pesquisa` passou a ser obrigatória e não vazia em `presidencia()`, `ipea()`, `capes()` e
+  `folha()`. Em `cfm()` e `nyt()` segue opcional.
+- **Incompatível:** o modo lista (uma busca por valor) passou a valer só para `pesquisa`. Lista em outro parâmetro,
+  como `cfm().raspar(uf=["SP", "RJ"])`, levanta `ValidationError`.
+- **Incompatível:** `saudelegis()`, `ans()` e `anvisa()` passaram a recusar `paginas` e lista em `pesquisa`, antes
+  ignorados.
+- **Incompatível:** `paginas` passou a exigir `range` crescente, não vazio e começando em 1.
+- **Incompatível:** `sort` do `nyt()` passou a aceitar só `newest`, `oldest`, `relevance` e `best`.
 - `cfm()` e `nyt()` passaram a devolver a coluna `termo_busca`, como os demais raspadores.
 
 ### Descontinuado

@@ -55,10 +55,7 @@ class ScraperNYT(BaseScraper):
     RESULTS_PER_PAGE = 10
     MAX_PAGES = 100
 
-    colunas = [
-        'titulo', 'url', 'data_publicacao', 'secao', 'desk',
-        'tipo', 'resumo', 'autor', 'palavras', 'imagem_url'
-    ]
+    colunas = OutputNYT.colunas_da_fonte()
 
     def __init__(self, api_key: str | None = None, debug: bool = True):
         """Inicializa o raspador do NYT.

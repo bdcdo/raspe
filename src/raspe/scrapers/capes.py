@@ -28,11 +28,7 @@ _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 class ScraperCapes(BaseScraper, HTMLScraper):
     """Raspador HTTP para o buscador do Portal de Periódicos da CAPES."""
 
-    colunas = [
-        'id', 'tipo', 'titulo', 'link', 'autores', 'ano', 'revista',
-        'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
-        'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
-    ]
+    colunas = OutputCapes.colunas_da_fonte()
     schema_entrada = InputCapes
     schema_saida = OutputCapes
 

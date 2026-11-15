@@ -154,9 +154,8 @@ class AbstractScraper(ABC):
             emite ``DeprecationWarning``. ``None`` mantém o comportamento antigo,
             sem validação dos nomes.
         schema_saida: Schema pydantic das colunas do DataFrame de ``raspar()``,
-            conferido em :meth:`_conferir_saida`. Com ele, ``colunas`` mais
-            ``termo_busca`` precisam bater com os campos do schema (conferido em
-            ``tests/schemas/test_output_parity.py``).
+            conferido em :meth:`_conferir_saida`. Os raspadores com schema tiram
+            ``colunas`` dele, com ``OutputXx.colunas_da_fonte()``.
     """
 
     colunas: ClassVar[list[str]] = []

@@ -17,7 +17,7 @@ import pytest
 import responses
 
 from raspe.exceptions import ScraperError, ValidationError
-from raspe.schemas import InputPresidencia, OutputPresidencia, conferir_saida, descrever_tipo, validar_entrada
+from raspe.schemas import InputCFM, InputPresidencia, OutputPresidencia, conferir_saida, descrever_tipo, validar_entrada
 from raspe.scrapers.ans import ScraperANS
 from raspe.scrapers.cfm import ScraperCFM
 from raspe.scrapers.folha import ScraperFolha
@@ -43,8 +43,22 @@ class TestMensagensDeErro:
 
     @responses.activate
     def test_tipo_errado_descreve_o_tipo_esperado(self):
-        with pytest.raises(ValidationError, match="valor 3 inválido; esperado texto ou lista de textos"):
-            ScraperPresidencia().raspar(pesquisa=3)
+        with pytest.raises(ValidationError, match="valor None inválido; esperado texto ou lista de textos"):
+            ScraperPresidencia().raspar(pesquisa=None)
+
+    @pytest.mark.parametrize("pesquisa", ["", "   ", [], ["natjus", " "]])
+    def test_pesquisa_obrigatoria_vazia(self, pesquisa):
+        with pytest.raises(ValidationError, match="'pesquisa' é obrigatória e não pode ser vazia"):
+            ScraperPresidencia().raspar(pesquisa=pesquisa)
+
+    def test_numero_em_campo_de_texto_vira_texto(self):
+        """Antes dos schemas, ``raspar(numero=2350)`` ia ao portal como texto."""
+        parametros = validar_entrada(InputCFM, {"numero": 2350, "uf": 35}, metodo="m()")
+        assert (parametros["numero"], parametros["uf"]) == ("2350", "35")
+
+    def test_ano_vazio_e_sem_filtro(self):
+        """``ano=""`` era o default antigo de CFM e NYT."""
+        assert validar_entrada(InputCFM, {"ano": ""}, metodo="m()")["ano"] is None
 
     @responses.activate
     def test_valor_fora_da_lista_mostra_os_permitidos(self):
@@ -76,10 +90,10 @@ class TestMensagensDeErro:
     @responses.activate
     def test_varios_erros_saem_um_por_linha_com_os_aceitos(self):
         with pytest.raises(ValidationError) as erro:
-            ScraperPresidencia().raspar(pesquisa=3, pagina=range(1, 2))
+            ScraperPresidencia().raspar(pesquisa=None, pagina=range(1, 2))
         assert str(erro.value).splitlines() == [
             "ScraperPresidencia.raspar() recebeu parâmetros inválidos:",
-            "  - 'pesquisa': valor 3 inválido; esperado texto ou lista de textos",
+            "  - 'pesquisa': valor None inválido; esperado texto ou lista de textos",
             "  - 'pagina': parâmetro desconhecido (você quis dizer 'paginas'?)",
             "Parâmetros aceitos: pesquisa, paginas.",
         ]

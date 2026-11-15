@@ -49,8 +49,9 @@ class InputBase(BaseModel):
     """
 
     # ``arbitrary_types_allowed`` é exigido por ``paginas``, que aceita ``range``,
-    # tipo que o pydantic não valida nativamente.
-    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+    # tipo que o pydantic não valida nativamente. ``coerce_numbers_to_str`` mantém
+    # chamadas como ``raspar(numero=2350)``, que antes dos schemas iam ao portal como texto.
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True, coerce_numbers_to_str=True)
 
     aliases_deprecados: ClassVar[dict[str, str]] = {}
 
@@ -62,6 +63,15 @@ class PesquisaObrigatoriaMixin(InputBase):
         description=_DESCRICAO_PESQUISA,
         examples=["natjus", ["natjus", "saude"]],
     )
+
+    @field_validator("pesquisa")
+    @classmethod
+    def _validar_pesquisa(cls, pesquisa: str | list[str]) -> str | list[str]:
+        """Recusa termo vazio, que viraria uma busca sem filtro baixando todas as páginas."""
+        termos = [pesquisa] if isinstance(pesquisa, str) else pesquisa
+        if not termos or any(not termo.strip() for termo in termos):
+            raise ValueError("'pesquisa' é obrigatória e não pode ser vazia.")
+        return pesquisa
 
 
 class PesquisaOpcionalMixin(InputBase):
@@ -146,6 +156,12 @@ class AnoMixin(InputBase):
 
     ano: int | None = Field(default=None, description="Ano.", examples=[2024])
 
+    @field_validator("ano", mode="before")
+    @classmethod
+    def _ano_vazio_e_nulo(cls, ano: Any) -> Any:
+        """Aceita ``ano=""``, o default antigo de CFM e NYT, como sem filtro."""
+        return None if ano == "" else ano
+
 
 class OutputBase(BaseModel):
     """Base de todo schema de saída: uma linha do DataFrame de ``raspar()``."""
@@ -170,9 +186,18 @@ class OutputBase(BaseModel):
         Returns:
             Lista com o nome das colunas, na ordem em que ``raspar()`` as devolve.
         """
-        da_base = list(OutputBase.model_fields)
-        proprias = [nome for nome in cls.model_fields if nome not in da_base]
-        return proprias + da_base
+        return cls.colunas_da_fonte() + list(OutputBase.model_fields)
+
+    @classmethod
+    def colunas_da_fonte(cls) -> list[str]:
+        """Colunas que o parser do raspador extrai, sem as que ``raspar()`` acrescenta.
+
+        É o valor do atributo de classe ``colunas`` dos raspadores com schema.
+
+        Returns:
+            Lista com o nome das colunas próprias do schema, na ordem declarada.
+        """
+        return [nome for nome in cls.model_fields if nome not in OutputBase.model_fields]
 
 
 def _nivel_de_pilha_fora_do_pacote() -> int:
@@ -354,6 +379,8 @@ def conferir_saida(df: pd.DataFrame, schema: type[OutputBase], metodo: str) -> p
     colunas = schema.colunas()
     if len(df) == 0:
         return pd.DataFrame(columns=colunas)
+    if list(df.columns) == colunas:
+        return df
     if set(df.columns) == set(colunas):
         return df.reindex(columns=colunas)
     faltando = [coluna for coluna in colunas if coluna not in df.columns]
