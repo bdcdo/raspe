@@ -94,6 +94,11 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que tratavam portal recusando o acesso (como o ANSLegis em
   "URL inválida. Acesse o sistema novamente"), em manutenção ou com layout novo como busca sem resultados: sem o
   aviso de busca vazia na página, agora levantam `ScraperError`.
+- Corrigido `saudelegis()`, que falhava com `BrowserError` desde que o portal trocou o botão "Buscar" por
+  "Consultar", e que lia só a primeira página de resultados: agora conta as páginas pelo rodapé da tabela
+  ("Mostrando 1 a 10 de 14 registros") e percorre todas, até o limite de 50.
+- Corrigido o notebook `09_saudelegis.ipynb`, que mandava instalar o Selenium (o raspador usa Playwright); agora
+  traz as saídas de uma execução ao vivo.
 - `BaseScraper._set_query_atual` agora copia o dicionário recebido em vez
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros

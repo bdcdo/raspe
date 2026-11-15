@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+
+
+
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<meta content="IE=Edge" http-equiv="X-UA-Compatible"/>
+<meta content="noindex,follow" name="robots"/>
+<title>SAUDELEGIS - Sistema de Legislação da Saúde</title>
+<link href="/saudelegis/images/datasus-icone.ico" rel="shortcut icon" type="image/x-icon"/>
+<link href="/saudelegis/styles/content.css" media="all" rel="stylesheet" type="text/css"/>
+
+</head><body class="rvfs-4" data-rvfs="4" id="content">
+<div class="header">
+<div id="barra-brasil">
+<a href="http://brasil.gov.br" style="background: #7F7F7F; height: 33px; padding-left: 10px; display: block; font-family: sans, sans-serif; text-decoration: none; color: white;">Portal do
+				Governo Brasileiro</a>
+
+</div>
+<div id="topo_geral">
+<div class="container">
+<div class="row">
+<div class="span7">
+<div class="logo">
+<h1>SLEGIS</h1>
+</div>
+<div class="titulo_sistema">
+<h1>Sistema de Legislação da Saúde</h1>
+<h6>Ministério da Saúde</h6>
+</div>
+</div>
+<div class="span5">
+<div class="box_botoes_acessibilidade">
+<div class="fontsize-controllers group" id="rvfs-controllers"><div class="btn-group"><a class="rvfs-decrease btn" href="#" title="Decrease font size">A-</a><a class="rvfs-reset btn disabled" href="#" title="Default font size">A</a><a class="rvfs-increase btn" href="#" title="Increase font size">A+</a></div></div>
+<a class="contraste" id="lbkContraste" onclick="atribuirContraste()" title="Contraste"> <span class="icone icone-adjust"></span></a>
+</div>
+<form action="/saudelegis/secure/norma/listPublic.xhtml" enctype="application/x-www-form-urlencoded" id="j_idt5" method="post" name="j_idt5">
+<input name="j_idt5" type="hidden" value="j_idt5"/>
+<div id="box_menu_top">
+<ul>
+<li class="paginainicial">
+<a href="/saudelegis/login.xhtml"><span class="icone icone-house"></span>Página inicial</a></li>
+<li><a href="#" onclick="mojarra.jsfcljs(document.getElementById('j_idt5'),{'j_idt14':'j_idt14'},'');return false">
+<span class="icone icone-copy"></span>Padrões do Governo</a></li>
+</ul>
+</div>
+<div class="usuario">
+<p>
+<span class="perfilUsuario"> V<i>2.4.0</i>
+</span>
+</p>
+</div><input autocomplete="off" id="javax.faces.ViewState" name="javax.faces.ViewState" type="hidden" value="-8687633909945400609:4841921239715388577"/>
+</form>
+</div>
+</div>
+</div>
+</div>
+<div id="BoxMenuPrincipal">
+<div class="container">
+<div class="row">
+<div class="span12" style="height: 35px">
+<ul class="nav">
+<form action="/saudelegis/secure/norma/listPublic.xhtml" enctype="application/x-www-form-urlencoded" id="formPublico" method="post" name="formPublico">
+<input name="formPublico" type="hidden" value="formPublico"/>
+<ul class="sf-menu sf-js-enabled sf-shadow">
+<li><a class="sf-with-ul" href="#">Pesquisa<span class="sf-sub-indicator"> »</span></a>
+<ul style="float: none; width: 13.0769em; display: none; visibility: hidden;">
+<li style="white-space: normal; float: left; width: 100%;"><a href="/saudelegis/secure/norma/listPublic.xhtml" style="float: none; width: auto;">Consulta de Normas</a></li>
+</ul></li>
+<li><a class="sf-with-ul" href="#">Alerta legis<span class="sf-sub-indicator"> »</span></a>
+<ul style="float: none; width: 13.2308em; display: none; visibility: hidden;">
+<li style="white-space: normal; float: left; width: 100%;"><a href="/saudelegis/secure/destinatario/viewPublic.xhtml" style="float: none; width: auto;">Destinatário</a></li>
+<li style="white-space: normal; float: left; width: 100%;"><a href="/saudelegis/secure/alertaLegis/consultaAlertaLegisPublic.xhtml" style="float: none; width: auto;">Consulta alerta legis</a></li>
+</ul>
+</li>
+</ul><input autocomplete="off" id="javax.faces.ViewState" name="javax.faces.ViewState" type="hidden" value="-8687633909945400609:4841921239715388577"/>
+</form>
+</ul>
+</div>
+</div>
+<div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" style="min-height: 762px;">
+<div class="container">
+<div class="row"><ul class="span12" id="mensagem"><li class="alert alert-danger"><span title="Nenhum registro foi encontrado. Favor verificar o filtro de busca.">	Nenhum registro foi encontrado. Favor verificar o filtro de busca.</span></li></ul>
+<div class="span12">
+<link href="/saudelegis/styles/view.css" media="all" rel="stylesheet" type="text/css"/>
+<form action="/saudelegis/secure/norma/listPublic.xhtml" enctype="application/x-www-form-urlencoded" id="j_idt49" method="post" name="j_idt49">
+<input name="j_idt49" type="hidden" value="j_idt49"/>
+<ul class="breadcrumb">
+<li><a href="#" onclick="mojarra.jsfcljs(document.getElementById('j_idt49'),{'j_idt49:j_idt51':'j_idt49:j_idt51'},'');return false">Início</a>
+<span class="icone-arrow-right"></span>
+</li>
+<li><a href="#" onclick="mojarra.jsfcljs(document.getElementById('j_idt49'),{'j_idt49:j_idt53':'j_idt49:j_idt53'},'');return false">Normas</a>
+<span class="icone-arrow-right"></span>
+</li>
+<li class="active">
+					Pesquisa
+				</li>
+</ul><input autocomplete="off" id="javax.faces.ViewState" name="javax.faces.ViewState" type="hidden" value="-8687633909945400609:4841921239715388577"/>
+</form>
+<strong class="title">
+			Pesquisa <small>(Normas)</small>
+</strong>
+<div class="box conteudo-box">
+<div class="span12">
+<form action="/saudelegis/secure/norma/listPublic.xhtml" enctype="application/x-www-form-urlencoded" id="form" method="post" name="form">
+<input name="form" type="hidden" value="form"/>
+<fieldset>
+<div>
+<div class="span4"><label for="form:tipo">Tipo de Norma</label><select id="form:tipo" name="form:tipo" size="1" title="tipo de norma"> <option selected="selected"></option>
+<option value="2">(AAT) Ato Administrativo</option>
+<option value="7">(COP) Consulta Pública</option>
+<option value="189">(DC) Decreto</option>
+<option value="12">(INT) Instrução Normativa</option>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</select>
+</div>
+<div class="span4"><label for="form:num">Número</label><input autocomplete="off" class="sonumeros10" id="form:num" maxlength="10" name="form:num" title="Número de identificação da Norma" type="text"/>
+</div>
+</div>
+<div class="custom-panel">
+<div class="span4"><label for="form:data">Data de Publicação</label>
+<div id="icons"><input class="datePicker hasDatepicker" id="form:data" maxlength="10" name="form:data" title="Data inicial da publicação da Norma" type="text"/><a class="ui-state-default ui-corner-all" style="padding-bottom: 3px; height: 100%; width: 25px; text-align: center" title="Selecionar Data"><span class="fa fa-lg fa-calendar"></span></a>
+</div>
+<div class="span3"><label for="form:dataAte">até</label>
+</div>
+<div id="icons"><input class="datePicker hasDatepicker" id="form:dataAte" maxlength="10" name="form:dataAte" title="Data final da publicação da Norma" type="text"/><a class="ui-state-default ui-corner-all" style="padding-bottom: 3px; height: 100%; width: 25px; text-align: center" title="Selecionar Data"><span class="fa fa-lg fa-calendar"></span></a>
+</div>
+</div>
+<div class="span4"><label for="form:ano">Ano de Assinatura</label><input autocomplete="off" class="sonumeros4" id="form:ano" maxlength="4" name="form:ano" title="Ano de assinatura da norma encaminhada ao MS" type="text"/>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel panel-heading">
+<h6 class="panel-title">Origem</h6>
+</div>
+<div class="panel panel-body"><span id="form:panelOrigem"><span id="form:divLinhaCampoBotaoAdicionarOrigem">
+<div class="span4"><label class="form-lbl" for="form:origemDaNorma">Nome</label><select id="form:origemDaNorma" name="form:origemDaNorma" onchange="mojarra.ab(this,event,'valueChange','@form','form:divLinhaCampoBotaoAdicionarOrigem')" size="1"> <option selected="selected"></option>
+<option value="1814">AGÊNCIA PARA O DESENVOLVIMENTO DA ATENÇÃO PRIMÁRIA À SAÚDE</option>
+<option value="1565">ADVOCACIA GERAL DA UNIÃO</option>
+<option value="1">ANS</option>
+<option value="1694">AGÊNCIA NACIONAL DE SAÚDE SUPLEMENTAR- PROCURADORIA FEDERAL</option>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</select>
+</div>
+<div class="span1">
+</div></span>
+<br/>
+<div class="span12">
+<div class="ui-grid ui-widget ui-helper-clearfix"><div class="dataTables_wrapper" id="form:grid-origens_wrapper" role="grid"><div class="fg-toolbar ui-toolbar ui-widget-header ui-corner-tl ui-corner-tr ui-helper-clearfix"><div class="dataTables_length" id="form:grid-origens_length">Mostrar <select aria-controls="form:grid-origens" name="form:grid-origens_length" size="1" style="width: 70px"><option selected="selected" value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></div><div class="dataTables_filter" id="form:grid-origens_filter">Filtro: <input style="width: 200px" type="text"/></div></div><table aria-describedby="form:grid-origens_info" class="table table-hover dataTable" id="form:grid-origens">
+<thead>
+<tr role="row"><th aria-controls="form:grid-origens" aria-label="Origem: activate to sort column descending" aria-sort="ascending" class="ui-state-default" colspan="1" role="columnheader" rowspan="1" scope="col" tabindex="0"><div class="DataTables_sort_wrapper">Origem<span class="DataTables_sort_icon css_right ui-icon ui-icon-triangle-1-n"></span></div></th><th aria-controls="form:grid-origens" aria-label="Ações: activate to sort column ascending" class="col10 ui-state-default" colspan="1" role="columnheader" rowspan="1" scope="col" tabindex="0"><div class="DataTables_sort_wrapper">Ações<span class="DataTables_sort_icon css_right ui-icon ui-icon-carat-2-n-s"></span></div></th></tr>
+</thead>
+<tbody aria-live="polite" aria-relevant="all" role="alert"><tr class="odd"><td class="dataTables_empty" colspan="2" valign="top">Nenhum Registro Encontrado</td></tr></tbody></table><div class="fg-toolbar ui-toolbar ui-widget-header ui-corner-bl ui-corner-br ui-helper-clearfix"><div class="dataTables_info" id="form:grid-origens_info">Mostrando 0 a 0 de 0 registro (s)</div><div class="dataTables_paginate fg-buttonset ui-buttonset fg-buttonset-multi ui-buttonset-multi paging_full_numbers" id="form:grid-origens_paginate"><a class="first ui-corner-tl ui-corner-bl fg-button ui-button ui-state-default ui-state-disabled" id="form:grid-origens_first" tabindex="0">Primeiro</a><a class="previous fg-button ui-button ui-state-default ui-state-disabled" id="form:grid-origens_previous" tabindex="0">Anterior</a><span></span><a class="next fg-button ui-button ui-state-default ui-state-disabled" id="form:grid-origens_next" tabindex="0">Próximo</a><a class="last ui-corner-tr ui-corner-br fg-button ui-button ui-state-default ui-state-disabled" id="form:grid-origens_last" tabindex="0">Último</a></div></div></div>
+</div>
+</div></span>
+</div>
+</div>
+<div class="custom-panel2">
+<div class="span4"><label for="form:fonte">Fonte</label><select id="form:fonte" name="form:fonte" size="1" title="Fonte da norma"> <option value=""></option>
+<option value="1">BFIO</option>
+<option value="2">BLMS</option>
+<option value="4">BSDG</option>
+<option value="5">BSE</option>
+
+
+
+
+
+
+</select>
+</div>
+<div class="span3"><label for="form:secao">Seção</label><select id="form:secao" name="form:secao" size="1" title="Seção da origem da norma"> <option value=""></option>
+<option value="4">NENHUM</option>
+<option value="0">IV</option>
+<option value="150">Suplemento</option>
+<option value="71">II</option>
+
+
+
+
+</select>
+</div>
+</div>
+<div>
+<div class="span3"><label for="form:id">Identificação</label><input autocomplete="off" class="sonumeros10" id="form:id" maxlength="10" name="form:id" title="Número inicial de identificação da norma" type="text"/>
+</div>
+<div class="span4"><label for="form:situacao">Situação</label><select id="form:situacao" name="form:situacao" size="1" title="Situação do documento quanto a sua validade"> <option value=""></option>
+<option value="183">ANULADA</option>
+<option value="184">INSUBSISTENTE</option>
+<option value="2">REVOGADA</option>
+<option value="90">REVOGAÇÃO TOTAL</option>
+
+
+
+</select>
+</div>
+</div>
+<div>
+<div class="span8"><label for="form:assunto">Assunto</label><input id="form:assunto" name="form:assunto" title="Descrição sucinta do que esta sendo discutido na norma" type="text" value="termoextremamenteimprovavelxyz"/>
+</div>
+</div>
+<br/>
+<div>
+<div class="span12">
+<div class="pull-right"><input class="btn btn-primary" name="form:j_idt108" type="submit" value="Consultar"/><input class="btn btn-default" name="form:j_idt109" type="submit" value="Limpar"/>
+</div>
+</div>
+</div>
+<br/>
+<div class="clear-fix"></div>
+</fieldset><input autocomplete="off" id="javax.faces.ViewState" name="javax.faces.ViewState" type="hidden" value="-8687633909945400609:4841921239715388577"/>
+</form>
+</div>
+</div>
+
+
+</div>
+</div>
+</div>
+</div>
+<div id="rodape-datasus">
+
+</div>
+<div class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" id="ui-datepicker-div"></div></body></html>
