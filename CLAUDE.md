@@ -64,8 +64,10 @@ Novos scrapers devem:
 - Os hooks locais (mypy, pyright, pytest) chamam `.venv/bin/...`, então o
   ambiente precisa estar em `.venv/` na raiz do repo.
 - Ativar hooks: `pre-commit install`
-- Hooks rodam em cada commit: trailing whitespace, isort, pylint, flake8, mypy, pyright e pytest
-  (suíte offline, ~15 s)
+- Hooks rodam no commit: trailing whitespace, isort, pylint, flake8, mypy, pyright e pytest
+  (suíte offline, ~15 s), cada um só quando o commit traz arquivo do tipo ou pasta que ele
+  cobre (o pytest, por exemplo, só com `src/` ou `tests/`). O `gitignore-versionado` roda em
+  todo commit e reprova arquivo versionado que o `.gitignore` cobre
 - Comprimento máximo de linha: 120
 - Para rodar todos os hooks manualmente: `pre-commit run --all-files`
 - Comandos isolados (use o hook, não o binário solto: `flake8` e `pylint`

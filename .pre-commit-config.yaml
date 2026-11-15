@@ -59,3 +59,21 @@ repos:
         files: ^(src|tests)/
         pass_filenames: false
         args: ["-q", "-p", "no:cacheprovider"]
+      # O hook pytest acima só dispara com arquivo de src/ ou tests/ no commit, e o repo não
+      # tem CI: um `git add -f .coverage` isolado passaria. Este roda em todo commit, com a
+      # mesma regra de tests/test_repositorio.py, e não depende do .venv, para não travar
+      # commit só de documentação.
+      - id: gitignore-versionado
+        name: nenhum arquivo versionado coberto pelo .gitignore
+        entry: bash
+        language: system
+        always_run: true
+        pass_filenames: false
+        args:
+          - -c
+          - |
+            arquivos=$(git ls-files --cached --ignored --exclude-per-directory=.gitignore) || exit
+            [ -z "$arquivos" ] && exit 0
+            echo "Arquivos versionados que o .gitignore cobre. Tire-os do índice com git rm --cached <arquivo>:"
+            echo "$arquivos"
+            exit 1
