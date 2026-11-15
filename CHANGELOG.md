@@ -124,6 +124,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `UserWarning` com o rótulo, porque ele indica mudança de layout do portal.
 - Corrigido o aviso de páginas sem linhas nos raspadores com navegador, que saía atribuído ao asyncio: agora aponta
   para a linha de quem chamou `raspar()`, como nos demais raspadores.
+- Corrigido o `ano` de `nyt()` e `cfm()` fora de quatro dígitos: no `nyt()`, `ano=24` dava erro de formato de
+  data e `ano=0` desligava o filtro em silêncio; no `cfm()`, os dois iam ao portal. Agora levantam
+  `ValidationError` dizendo que o ano precisa ter quatro dígitos.
 
 ## [0.1.0] - 2025-05-15
 

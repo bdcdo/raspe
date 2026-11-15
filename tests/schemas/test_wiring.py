@@ -61,6 +61,12 @@ class TestMensagensDeErro:
         """``ano=""`` era o default antigo de CFM e NYT."""
         assert validar_entrada(InputCFM, {"ano": ""}, metodo="m()")["ano"] is None
 
+    @pytest.mark.parametrize("ano", [24, 0, -2024, 20240])
+    def test_ano_sem_quatro_digitos_levanta(self, ano):
+        mensagem = rf"'ano': 'ano' precisa ter quatro dígitos \(ex\.: 2024\); veio {ano}\."
+        with pytest.raises(ValidationError, match=mensagem):
+            validar_entrada(InputCFM, {"ano": ano}, metodo="m()")
+
     @responses.activate
     def test_valor_fora_da_lista_mostra_os_permitidos(self):
         with pytest.raises(ValidationError, match="esperado um de 'todos', 'online', 'jornal'"):

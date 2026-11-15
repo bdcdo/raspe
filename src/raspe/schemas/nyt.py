@@ -15,7 +15,7 @@ class InputNYT(PaginasMixin, AnoMixin, IntervaloDatasMixin, PesquisaOpcionalMixi
     ano: int | None = Field(
         default=None,
         description=(
-            "Ano de publicação. Preenche `data_inicio` com 1º de janeiro e `data_fim` "
+            "Ano de publicação, com quatro dígitos. Preenche `data_inicio` com 1º de janeiro e `data_fim` "
             "com 31 de dezembro quando elas não vêm."
         ),
         examples=[2024],

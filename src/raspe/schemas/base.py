@@ -169,13 +169,21 @@ class IntervaloDatasMixin(InputBase):
 class AnoMixin(InputBase):
     """Filtro por ano. Schemas concretos redeclaram o campo para dizer o que o ano filtra."""
 
-    ano: int | None = Field(default=None, description="Ano.", examples=[2024])
+    ano: int | None = Field(default=None, description="Ano, com quatro dígitos.", examples=[2024])
 
     @field_validator("ano", mode="before")
     @classmethod
     def _ano_vazio_e_nulo(cls, ano: Any) -> Any:
         """Aceita ``ano=""``, o default antigo de CFM e NYT, como sem filtro."""
         return None if ano == "" else ano
+
+    @field_validator("ano")
+    @classmethod
+    def _ano_com_quatro_digitos(cls, ano: int | None) -> int | None:
+        """Recusa ano fora de 1000 a 9999, que nenhuma fonte entende como ano."""
+        if ano is not None and not 1000 <= ano <= 9999:
+            raise ValueError(f"'ano' precisa ter quatro dígitos (ex.: 2024); veio {ano}.")
+        return ano
 
 
 class OutputBase(BaseModel):

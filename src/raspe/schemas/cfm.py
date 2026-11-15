@@ -17,7 +17,7 @@ class InputCFM(PaginasMixin, AnoMixin, PesquisaOpcionalMixin):
         default="", description="Filtro de revogação repassado ao portal; vazio não filtra.", examples=["N"]
     )
     numero: str = Field(default="", description="Número da norma.", examples=["2350"])
-    ano: int | None = Field(default=None, description="Ano da norma.", examples=[2023])
+    ano: int | None = Field(default=None, description="Ano da norma, com quatro dígitos.", examples=[2023])
 
 
 class OutputCFM(OutputBase):
