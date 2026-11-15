@@ -38,6 +38,8 @@ class ScraperFolha(BaseScraper, HTMLScraper):
     SITES_VALIDOS = ('todos', 'online', 'jornal')
     LIMITE_MAX_RESULTADOS = 10000
 
+    colunas = ['link', 'titulo', 'resumo', 'data']
+
     def __init__(self, debug: bool = True):
         super().__init__("FOLHA", debug)
 
@@ -223,7 +225,7 @@ class ScraperFolha(BaseScraper, HTMLScraper):
         Returns:
             DataFrame com as colunas: link, titulo, resumo, data.
         """
-        columns = ['link', 'titulo', 'resumo', 'data']
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as f:

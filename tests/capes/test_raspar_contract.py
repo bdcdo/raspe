@@ -121,6 +121,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyz123")
         assert df.empty
+        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
     @responses.activate
     def test_pagina_sem_paginacao_nem_aviso_levanta_erro(self, scraper, mocker):

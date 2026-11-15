@@ -27,6 +27,12 @@ _BASE_DOMAIN = "https://www.periodicos.capes.gov.br"
 class ScraperCapes(BaseScraper, HTMLScraper):
     """Raspador HTTP para o buscador do Portal de Periódicos da CAPES."""
 
+    colunas = [
+        'id', 'tipo', 'titulo', 'link', 'autores', 'ano', 'revista',
+        'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
+        'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
+    ]
+
     def __init__(self, debug: bool = True):
         super().__init__("capes", debug)
 
@@ -107,11 +113,7 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         return (total + per_page - 1) // per_page
 
     def _parse_page(self, path: str) -> pd.DataFrame:
-        columns = [
-            'id', 'tipo', 'titulo', 'link', 'autores', 'ano', 'revista',
-            'instituicao', 'topicos', 'resumo', 'doi', 'link_editor',
-            'acesso_aberto', 'producao_nacional', 'revisado_por_pares',
-        ]
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as f:

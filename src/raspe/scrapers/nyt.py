@@ -48,6 +48,11 @@ class ScraperNYT(BaseScraper):
     RESULTS_PER_PAGE = 10
     MAX_PAGES = 100
 
+    colunas = [
+        'titulo', 'url', 'data_publicacao', 'secao', 'desk',
+        'tipo', 'resumo', 'autor', 'palavras', 'imagem_url'
+    ]
+
     def __init__(self, api_key: str | None = None, debug: bool = True):
         """Inicializa o raspador do NYT.
 
@@ -229,10 +234,7 @@ class ScraperNYT(BaseScraper):
             DataFrame com as colunas: titulo, url, data_publicacao, secao,
             desk, tipo, resumo, autor, palavras, imagem_url.
         """
-        columns = [
-            'titulo', 'url', 'data_publicacao', 'secao', 'desk',
-            'tipo', 'resumo', 'autor', 'palavras', 'imagem_url'
-        ]
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as f:

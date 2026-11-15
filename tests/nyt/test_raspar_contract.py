@@ -85,6 +85,7 @@ class TestRasparContract:
 
         df = scraper.raspar(texto="xxxxxxxx_inexistente")
         assert df.empty
+        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
     @responses.activate
     def test_api_key_invalida_levanta_apikeyerror(self, scraper, mocker):

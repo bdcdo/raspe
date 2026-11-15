@@ -11,6 +11,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
+    colunas = ['link', 'titulo', 'descricao', 'ementa']
+
     def __init__(self, debug: bool = True):
         super().__init__("CAMARA", debug)
         self.session.headers.update({
@@ -107,7 +109,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = ['link', 'titulo', 'descricao', 'ementa']
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as file:

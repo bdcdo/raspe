@@ -36,6 +36,8 @@ class ScraperSaudeLegis(PlaywrightScraper):
         ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
     """
 
+    colunas = ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
+
     def __init__(self, debug: bool = True, headless: bool = True):
         """Inicializa o ScraperSaudeLegis."""
         super().__init__(
@@ -155,7 +157,7 @@ class ScraperSaudeLegis(PlaywrightScraper):
         Returns:
             pd.DataFrame: Dados extraídos da página.
         """
-        columns = ['tipo_norma', 'numero', 'data_pub', 'origem', 'ementa', 'link_url']
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as f:

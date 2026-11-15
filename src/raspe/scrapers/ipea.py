@@ -7,6 +7,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperIpea(BaseScraper, HTMLScraper):
+    colunas = ['titulo', 'link', 'autores', 'data', 'assuntos']
+
     def __init__(self, download_path=None, debug: bool = True):
         super().__init__("IPEA", debug)
 
@@ -88,7 +90,7 @@ class ScraperIpea(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = ['titulo', 'link', 'autores', 'data', 'assuntos']
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as file:

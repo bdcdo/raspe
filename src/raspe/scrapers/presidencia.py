@@ -9,6 +9,8 @@ from ..html_scraper import HTMLScraper
 
 
 class ScraperPresidencia(BaseScraper, HTMLScraper):
+    colunas = ['nome', 'link', 'ficha', 'revogacao', 'descricao']
+
     def __init__(self, debug: bool = True):
         super().__init__("PRESIDENCIA", debug)
 
@@ -90,7 +92,7 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
     def _parse_page(self, path) -> pd.DataFrame:
         from bs4 import BeautifulSoup
 
-        columns = ['nome', 'link', 'ficha', 'revogacao', 'descricao']
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as file:

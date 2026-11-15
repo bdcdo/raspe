@@ -52,6 +52,8 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   de mutar `query_base` in-place. Bug latente (não afetava o fluxo atual
   de `_download_data`), mas vira armadilha em refactors futuros
   (paralelização, cache, uso de `old_page_name`).
+- Corrigida a busca sem resultados, que devolvia um `DataFrame` sem colunas: agora traz as colunas da fonte
+  (listadas no novo atributo de classe `colunas` de cada raspador), mais `termo_busca`.
 - Corrigidas as mensagens de log repetidas ao criar mais de um raspador da mesma fonte: cada instância
   acrescentava mais um handler ao logger compartilhado.
 - Corrigido `raspar()` devolvendo `DataFrame` vazio quando a requisição inicial esbarra em 429 ou 5xx

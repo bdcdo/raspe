@@ -23,6 +23,8 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         df = scraper.raspar(texto=termos)
     """
 
+    colunas = ['Tipo', 'UF', 'Nº/Ano', 'Situação', 'Ementa', 'Link']
+
     def __init__(self, debug: bool = True):
         super().__init__("CFM", debug)
 
@@ -175,7 +177,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         Returns:
             pd.DataFrame: DataFrame com as normas extraídas
         """
-        columns = ['Tipo', 'UF', 'Nº/Ano', 'Situação', 'Ementa', 'Link']
+        columns = self.colunas
 
         try:
             with open(path, 'r', encoding='utf-8') as file:

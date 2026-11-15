@@ -21,6 +21,12 @@ Novos scrapers devem:
 2. Implementar as propriedades abstratas: `api_base`, `type`, `query_page_name`, `api_method`
 3. Implementar os métodos: `_set_query_base()`, `_find_n_pags()`, `_parse_page()`
 4. Validar parâmetros em `_validar_parametros()` (sobrescrevendo o método base)
+5. Declarar as colunas do resultado no atributo de classe `colunas` e usá-lo no
+   `_parse_page()`; a busca sem resultados devolve um `DataFrame` vazio com essas colunas
+6. No `_find_n_pags()`, quando a página não traz o marcador de contagem, devolver
+   `self._confirmar_busca_vazia(soup)` (de `HTMLScraper`) em vez de 0: ele só aceita 0
+   se a página traz o aviso de busca vazia e levanta `ScraperError` em página de
+   manutenção ou anti-robô
 
 ## Versionamento e CHANGELOG
 

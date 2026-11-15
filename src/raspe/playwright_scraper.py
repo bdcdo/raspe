@@ -614,7 +614,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
                 if total_paginas == 0:
                     self.logger.warning("Nenhum resultado encontrado")
-                    return pd.DataFrame()
+                    return pd.DataFrame(columns=self.colunas)
 
                 # Salva primeira página
                 await self._salvar_html_pagina(1, download_dir)

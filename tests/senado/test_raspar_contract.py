@@ -79,6 +79,7 @@ class TestRasparContract:
         )
         df = scraper.raspar(pesquisa="xxxxxx_inexistente")
         assert df.empty
+        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
     @responses.activate
     def test_verificacao_anti_robo_levanta_erro(self, scraper, mocker):

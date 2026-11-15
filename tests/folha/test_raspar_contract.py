@@ -91,6 +91,7 @@ class TestRasparContract:
 
         df = scraper.raspar(pesquisa="termo_inexistente_xyzabc")
         assert df.empty
+        assert COLUNAS_OBRIGATORIAS <= set(df.columns)
 
 
 class TestValidacao:
