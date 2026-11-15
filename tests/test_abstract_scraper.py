@@ -12,7 +12,7 @@ from typing import Literal
 import pandas as pd
 import pytest
 
-from raspe.abstract_scraper import AbstractScraper
+from raspe.abstract_scraper import AbstractScraper, _HandlerRaspe
 from raspe.exceptions import ScraperError, ValidationError
 
 
@@ -43,8 +43,8 @@ class TestInit:
 
     def test_logger_configurado(self):
         s = _DummyScraper("logger_test", debug=True)
-        assert isinstance(s.logger, logging.Logger)
-        assert s.logger.name == "logger_test"
+        assert s.logger.name == "raspe.logger_test"
+        assert s.logger.logger.parent is logging.getLogger("raspe")
         assert s.logger.level == logging.DEBUG
 
     def test_logger_em_modo_info_quando_debug_off(self):
@@ -53,26 +53,78 @@ class TestInit:
 
     def test_logger_nao_propaga(self):
         """Para evitar duplicação de logs com o root logger."""
-        s = _DummyScraper("propagate_test")
-        assert s.logger.propagate is False
+        assert logging.getLogger("raspe").propagate is False
 
-    def test_logger_nao_empilha_handler_por_instancia(self):
+    def test_logger_nao_empilha_handler_por_instancia(self, capsys):
         """Instâncias com o mesmo nome compartilham o logger; cada mensagem sai uma vez só."""
         primeiro = _DummyScraper("handler_unico", debug=False)
         segundo = _DummyScraper("handler_unico", debug=True)
-        assert primeiro.logger is segundo.logger
-        assert len(segundo.logger.handlers) == 1
-        assert segundo.logger.level == logging.DEBUG
-
-    def test_logger_mantem_handler_do_usuario_e_usa_stderr_atual(self, capsys):
-        """Um handler alheio no logger não suprime o do raspe, e a saída vai para o stderr atual."""
-        alheio = logging.NullHandler()
-        logging.getLogger("handler_alheio").addHandler(alheio)
-        s = _DummyScraper("handler_alheio", debug=False)
-        s.logger.warning("aviso único")
-        assert alheio in s.logger.handlers
-        assert len(s.logger.handlers) == 2
+        assert primeiro.logger.logger is segundo.logger.logger
+        assert sum(isinstance(h, _HandlerRaspe) for h in logging.getLogger("raspe").handlers) == 1
+        segundo.logger.warning("aviso único")
         assert capsys.readouterr().err.count("aviso único") == 1
+
+    def test_nivel_e_de_cada_instancia(self, capsys):
+        """Criar uma instância com debug=True não liga o DEBUG da anterior, e vice-versa."""
+        silenciosa = _DummyScraper("nivel_proprio", debug=False)
+        detalhada = _DummyScraper("nivel_proprio", debug=True)
+        silenciosa.logger.debug("debug da silenciosa")
+        detalhada.logger.debug("debug da detalhada")
+        err = capsys.readouterr().err
+        assert "debug da silenciosa" not in err
+        assert "debug da detalhada" in err
+
+        detalhada.logger.setLevel("WARNING")
+        detalhada.logger.info("info depois do setLevel")
+        silenciosa.logger.info("info da silenciosa")
+        err = capsys.readouterr().err
+        assert "info depois do setLevel" not in err
+        assert "info da silenciosa" in err
+
+    def test_set_level_valida_o_nome_e_get_effective_level_reflete_a_instancia(self):
+        s = _DummyScraper("nivel_invalido", debug=False)
+        assert s.logger.getEffectiveLevel() == logging.INFO
+        with pytest.raises(ValueError, match="warning"):
+            s.logger.setLevel("warning")
+        s.logger.setLevel(logging.ERROR)
+        assert s.logger.getEffectiveLevel() == logging.ERROR
+
+    def test_api_de_logger_vai_para_o_logger_da_fonte(self):
+        """Quem usava ``raspador.logger.addHandler`` continua funcionando."""
+        s = _DummyScraper("api_logger")
+        extra = logging.NullHandler()
+        s.logger.addHandler(extra)
+        try:
+            assert extra in s.logger.handlers
+            assert extra in logging.getLogger("raspe.api_logger").handlers
+        finally:
+            s.logger.removeHandler(extra)
+
+    def test_nova_instancia_nao_desfaz_configuracao_do_usuario(self):
+        """O raspe configura o logger ``raspe`` uma vez; criar raspadores não sobrescreve o propagate do usuário."""
+        raiz = logging.getLogger("raspe")
+        try:
+            raiz.propagate = True
+            _DummyScraper("propagate_usuario")
+            assert raiz.propagate is True
+            assert sum(isinstance(h, _HandlerRaspe) for h in raiz.handlers) == 1
+        finally:
+            raiz.propagate = False
+
+    def test_nivel_do_logger_raspe_vale_para_todas_as_fontes(self, capsys):
+        """O usuário silencia o raspe inteiro pelo logger pai, e novas instâncias respeitam isso."""
+        raiz = logging.getLogger("raspe")
+        nivel_antigo = raiz.level
+        try:
+            raiz.setLevel(logging.WARNING)
+            s = _DummyScraper("silenciado", debug=True)
+            s.logger.info("info escondido")
+            s.logger.warning("aviso visível")
+            err = capsys.readouterr().err
+            assert "info escondido" not in err
+            assert "aviso visível" in err
+        finally:
+            raiz.setLevel(nivel_antigo)
 
 
 class TestValidarParametros:
