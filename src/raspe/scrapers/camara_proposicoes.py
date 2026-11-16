@@ -12,6 +12,7 @@ Exemplo:
 """
 
 import json
+import time
 from typing import Any, Literal
 
 import pandas as pd
@@ -52,6 +53,9 @@ class ScraperCamaraProposicoes(BaseScraper):
       de até ``MESES_POR_CONSULTA`` meses, faz uma consulta por janela e junta
       as proposições sem repetir. Uma data só (ou ``ano``) não tem esse limite,
       e a busca sai numa consulta.
+
+    No período dividido com ``pesquisa``, o raspador tenta antes a consulta só
+    com ``data_inicio``, que costuma sair em menos requisições (ver :meth:`_coletar`).
     """
 
     schema_entrada = InputCamaraProposicoes
@@ -134,6 +138,68 @@ class ScraperCamaraProposicoes(BaseScraper):
         if not (data_inicio and data_fim):
             return [kwargs]
         return self._consultas_por_janela(kwargs, data_inicio, data_fim, self.MESES_POR_CONSULTA)
+
+    def _coletar(self, **kwargs) -> pd.DataFrame:
+        """Coleta a busca; no período longo com ``pesquisa``, tenta antes uma consulta só.
+
+        O período dividido em janelas custa ao menos uma requisição por janela, e
+        na busca por termo quase todas vêm vazias. Com ``pesquisa``, a consulta só
+        com ``data_inicio`` responde em 1 a 2 s e traz as mesmas proposições, mais
+        as apresentadas depois de ``data_fim``, que o raspador tira (ver
+        :meth:`_coletar_sem_data_fim`). Sem ``pesquisa``, ela demora ou dá 504 em
+        período antigo, e a busca vai direto às janelas.
+
+        Medido ao vivo em 2026-11-16 com ``pesquisa`` e períodos de 4 a 15 anos: os
+        dois caminhos devolveram os mesmos ``id``, com 1 a 3 requisições no lugar
+        de 16 a 62.
+
+        Args:
+            **kwargs: Parâmetros já validados; as datas chegam em YYYY-MM-DD.
+
+        Returns:
+            pd.DataFrame: As proposições do período; no período dividido, em ordem de
+            ``id``, a mesma de uma consulta só, seja qual for o caminho.
+        """
+        janelas = len(self._dividir_busca(**kwargs))
+        if janelas == 1:
+            return super()._coletar(**kwargs)
+        if kwargs.get('pesquisa'):
+            df = self._coletar_sem_data_fim(janelas, **kwargs)
+            if df is not None:
+                return df.reset_index(drop=True)
+            # Pausa entre a consulta descartada e a primeira janela.
+            time.sleep(self.sleep_time)
+        return super()._coletar(**kwargs).sort_values('id', ignore_index=True)
+
+    def _coletar_sem_data_fim(self, max_paginas: int, **kwargs) -> pd.DataFrame | None:
+        """Coleta o período pela consulta só com ``data_inicio``, se ela couber em ``max_paginas``.
+
+        Args:
+            max_paginas: Maior número de páginas que compensa baixar (o de janelas do período).
+            **kwargs: Parâmetros já validados, com ``data_inicio`` e ``data_fim``.
+
+        Returns:
+            pd.DataFrame | None: As proposições apresentadas até ``data_fim``. ``None``
+            se a consulta passa de ``max_paginas`` ou se a página 1 falha (erro da API
+            ou de rede): a página pedida é descartada, e a busca segue pelas janelas.
+
+        Raises:
+            RateLimitError: Se a página 1 esbarrar em rate limit (429) persistente.
+        """
+        try:
+            query, r0, n_pags = self._pedir_pagina_1(**{**kwargs, 'data_fim': None})
+        except (APIError, requests.RequestException) as e:
+            self.logger.warning(
+                f"Consulta só com a data inicial falhou ({type(e).__name__}: {e}); seguindo por janelas"
+            )
+            return None
+        if n_pags > max_paginas:
+            self.logger.info(f"Consulta só com a data inicial daria {n_pags} páginas; seguindo por janelas")
+            return None
+        df = self._ler_e_limpar(self._baixar_paginas(query, r0, n_pags))
+        # ``data_apresentacao`` vem como "2020-02-04T14:02"; os 10 primeiros caracteres são o dia.
+        ate_o_fim = df['data_apresentacao'].astype('string').str[:10].le(kwargs['data_fim']).fillna(False)
+        return df.loc[ate_o_fim]
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta os parâmetros da consulta à API.

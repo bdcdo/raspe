@@ -61,6 +61,8 @@ class TestRasparContract:
         assert df["id"].is_unique
         assert df["data_apresentacao"].between("2023-01-01", "2024-12-31").all()
         assert (df["termo_busca"] == "inteligência artificial").all()
+        # Uma requisição por janela: a mesma resposta dá a contagem e as linhas.
+        assert len(responses.calls) == 2
         dormir.assert_called_once_with(scraper.sleep_time)
 
     @responses.activate(assert_all_requests_are_fired=True)

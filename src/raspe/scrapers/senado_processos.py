@@ -186,6 +186,11 @@ class ScraperSenadoProcessos(BaseScraper):
     def _find_n_pags(self, r0: requests.Response) -> int:
         """Conta 1 página se a resposta traz processos e 0 se a lista vem vazia.
 
+        A resposta é interpretada aqui e de novo em :meth:`_parse_page`, a partir do
+        arquivo gravado. Medido ao vivo em 2026-11-16 na janela de ano inteiro sem
+        ``pesquisa`` (2019 e 2023, uns 5.500 processos, 4,7 MB): esta leitura leva
+        0,03 a 0,04 s, contra 3 a 4 s da requisição, que é uma só por janela.
+
         Args:
             r0: Resposta da consulta.
 

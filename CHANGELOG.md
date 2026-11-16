@@ -18,8 +18,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   lei, PECs, requerimentos) pela API oficial de Dados Abertos (`dadosabertos.camara.leg.br/api/v2/proposicoes`), com
   os filtros `pesquisa`, `ano`, `sigla_tipo`, `data_inicio` e `data_fim` e oito colunas por proposição. O período
   de mais de 3 meses entre `data_inicio` e `data_fim`, que a API recusa numa consulta só, sai em consultas de até 3
-  meses, juntadas sem repetir proposição. É a primeira parte da migração da Câmara e do Senado para as APIs oficiais
-  (#29); `raspe.camara()` segue como está.
+  meses, juntadas sem repetir proposição. Com `pesquisa`, o raspador tenta antes a consulta só com `data_inicio` e
+  tira o que foi apresentado depois de `data_fim`; ela vale quando cabe em até tantas páginas quantas seriam as
+  consultas de 3 meses. É a primeira parte da migração da Câmara e do Senado para as APIs oficiais (#29);
+  `raspe.camara()` segue como está.
 - Scraper para o Portal de Periódicos da CAPES (`raspe.capes()`).
   Coleta metadados de artigos, livros e capítulos a partir do
   buscador público (`www.periodicos.capes.gov.br/index.php/acervo/buscador.html`),
