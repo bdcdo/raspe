@@ -64,7 +64,7 @@ class BaseScraper(AbstractScraper):
     """
 
     # Coluna que identifica o registro na fonte, para a busca dividida em várias consultas
-    # (ver _coletar) não repetir linha. ``None`` compara a linha inteira.
+    # (ver _coletar) não repetir linha. ``None`` não tira repetição.
     coluna_id: ClassVar[str | None] = None
 
     def __init__(self, nome_buscador: str, debug: bool = True):
@@ -209,7 +209,7 @@ class BaseScraper(AbstractScraper):
 
         A consulta que falha interrompe a busca: seguir sem ela devolveria um
         período com um buraco. Linha repetida é a que tem o mesmo valor em
-        ``coluna_id`` ou, sem ela, a linha inteira igual.
+        ``coluna_id``; sem essa coluna declarada, nada é tirado.
 
         Args:
             **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
@@ -228,10 +228,12 @@ class BaseScraper(AbstractScraper):
             dfs.append(super()._coletar(**consulta))
         # Como na busca por lista: consulta vazia só entra se todas vierem vazias.
         juntas = pd.concat([df for df in dfs if not df.empty] or dfs[:1], ignore_index=True)
+        if self.coluna_id is None:
+            return juntas
         return juntas.drop_duplicates(subset=self.coluna_id, ignore_index=True)
 
     def _levantar_se_recusada(self, r0: requests.Response) -> None:
-        """Levanta ``APIError`` se a API recusou a consulta (4xx), com a explicação que ela dá.
+        """Levanta ``APIError`` se a API recusou a consulta, com a explicação que ela dá.
 
         Serve às APIs que respondem o erro em JSON com o campo ``detail``; sem
         ele, a mensagem leva o corpo da resposta.
@@ -240,7 +242,7 @@ class BaseScraper(AbstractScraper):
             r0: Resposta da página 1.
 
         Raises:
-            APIError: Se o status for 4xx ou 5xx.
+            APIError: Se o status for de erro (400 ou mais).
         """
         if r0.status_code < 400:
             return

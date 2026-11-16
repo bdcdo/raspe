@@ -109,8 +109,10 @@ class ScraperCamaraProposicoes(BaseScraper):
                 f"{type(self).__name__}.raspar() precisa de 'pesquisa' ou de um filtro de tempo "
                 "('ano', 'data_inicio' ou 'data_fim'): sem eles, a API da Câmara não responde a tempo."
             )
+        if kwargs.get('paginas') is None:
+            return kwargs
         consultas = len(self._dividir_busca(**kwargs))
-        if consultas > 1 and kwargs.get('paginas') is not None:
+        if consultas > 1:
             raise ValidationError(
                 f"{type(self).__name__}.raspar() não aceita 'paginas' nesta busca: o período pedido passa de "
                 f"{self.MESES_POR_CONSULTA} meses e sai em {consultas} consultas, cada uma com a sua paginação. "

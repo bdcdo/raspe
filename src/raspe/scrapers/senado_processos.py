@@ -126,12 +126,14 @@ class ScraperSenadoProcessos(BaseScraper):
                 período até hoje começar no futuro.
         """
         kwargs = super()._validar_parametros(**kwargs)
-        if not kwargs.get('ano') and not kwargs.get('data_inicio'):
+        if kwargs.get('ano'):
+            return kwargs
+        if not kwargs.get('data_inicio'):
             raise ValidationError(
                 f"{type(self).__name__}.raspar() precisa de 'ano' ou de 'data_inicio': sem eles, a API do Senado "
                 "só devolve os processos que ainda tramitam ou, com 'data_fim', os do ano anterior a ela."
             )
-        if not kwargs.get('ano') and not kwargs.get('data_fim') and kwargs['data_inicio'] > _hoje():
+        if not kwargs.get('data_fim') and kwargs['data_inicio'] > _hoje():
             raise ValidationError(f"'data_inicio' ({kwargs['data_inicio']}) não pode ser posterior a hoje.")
         return kwargs
 
