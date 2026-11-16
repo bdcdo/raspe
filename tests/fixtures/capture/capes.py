@@ -4,7 +4,8 @@ Como executar (faz requisições reais à internet, fora do CI), a partir
 da raiz do repositório:
 
     uv run python -m tests.fixtures.capture.capes
-    uv run python -m tests.fixtures.capture.capes --saida /tmp/captura-capes
+    saida=$(mktemp -d)
+    uv run python -m tests.fixtures.capture.capes --saida "$saida"
 
 A forma ``-m`` é necessária porque o script importa ``tests.fixtures``;
 rodado como arquivo, o Python não põe a raiz do repositório no

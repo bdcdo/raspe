@@ -26,7 +26,8 @@ uv pip install -e ".[dev]"
 python -m tests.fixtures.capture.presidencia
 
 # Gravar numa pasta fora do repositório, para comparar com os samples commitados:
-python -m tests.fixtures.capture.presidencia --saida /tmp/captura-presidencia
+saida=$(mktemp -d)
+python -m tests.fixtures.capture.presidencia --saida "$saida"
 ```
 
 A forma `-m` é necessária porque os scripts importam `tests.fixtures`. Rodado como arquivo (`python tests/fixtures/capture/presidencia.py`), o Python põe a pasta do script no `sys.path` no lugar da raiz, e o import falha com `ModuleNotFoundError: No module named 'tests'`.

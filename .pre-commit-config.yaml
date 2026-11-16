@@ -66,19 +66,11 @@ repos:
         args: ["-q", "-p", "no:cacheprovider"]
       # O hook pytest acima só dispara com arquivo de src/ ou tests/ no commit: um
       # `git add -f .coverage` isolado passaria no commit local. Este roda em todo commit, com a
-      # mesma regra de tests/test_repositorio.py, e não depende do .venv, para não travar
-      # commit só de documentação.
+      # mesmo script de tests/test_repositorio.py, que só usa a biblioteca padrão: roda com o
+      # python3 do sistema, sem o .venv, para não travar commit só de documentação.
       - id: gitignore-versionado
         name: nenhum arquivo versionado coberto pelo .gitignore
-        entry: bash
+        entry: python3 scripts/gitignore_versionado.py
         language: system
         always_run: true
         pass_filenames: false
-        args:
-          - -c
-          - |
-            arquivos=$(git ls-files --cached --ignored --exclude-per-directory=.gitignore) || exit
-            [ -z "$arquivos" ] && exit 0
-            echo "Arquivos versionados que o .gitignore cobre. Tire-os do índice com git rm --cached <arquivo>:"
-            echo "$arquivos"
-            exit 1
