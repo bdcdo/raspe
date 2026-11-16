@@ -32,7 +32,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado o parâmetro `debug` aos raspadores da Presidência, do Senado, da Câmara, da CAPES, do CFM, da Folha,
   do IPEA e do NYT, que também passa pelas funções `raspe.<fonte>()`: `raspe.ipea(debug=False)`.
 - Adicionados schemas pydantic de entrada e saída em `raspe.schemas` (atributos `schema_entrada` e `schema_saida`)
-  para todos os raspadores menos Câmara e Senado, que aguardam a reescrita sobre as APIs oficiais.
+  para todos os raspadores. Câmara e Senado têm só o de entrada; as colunas deles ficam no README.
 - Adicionado `docs/colunas.md`, com coluna, tipo, descrição e exemplo de cada fonte, gerado dos schemas por
   `python -m raspe.schemas.documentacao`.
 - Adicionados ao README tipo, descrição e exemplo de cada coluna da Câmara e do Senado, que ficam fora de
@@ -97,6 +97,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
 
 ### Corrigido
+- Corrigidos `camara()` e `senado()`, que aceitavam qualquer parâmetro e, com `ano=0`, buscavam sem o filtro de ano.
+  Os dois ganharam schema de entrada (`InputCamara` e `InputSenado`): `ano` precisa ter quatro dígitos, e parâmetro
+  desconhecido levanta `ValidationError` antes da busca, como nos demais raspadores. A busca por lista passa a valer
+  só em `pesquisa`, e a coluna `termo_busca` sai também sem `pesquisa`, vazia.
 - Corrigidos `camara()`, `capes()`, `cfm()`, `folha()`, `ipea()`, `presidencia()` e `senado()`, que registravam só no
   log o erro de um resultado que não conseguiam ler: com parte dos resultados da página quebrada, avisam com
   `UserWarning`; com todos, a página entra no `ScraperError` com o erro do primeiro.

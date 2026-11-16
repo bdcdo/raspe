@@ -19,10 +19,12 @@ from raspe.exceptions import ScraperError, ValidationError
 from raspe.schemas import InputCFM, InputPresidencia, OutputPresidencia, conferir_saida, descrever_tipo, validar_entrada
 from raspe.scrapers.ans import ScraperANS
 from raspe.scrapers.anvisa import ScraperANVISA
+from raspe.scrapers.camara import ScraperCamaraDeputados
 from raspe.scrapers.cfm import ScraperCFM
 from raspe.scrapers.folha import ScraperFolha
 from raspe.scrapers.presidencia import ScraperPresidencia
 from raspe.scrapers.saudelegis import ScraperSaudeLegis
+from raspe.scrapers.senado import ScraperSenadoFederal
 from tests._helpers import load_sample_bytes
 
 URL_PRESIDENCIA = "https://legislacao.presidencia.gov.br/pesquisa/ajax/resultado_pesquisa_legislacao.php"
@@ -65,6 +67,23 @@ class TestMensagensDeErro:
         mensagem = rf"'ano': 'ano' precisa ter quatro dígitos \(ex\.: 2024\); veio {ano}\."
         with pytest.raises(ValidationError, match=mensagem):
             validar_entrada(InputCFM, {"ano": ano}, metodo="m()")
+
+    @responses.activate
+    @pytest.mark.parametrize("classe", [ScraperCamaraDeputados, ScraperSenadoFederal], ids=lambda c: c.__name__)
+    @pytest.mark.parametrize(
+        ("kwargs", "mensagem"),
+        [
+            # Antes do schema, o ``if ano:`` dos dois descartava o 0 e a busca rodava sem o filtro.
+            ({"ano": 0}, "'ano' precisa ter quatro dígitos"),
+            ({"anno": 2023}, "'anno': parâmetro desconhecido"),
+        ],
+        ids=["ano_zero", "kwarg_desconhecido"],
+    )
+    def test_camara_e_senado_recusam_antes_de_buscar(self, classe, kwargs, mensagem, mocker):
+        # O construtor da Câmara visita o portal; o do Senado não faz requisição.
+        mocker.patch.object(ScraperCamaraDeputados, "_prep_scrape", return_value={})
+        with pytest.raises(ValidationError, match=mensagem):
+            classe().raspar(pesquisa="saúde", **kwargs)
 
     @responses.activate
     def test_valor_fora_da_lista_mostra_os_permitidos(self):

@@ -8,9 +8,11 @@ from bs4 import Tag
 
 from ..base_scraper import BaseScraper
 from ..html_scraper import HTMLScraper
+from ..schemas.camara import InputCamara
 
 
 class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
+    schema_entrada = InputCamara
     colunas = ['link', 'titulo', 'descricao', 'ementa']
 
     # O portal exibe 20 resultados por página e responde HTTP 500 a partir da

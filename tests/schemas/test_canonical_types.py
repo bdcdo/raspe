@@ -25,7 +25,7 @@ from raspe.schemas import (
     PesquisaOpcionalMixin,
 )
 from tests.schemas.test_output_parity import extrair
-from tests.schemas.test_schema_coverage import ESPERADOS
+from tests.schemas.test_schema_coverage import ENTRADAS, ESPERADOS
 
 # Campo canônico para os mixins que o declaram. O tipo aceito sai do próprio
 # mixin, para que mudar a anotação no mixin não exija mexer aqui.
@@ -48,7 +48,7 @@ SINONIMOS = {
 
 _SNAKE_CASE_ASCII = re.compile(r"^[a-z][a-z0-9]*(_[a-z0-9]+)*$")
 
-_ENTRADAS = sorted({registro.entrada for registro in ESPERADOS.values()}, key=lambda schema: schema.__name__)
+_ENTRADAS = sorted(set(ENTRADAS.values()), key=lambda schema: schema.__name__)
 _SAIDAS = sorted({registro.saida for registro in ESPERADOS.values()}, key=lambda schema: schema.__name__)
 _TODOS = _ENTRADAS + _SAIDAS
 

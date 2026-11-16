@@ -23,7 +23,7 @@ import textwrap
 import pytest
 
 from raspe.abstract_scraper import AbstractScraper
-from tests.schemas.test_schema_coverage import ESPERADOS
+from tests.schemas.test_schema_coverage import ENTRADAS
 
 
 def _chave_literal(no: ast.AST) -> str | None:
@@ -68,9 +68,9 @@ def chaves_lidas(classe: type[AbstractScraper]) -> set[str]:
     return chaves
 
 
-@pytest.mark.parametrize("classe", list(ESPERADOS), ids=lambda classe: classe.__name__)
+@pytest.mark.parametrize("classe", list(ENTRADAS), ids=lambda classe: classe.__name__)
 def test_kwargs_lidos_sao_os_campos_do_schema(classe):
-    campos = set(ESPERADOS[classe].entrada.model_fields)
+    campos = set(ENTRADAS[classe].model_fields)
     lidas = chaves_lidas(classe)
     nome = classe.__name__
     assert lidas - campos == set(), f"{nome} lê kwargs que o schema não declara: {sorted(lidas - campos)}"
