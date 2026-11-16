@@ -97,6 +97,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
 
 ### Corrigido
+- Corrigido o exemplo de filtro por tipo no notebook do Senado: `LEI - Lei` é uma opção observada no portal e a busca devolveu 50 registros em cinco páginas.
+- Corrigido o Senado para preservar o erro original de um item mesmo quando o diagnóstico também falha.
+- Corrigida a Câmara para preparar a sessão somente na primeira requisição, depois da validação dos parâmetros.
+- Corrigida a paginação por links numerados e dropdown para acusar implementação ausente antes de abrir o navegador.
 - Corrigidos `camara()` e `senado()`, que aceitavam qualquer parâmetro e, com `ano=0`, buscavam sem o filtro de ano.
   Os dois ganharam schema de entrada (`InputCamara` e `InputSenado`): `ano` precisa ter quatro dígitos, e parâmetro
   desconhecido levanta `ValidationError` antes da busca, como nos demais raspadores. A busca por lista passa a valer

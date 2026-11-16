@@ -622,6 +622,10 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         Returns:
             str: Pasta com as páginas salvas.
         """
+        if (self.pagination_strategy in (PaginationStrategy.NUMBERED_LINKS, PaginationStrategy.SELECT_DROPDOWN)
+                and type(self)._paginar_por_numero is PlaywrightScraper._paginar_por_numero):
+            raise NotImplementedError("Subclasse deve implementar _paginar_por_numero()")
+
         self.logger.info(f"Iniciando raspagem Playwright: {kwargs}")
 
         async with self._browser_context():

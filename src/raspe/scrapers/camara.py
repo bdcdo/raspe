@@ -46,7 +46,13 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
         self._query_page_name = 'pagina'
         self._api_method = 'GET'
 
-        self._prep_scrape()
+        self._sessao_preparada = False
+
+    def _set_r(self, query_atual):
+        if not self._sessao_preparada:
+            self._prep_scrape()
+            self._sessao_preparada = True
+        return super()._set_r(query_atual)
 
     @property
     def api_base(self) -> str:

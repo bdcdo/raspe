@@ -221,29 +221,8 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
 
                 lista_infos.append([titulo, link_norma, link_detalhes, descricao, trecho_descricao])
             except Exception as e:
-                # Coletar informações diagnósticas detalhadas
-                h3_diag = item.find('h3')
-                links_diag = list(h3_diag.find_all('a')) if h3_diag else []
-                p_diag = list(item.find_all('p'))
-
-                item_info = {
-                    'has_h3': bool(h3_diag),
-                    'links_in_h3': len(links_diag),
-                    'links_h3_details': [
-                        {'text': a.text.strip()[:50], 'has_href': 'href' in a.attrs}
-                        for a in links_diag
-                    ],
-                    'p_count': len(p_diag),
-                    'p_elements_details': [
-                        {'text': p.text.strip()[:50], 'class': str(p.get('class', ''))}
-                        for p in p_diag
-                    ],
-                    'item_class': str(item.get('class', '')) if hasattr(item, 'get') else 'unknown'
-                }
-
                 self.logger.warning(
-                    f"Erro ao processar item {idx} de {len(itens)} em {path}: {e}. "
-                    f"Diagnóstico detalhado: {item_info}"
+                    f"Erro ao processar item {idx} de {len(itens)} em {path}: {e}"
                 )
                 erros.append(e)
 
