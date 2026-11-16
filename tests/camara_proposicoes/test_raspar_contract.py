@@ -156,7 +156,10 @@ _QUERY_TELEMEDICINA = matchers.query_param_matcher(
 
 
 class TestPeriodoDividido:
-    """``data_inicio`` + ``data_fim`` com mais de 3 meses: a API responde 400, e o raspador divide o período."""
+    """``data_inicio`` + ``data_fim`` com mais de 3 meses: a API responde 400, e o raspador divide o período.
+
+    Sem ``pesquisa``, a busca vai direto às janelas (a consulta só com a data inicial não é tentada).
+    """
 
     @responses.activate(assert_all_requests_are_fired=True)
     def test_periodo_longo_sai_em_janelas_de_ate_3_meses(self, scraper, mocker):
@@ -165,27 +168,27 @@ class TestPeriodoDividido:
         amostras = ["page_01", "page_02", "no_results"]
         for (inicio, fim), amostra in zip(janelas, amostras):
             _registrar(
-                {"keywords": "doença rara", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
+                {"siglaTipo": "PL", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
                 0 if amostra == "no_results" else 78, amostra,
             )
 
-        df = scraper.raspar(pesquisa="doença rara", data_inicio="2020-01-01", data_fim="2020-07-15")
+        df = scraper.raspar(sigla_tipo="PL", data_inicio="2020-01-01", data_fim="2020-07-15")
 
         assert list(df.columns) == COLUNAS
         assert len(df) == 178
         assert df["id"].is_unique
         assert df["id"].dtype == "int64"
-        assert (df["termo_busca"] == "doença rara").all()
+        assert (df["termo_busca"] == "").all()
+        assert len(responses.calls) == 3
         assert dormir.call_args_list == [mocker.call(scraper.sleep_time)] * 2
 
     @responses.activate(assert_all_requests_are_fired=True)
     def test_proposicao_repetida_entre_janelas_sai_uma_vez(self, scraper, mocker):
         mocker.patch("time.sleep")
         for inicio, fim in [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-04-30")]:
-            _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
-                       9, "single_page")
+            _registrar({"dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim}, 9, "single_page")
 
-        df = scraper.raspar(pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-04-30")
+        df = scraper.raspar(data_inicio="2020-01-01", data_fim="2020-04-30")
 
         assert len(df) == 9
         assert df["id"].is_unique
@@ -194,15 +197,11 @@ class TestPeriodoDividido:
     def test_janela_paginada_baixa_todas_as_paginas(self, scraper, mocker):
         mocker.patch("time.sleep")
         _registrar(
-            {"keywords": "doença rara", "dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-03-31"},
-            178, "page_01", "page_02",
+            {"dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-03-31"}, 178, "page_01", "page_02"
         )
-        _registrar(
-            {"keywords": "doença rara", "dataApresentacaoInicio": "2020-04-01", "dataApresentacaoFim": "2020-04-30"},
-            0, "no_results",
-        )
+        _registrar({"dataApresentacaoInicio": "2020-04-01", "dataApresentacaoFim": "2020-04-30"}, 0, "no_results")
 
-        df = scraper.raspar(pesquisa="doença rara", data_inicio="2020-01-01", data_fim="2020-04-30")
+        df = scraper.raspar(data_inicio="2020-01-01", data_fim="2020-04-30")
 
         assert len(df) == 178
 
@@ -219,12 +218,136 @@ class TestPeriodoDividido:
         )
 
         assert len(df) == 9
+        assert len(responses.calls) == 1
 
     def test_paginas_em_periodo_dividido_levanta_antes_da_busca(self, scraper):
         with pytest.raises(ValidationError, match="não aceita 'paginas' nesta busca.*4 consultas"):
             scraper.raspar(
                 pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-12-31", paginas=range(1, 2)
             )
+
+
+class TestPeriodoLongoComPesquisa:
+    """Com ``pesquisa``, o período de mais de 3 meses tenta antes a consulta só com a data inicial.
+
+    Ela vale quando cabe em até tantas páginas quantas seriam as janelas; o raspador
+    tira do resultado o que foi apresentado depois de ``data_fim``.
+    """
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_sai_numa_requisicao_e_corta_em_data_fim(self, scraper, mocker):
+        """8 janelas viram 1 requisição; o dia de ``data_fim`` entra, e o que vem depois sai."""
+        dormir = mocker.patch("time.sleep")
+        _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": "2019-01-01"}, 9, "single_page")
+
+        df = scraper.raspar(pesquisa="telemedicina", data_inicio="2019-01-01", data_fim="2020-05-25")
+
+        assert len(responses.calls) == 1
+        dormir.assert_not_called()
+        assert list(df.columns) == COLUNAS
+        # A amostra tem 9 proposições: 8 até 2020-05-25T10:39 e uma de 2022-12-07.
+        assert len(df) == 8
+        assert df["data_apresentacao"].max() == "2020-05-25T10:39"
+        assert list(df.index) == list(range(8))
+        assert df["id"].dtype == "int64"
+        assert (df["termo_busca"] == "telemedicina").all()
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_consulta_paginada_que_cabe_nas_janelas_baixa_as_paginas(self, scraper, mocker):
+        """178 resultados = 2 páginas, contra 3 janelas: 2 requisições."""
+        mocker.patch("time.sleep")
+        _registrar({"keywords": "doença rara", "dataApresentacaoInicio": "2008-01-01"}, 178, "page_01", "page_02")
+
+        df = scraper.raspar(pesquisa="doença rara", data_inicio="2008-01-01", data_fim="2008-07-15")
+
+        assert len(responses.calls) == 2
+        assert list(df["data_apresentacao"]) == ["2008-04-02T17:52"]
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_consulta_que_passa_das_janelas_volta_para_elas(self, scraper, mocker):
+        """250 resultados = 3 páginas, contra 2 janelas: a página 1 pedida é descartada, e a busca sai por janelas."""
+        dormir = mocker.patch("time.sleep")
+        _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": "2020-01-01"}, 250, "page_01")
+        for inicio, fim in [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-05-31")]:
+            _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
+                       9, "single_page")
+
+        df = scraper.raspar(pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-05-31")
+
+        assert len(responses.calls) == 3
+        assert list(df.columns) == COLUNAS
+        assert len(df) == 9
+        assert df["id"].is_unique
+        assert (df["termo_busca"] == "telemedicina").all()
+        assert dormir.call_args_list == [mocker.call(scraper.sleep_time)] * 2
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_consulta_que_falha_volta_para_as_janelas(self, scraper, mocker):
+        """Erro da API na consulta só com a data inicial não derruba a busca, que as janelas ainda atendem."""
+        mocker.patch("time.sleep")
+        scraper.max_retries = 1
+        responses.add(
+            responses.GET, API_URL, status=504,
+            match=[matchers.query_param_matcher(
+                {**QUERY_FIXA, "keywords": "telemedicina", "dataApresentacaoInicio": "2020-01-01", "pagina": "1"}
+            )],
+        )
+        for inicio, fim in [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-05-31")]:
+            _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
+                       9, "single_page")
+
+        df = scraper.raspar(pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-05-31")
+
+        assert len(responses.calls) == 3
+        assert len(df) == 9
+
+    @responses.activate
+    def test_os_dois_caminhos_devolvem_a_mesma_ordem(self, scraper, mocker):
+        """Por janelas ou pela consulta só com a data inicial, as proposições vêm em ordem de ``id``."""
+        mocker.patch("time.sleep")
+        pagina = json.loads(load_sample("camara_proposicoes", "raspar/single_page.json"))
+        # Numa janela mais antiga, uma proposição de ``id`` maior que as da janela seguinte.
+        antiga = {**pagina["dados"][-1], "id": 9999999, "dataApresentacao": "2020-01-15T10:00"}
+        _registrar({"dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-03-31"},
+                   1, json.dumps({"dados": [antiga]}).encode())
+        _registrar({"dataApresentacaoInicio": "2020-04-01", "dataApresentacaoFim": "2020-05-31"}, 9, "single_page")
+
+        df = scraper.raspar(data_inicio="2020-01-01", data_fim="2020-05-31")
+
+        assert len(df) == 10
+        assert df["id"].is_monotonic_increasing
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_sem_resultados_devolve_as_colunas(self, scraper):
+        _registrar({"keywords": "termoinexistentexyz123", "dataApresentacaoInicio": "2015-01-01"}, 0, "no_results")
+
+        df = scraper.raspar(pesquisa="termoinexistentexyz123", data_inicio="2015-01-01", data_fim="2020-12-31")
+
+        assert len(responses.calls) == 1
+        assert df.empty
+        assert list(df.columns) == COLUNAS
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_tudo_depois_de_data_fim_devolve_as_colunas(self, scraper):
+        _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": "2019-01-01"}, 9, "single_page")
+
+        df = scraper.raspar(pesquisa="telemedicina", data_inicio="2019-01-01", data_fim="2019-12-31")
+
+        assert df.empty
+        assert list(df.columns) == COLUNAS
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_lista_de_termos_tenta_a_consulta_unica_em_cada_termo(self, scraper, mocker):
+        mocker.patch("time.sleep")
+        _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": "2019-01-01"}, 9, "single_page")
+        _registrar({"keywords": "termoinexistentexyz123", "dataApresentacaoInicio": "2019-01-01"}, 0, "no_results")
+
+        df = scraper.raspar(
+            pesquisa=["telemedicina", "termoinexistentexyz123"], data_inicio="2019-01-01", data_fim="2020-12-31"
+        )
+
+        assert len(responses.calls) == 2
+        assert len(df) == 8
 
 
 class TestErros:

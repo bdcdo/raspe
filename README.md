@@ -276,7 +276,7 @@ Além de `pesquisa`, aceita `ano` (o da identificação da proposição, como o 
 
 - Sem filtro de tempo, a API só devolveria as proposições dos últimos 30 dias. O raspe pede a base inteira quando você não passa `ano`, `data_inicio` nem `data_fim`.
 - A base inteira só sai com `pesquisa`: sem termo, a API não responde a tempo. Por isso a busca sem `pesquisa` exige `ano`, `data_inicio` ou `data_fim`, e sem eles levanta `ValidationError`.
-- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses numa consulta. O raspe divide o período maior em janelas seguidas de até 3 meses, faz uma consulta por janela e junta as proposições sem repetir. Nessa busca dividida, `paginas` levanta `ValidationError`. Uma data só (ou `ano`) não tem o limite e sai numa consulta.
+- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses numa consulta. O raspe divide o período maior em janelas seguidas de até 3 meses, faz uma consulta por janela e junta as proposições sem repetir. Nessa busca dividida, `paginas` levanta `ValidationError`. Uma data só (ou `ano`) não tem o limite e sai numa consulta. Com `pesquisa`, o raspe tenta antes a consulta só com `data_inicio` e tira do resultado o que foi apresentado depois de `data_fim`: quando ela cabe em até tantas páginas quantas seriam as janelas, a busca sai em bem menos requisições, com as mesmas proposições. No período dividido, as proposições vêm em ordem de `id`.
 
 As colunas estão em [`docs/colunas.md`](docs/colunas.md).
 

@@ -272,9 +272,26 @@ class BaseScraper(AbstractScraper):
             str: Pasta com as páginas baixadas.
 
         Raises:
+            ScraperError: Os erros de :meth:`_pedir_pagina_1` e de :meth:`_baixar_paginas`.
+            requests.RequestException: Idem.
+        """
+        query_base, r0, n_pags = self._pedir_pagina_1(**kwargs)
+        return self._baixar_paginas(query_base, r0, n_pags, kwargs.get("paginas"))
+
+    def _pedir_pagina_1(self, **kwargs) -> tuple[dict[str, Any], requests.Response, int]:
+        """Monta a consulta, pede a página 1 e conta as páginas por ela.
+
+        Args:
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
+
+        Returns:
+            tuple: Os parâmetros de :meth:`_set_query_base`, a resposta da página 1 e o
+            número de páginas de :meth:`_find_n_pags`.
+
+        Raises:
             RateLimitError: Se o rate limit (429) persistir após todas as tentativas.
             APIError: Se o erro de servidor (5xx) persistir após todas as tentativas.
-            requests.RequestException: Se uma página falhar com outro erro HTTP ou de rede.
+            requests.RequestException: Se a requisição falhar com erro de rede.
             ScraperError: Se a página 1 não traz a contagem nem o aviso de busca vazia
                 (ver :meth:`HTMLScraper._confirmar_busca_vazia`).
         """
@@ -283,14 +300,32 @@ class BaseScraper(AbstractScraper):
         self.logger.debug(query_base)
 
         self.logger.debug("Definindo n_pags")
-        # A contagem vem da própria página 1, que o laço grava sem pedir de novo.
         r0 = self._request_with_retry(self._set_query_atual(query_base, 1))
         self.logger.debug(f"Encontrando n_pags (status: {r0.status_code})")
         n_pags = self._find_n_pags(r0)
         self.logger.debug(f"Encontradas {n_pags} páginas")
+        return query_base, r0, n_pags
 
+    def _baixar_paginas(
+        self, query_base: dict[str, Any], r0: requests.Response, n_pags: int, paginas: range | None = None
+    ) -> str:
+        """Grava a página 1, já pedida, e baixa as demais páginas de ``paginas``.
+
+        Args:
+            query_base: Parâmetros de :meth:`_set_query_base`.
+            r0: Resposta da página 1.
+            n_pags: Número de páginas da busca, de :meth:`_find_n_pags`.
+            paginas: Páginas a baixar; ``None`` baixa todas.
+
+        Returns:
+            str: Pasta com as páginas baixadas.
+
+        Raises:
+            RateLimitError: Se o rate limit (429) persistir após todas as tentativas.
+            APIError: Se o erro de servidor (5xx) persistir após todas as tentativas.
+            requests.RequestException: Se uma página falhar com outro erro HTTP ou de rede.
+        """
         self.logger.debug("Definindo paginas")
-        paginas = kwargs.get("paginas")
         paginas = self._set_paginas(paginas, n_pags)
 
         # Verificação de sanidade - certifique-se de que paginas é iterável
