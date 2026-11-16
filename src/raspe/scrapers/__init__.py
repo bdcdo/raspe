@@ -12,6 +12,7 @@ efetivamente aberto.
 from .ans import ScraperANS
 from .anvisa import ScraperANVISA
 from .camara import ScraperCamaraDeputados
+from .camara_proposicoes import ScraperCamaraProposicoes
 from .capes import ScraperCapes
 from .cfm import ScraperCFM
 from .datalegis import ScraperDatalegis
@@ -25,6 +26,7 @@ from .senado import ScraperSenadoFederal
 __all__ = [
     # Raspadores HTTP
     "ScraperCamaraDeputados",
+    "ScraperCamaraProposicoes",
     "ScraperCapes",
     "ScraperCFM",
     "ScraperFolha",

@@ -20,6 +20,7 @@ import raspe.schemas
 from raspe.abstract_scraper import AbstractScraper
 from raspe.schemas import (
     InputBase,
+    InputCamaraProposicoes,
     InputCapes,
     InputCFM,
     InputDatalegis,
@@ -29,6 +30,7 @@ from raspe.schemas import (
     InputPresidencia,
     InputSaudeLegis,
     OutputBase,
+    OutputCamaraProposicoes,
     OutputCapes,
     OutputCFM,
     OutputDatalegis,
@@ -41,6 +43,7 @@ from raspe.schemas import (
 from raspe.schemas.documentacao import descobrir_raspadores, fabricas_por_raspador
 from raspe.scrapers.ans import ScraperANS
 from raspe.scrapers.anvisa import ScraperANVISA
+from raspe.scrapers.camara_proposicoes import ScraperCamaraProposicoes
 from raspe.scrapers.capes import ScraperCapes
 from raspe.scrapers.cfm import ScraperCFM
 from raspe.scrapers.datalegis import ScraperDatalegis
@@ -83,6 +86,9 @@ ESPERADOS: dict[type[AbstractScraper], Registro] = {
     ScraperCFM: Registro(InputCFM, OutputCFM, ScraperCFM, "cfm", _PAGINAS_HTML),
     ScraperFolha: Registro(InputFolha, OutputFolha, ScraperFolha, "folha", _PAGINAS_HTML),
     ScraperNYT: Registro(InputNYT, OutputNYT, lambda: ScraperNYT(api_key="chave-de-teste"), "nyt", _PAGINAS_JSON),
+    ScraperCamaraProposicoes: Registro(
+        InputCamaraProposicoes, OutputCamaraProposicoes, ScraperCamaraProposicoes, "camara_proposicoes", _PAGINAS_JSON
+    ),
     ScraperSaudeLegis: Registro(InputSaudeLegis, OutputSaudeLegis, ScraperSaudeLegis, "saudelegis", _PARSE_HTML),
     ScraperANS: Registro(InputDatalegis, OutputDatalegis, ScraperANS, "datalegis", _PARSE_HTML),
     ScraperANVISA: Registro(InputDatalegis, OutputDatalegis, ScraperANVISA, "datalegis", _PARSE_HTML),

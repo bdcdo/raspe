@@ -191,6 +191,7 @@ Todas as fontes seguem o mesmo padrão: crie o raspador e chame `.raspar(pesquis
 |-------|---------|-------------|
 | Presidência | `raspe.presidencia()` | Leis, decretos e legislação federal |
 | Câmara | `raspe.camara()` | Legislação federal na busca da Câmara |
+| Câmara (proposições) | `raspe.camara_proposicoes()` | Projetos de lei, PECs e demais proposições, pela API oficial de Dados Abertos |
 | Senado | `raspe.senado()` | Legislação federal na busca do Senado |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
 | CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina e dos CRMs |
@@ -201,7 +202,7 @@ Todas as fontes seguem o mesmo padrão: crie o raspador e chame `.raspar(pesquis
 | **ANS** | `raspe.ans()` | Atos da Agência Nacional de Saúde (requer browser) |
 | **ANVISA** | `raspe.anvisa()` | Atos da Agência de Vigilância Sanitária (requer browser) |
 
-**Paginação e vários termos.** Os oito raspadores HTTP aceitam `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e uma **lista** em `pesquisa`: o raspador faz uma busca por termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha. SaudeLegis, ANS e ANVISA recusam os dois: coletam todas as páginas até um limite interno e recebem um termo por chamada.
+**Paginação e vários termos.** Os nove raspadores HTTP aceitam `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e uma **lista** em `pesquisa`: o raspador faz uma busca por termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha. SaudeLegis, ANS e ANVISA recusam os dois: coletam todas as páginas até um limite interno e recebem um termo por chamada.
 
 ### Escolhendo a fonte pelo nome
 
@@ -257,6 +258,25 @@ Colunas de `raspe.senado()`:
 | `descricao` | texto | Ementa da norma. | Institui o Comitê Interministerial de Doenças Raras. |
 | `trecho_descricao` | texto | Data da norma, ` - `, uma quebra de linha e o trecho do texto em que a busca achou o termo. | `'03/12/2020 - \nInstitui o Comitê Interministerial de Doenças Raras. ... DECRETA: Art. 1º Fica  instituído o Comitê Interministerial de Doenças Raras no âmbito do Ministério  da Mulher, da Família e dos Direitos Humanos. Art. ...'` |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. Sem `pesquisa`, vem vazia. | doenças raras |
+
+### Câmara: proposições pela API oficial
+
+`raspe.camara_proposicoes()` consulta a [API de Dados Abertos da Câmara](https://dadosabertos.camara.leg.br/swagger/api.html) e lista proposições (projetos de lei, PECs, requerimentos), tenham virado norma ou não. Para a legislação já publicada, use `raspe.camara()`.
+
+```python
+import raspe
+
+df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina")
+df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina", ano=2020, sigla_tipo="PL")
+df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina", data_inicio="2020-03-01", data_fim="2020-03-31")
+```
+
+Além de `pesquisa`, aceita `ano`, `sigla_tipo` (como `"PL"` ou `"PEC"`), `data_inicio` e `data_fim`, que filtram pela data de apresentação. Duas regras da API:
+
+- Sem filtro de tempo, a API só devolveria as proposições dos últimos 30 dias. O raspe pede a base inteira quando você não passa `ano`, `data_inicio` nem `data_fim`.
+- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses: a API recusa a consulta, e o raspe levanta `APIError` com a explicação. Para um período maior, use `ano`, uma data só, ou divida o período.
+
+As colunas estão em [`docs/colunas.md`](docs/colunas.md).
 
 ### CAPES (Portal de Periódicos)
 

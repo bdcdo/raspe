@@ -16,6 +16,22 @@ Schema: `OutputDatalegis`.
 | `situacao` | texto ou nulo | Situação do ato (vigente, revogado etc.), ou nulo quando o portal não a traz. | Em vigor |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
+## `raspe.camara_proposicoes()`
+
+Schema: `OutputCamaraProposicoes`.
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `id` | inteiro | Identificador da proposição na Câmara. | 2239462 |
+| `uri` | texto | Endereço da proposição na API, que devolve os detalhes dela. | https://dadosabertos.camara.leg.br/api/v2/proposicoes/2239462 |
+| `sigla_tipo` | texto | Sigla do tipo de proposição. | PL |
+| `cod_tipo` | inteiro | Código numérico do tipo de proposição. | 139 |
+| `numero` | inteiro | Número da proposição. | 696 |
+| `ano` | inteiro | Ano de apresentação da proposição. | 2020 |
+| `ementa` | texto | Ementa da proposição. | Dispõe sobre o uso da telemedicina durante a crise causada pelo coronavírus |
+| `data_apresentacao` | texto | Data e hora de apresentação, em ISO 8601 sem fuso, como a API devolve. | 2020-03-18T10:54 |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
 ## `raspe.capes()`
 
 Schema: `OutputCapes`.

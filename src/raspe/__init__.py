@@ -29,6 +29,7 @@ from .exceptions import (
 from .scrapers.ans import ScraperANS
 from .scrapers.anvisa import ScraperANVISA
 from .scrapers.camara import ScraperCamaraDeputados
+from .scrapers.camara_proposicoes import ScraperCamaraProposicoes
 from .scrapers.capes import ScraperCapes
 from .scrapers.cfm import ScraperCFM
 from .scrapers.folha import ScraperFolha
@@ -92,6 +93,26 @@ def camara(**kwargs):
         ScraperCamaraDeputados: Instância configurada do raspador.
     """
     return ScraperCamaraDeputados(**kwargs)
+
+
+def camara_proposicoes(**kwargs):
+    """
+    Cria um raspador para as proposições da Câmara dos Deputados, pela API oficial de Dados Abertos.
+
+    Lista projetos de lei, PECs, requerimentos e demais proposições, tenham
+    virado norma ou não. Para a legislação já publicada, use ``raspe.camara()``.
+
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
+
+    Returns:
+        ScraperCamaraProposicoes: Instância configurada do raspador.
+
+    Exemplo:
+        >>> import raspe
+        >>> df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina", ano=2020)
+    """
+    return ScraperCamaraProposicoes(**kwargs)
 
 
 def cfm(**kwargs):
@@ -243,6 +264,7 @@ __all__ = [
     "ipea",
     "senado",
     "camara",
+    "camara_proposicoes",
     "cfm",
     "nyt",
     "folha",
