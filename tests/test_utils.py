@@ -368,11 +368,11 @@ class TestDividirPeriodo:
                 "2020-01-01", "2020-04-01", 3, [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-04-01")],
                 id="tres_meses_exatos",
             ),
-            # A partir de um dia 31, as janelas seguem coladas e o dia não encolhe de vez (31 -> 30 -> 31).
+            # A partir de um dia 31, o início encolhe em fevereiro e nenhuma janela passa de 3 meses.
             pytest.param(
-                "2019-11-30", "2020-08-31", 3,
-                [("2019-11-30", "2020-02-28"), ("2020-02-29", "2020-05-29"), ("2020-05-30", "2020-08-29"),
-                 ("2020-08-30", "2020-08-31")],
+                "2018-05-31", "2019-06-15", 3,
+                [("2018-05-31", "2018-08-30"), ("2018-08-31", "2018-11-29"), ("2018-11-30", "2019-02-27"),
+                 ("2019-02-28", "2019-05-27"), ("2019-05-28", "2019-06-15")],
                 id="fim_de_mes",
             ),
             pytest.param(
@@ -385,3 +385,7 @@ class TestDividirPeriodo:
     )
     def test_janelas(self, inicio, fim, meses, esperado):
         assert dividir_periodo(inicio, fim, meses) == esperado
+
+    def test_janela_sem_tamanho_levanta_em_vez_de_nao_terminar(self):
+        with pytest.raises(ValueError, match="'meses' precisa ser pelo menos 1"):
+            dividir_periodo("2020-01-01", "2020-07-15", 0)

@@ -109,9 +109,13 @@ class TestJanelas:
 
     @responses.activate(assert_all_requests_are_fired=True)
     def test_processo_repetido_entre_janelas_sai_uma_vez(self, scraper, mocker):
+        """Vale o ``id``: o processo que mudou de situação entre as duas consultas também sai uma vez."""
         mocker.patch("time.sleep")
+        repetidos = json.loads(load_sample("senado_processos", "raspar/janela_01.json"))
+        for processo in repetidos:
+            processo["situacaoAtual"] = "MUDOU ENTRE AS CONSULTAS"
         _registrar(_janela("2023-01-01", "2023-12-31", sigla="PL"), "janela_01")
-        _registrar(_janela("2024-01-01", "2024-12-31", sigla="PL"), "janela_01")
+        _registrar(_janela("2024-01-01", "2024-12-31", sigla="PL"), json.dumps(repetidos).encode())
 
         df = scraper.raspar(sigla_tipo="PL", data_inicio="2023-01-01", data_fim="2024-12-31")
 
@@ -163,15 +167,24 @@ class TestJanelas:
 
         assert len(df) == 6
 
-    def test_paginas_em_busca_dividida_levanta_antes_da_busca(self, scraper):
-        with pytest.raises(ValidationError, match="não aceita 'paginas' nesta busca.*2 consultas"):
-            scraper.raspar(pesquisa="x", data_inicio="2023-01-01", data_fim="2024-12-31", paginas=range(1, 2))
-
     @responses.activate(assert_all_requests_are_fired=True)
-    def test_paginas_em_consulta_unica_baixa_a_resposta(self, scraper):
+    def test_paginas_baixa_a_resposta_inteira_de_cada_consulta(self, scraper, mocker):
+        """A API não pagina: ``paginas=range(1, 2)`` não corta nada, com uma consulta ou com várias."""
+        mocker.patch("time.sleep")
         _registrar({"termo": "telemedicina", "ano": "2020"}, "single_page")
+        _registrar(_janela("2023-01-01", "2023-12-31", termo="inteligência artificial"), "janela_01")
+        _registrar(_janela("2024-01-01", "2024-12-31", termo="inteligência artificial"), "janela_02")
 
         assert len(scraper.raspar(pesquisa="telemedicina", ano=2020, paginas=range(1, 2))) == 6
+        df = scraper.raspar(
+            pesquisa="inteligência artificial", data_inicio="2023-01-01", data_fim="2024-12-31", paginas=range(1, 2)
+        )
+        assert len(df) == 58
+
+    def test_data_inicio_no_futuro_sem_data_fim_levanta_antes_da_busca(self, scraper, mocker):
+        mocker.patch.object(senado_processos, "_hoje", return_value="2024-06-30")
+        with pytest.raises(ValidationError, match=r"'data_inicio' \(2030-01-01\) não pode ser posterior a hoje"):
+            scraper.raspar(pesquisa="x", data_inicio="2030-01-01")
 
 
 class TestFiltros:

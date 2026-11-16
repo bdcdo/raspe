@@ -318,7 +318,7 @@ def validar_intervalo_datas(
 
 
 def dividir_periodo(data_inicio: str, data_fim: str, meses: int) -> list[tuple[str, str]]:
-    """Divide um período em janelas seguidas, cada uma com menos de ``meses`` meses.
+    """Divide um período em janelas seguidas, cada uma um dia mais curta que ``meses`` meses.
 
     Serve às fontes que limitam o período de uma consulta. As janelas não se
     sobrepõem: cada uma começa no dia seguinte ao fim da anterior, e a última
@@ -327,24 +327,26 @@ def dividir_periodo(data_inicio: str, data_fim: str, meses: int) -> list[tuple[s
     Args:
         data_inicio: Primeiro dia do período, em YYYY-MM-DD.
         data_fim: Último dia do período, em YYYY-MM-DD.
-        meses: Tamanho da janela; cada uma vai até a véspera de completar ``meses`` meses.
+        meses: Tamanho da janela, a partir de 1; cada uma vai até a véspera de completar ``meses`` meses.
 
     Returns:
         Lista de pares ``(início, fim)`` em YYYY-MM-DD. Vazia se ``data_inicio``
         for posterior a ``data_fim``.
 
+    Raises:
+        ValueError: Se ``meses`` for menor que 1.
+
     Examples:
         >>> dividir_periodo("2020-01-01", "2020-07-15", meses=3)
         [('2020-01-01', '2020-03-31'), ('2020-04-01', '2020-06-30'), ('2020-07-01', '2020-07-15')]
     """
-    primeiro = pd.Timestamp(data_inicio)
+    if meses < 1:
+        raise ValueError(f"'meses' precisa ser pelo menos 1; veio {meses}.")
     ultimo = pd.Timestamp(data_fim)
     janelas: list[tuple[str, str]] = []
-    inicio = primeiro
+    inicio = pd.Timestamp(data_inicio)
     while inicio <= ultimo:
-        # A partir do primeiro dia, e não da janela anterior: somar mês a mês a um dia 31
-        # iria encolhendo o dia (31 -> 30 -> 28).
-        proximo = primeiro + pd.DateOffset(months=meses * (len(janelas) + 1))
+        proximo = inicio + pd.DateOffset(months=meses)
         fim = min(proximo - pd.Timedelta(days=1), ultimo)
         janelas.append((inicio.date().isoformat(), fim.date().isoformat()))
         inicio = proximo

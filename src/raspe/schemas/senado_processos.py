@@ -37,7 +37,7 @@ class InputSenadoProcessos(PaginasMixin, AnoMixin, IntervaloDatasMixin, Pesquisa
         default=None,
         description=(
             "A API devolve cada consulta inteira numa página só, então `paginas` só existe aqui por paridade com "
-            "os outros raspadores: `range(1, 2)` ou nenhum valor baixam tudo."
+            "os outros raspadores: `range(1, 2)` ou nenhum valor baixam tudo, também na busca dividida por período."
         ),
     )
 

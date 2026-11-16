@@ -27,15 +27,15 @@ Exemplo de uso:
 import time
 import warnings
 from abc import abstractmethod
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import pandas as pd
 import requests
 from tqdm import tqdm
 
 from raspe.abstract_scraper import AbstractScraper
-from raspe.exceptions import APIError, RateLimitError, ScraperError, ValidationError
-from raspe.utils import nivel_de_pilha_fora_do_pacote, start_session
+from raspe.exceptions import APIError, RateLimitError, ScraperError
+from raspe.utils import dividir_periodo, nivel_de_pilha_fora_do_pacote, start_session
 
 
 class BaseScraper(AbstractScraper):
@@ -62,6 +62,10 @@ class BaseScraper(AbstractScraper):
         max_retries: Número máximo de tentativas para rate limit, erros 5xx e falhas de rede.
         max_retry_after: Espera máxima, em segundos, pedida pelo header Retry-After de um 429.
     """
+
+    # Coluna que identifica o registro na fonte, para a busca dividida em várias consultas
+    # (ver _coletar) não repetir linha. ``None`` compara a linha inteira.
+    coluna_id: ClassVar[str | None] = None
 
     def __init__(self, nome_buscador: str, debug: bool = True):
         """Inicializa o BaseScraper com configuração HTTP."""
@@ -170,41 +174,52 @@ class BaseScraper(AbstractScraper):
         """Divide a busca nas consultas que a fonte aceita; por padrão, uma só.
 
         A subclasse sobrescreve quando a fonte limita o período de uma consulta
-        (ver :func:`raspe.utils.dividir_periodo`).
+        (ver :meth:`_consultas_por_janela`).
 
         Args:
             **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
-            list[dict]: Os parâmetros de cada consulta, na ordem em que saem.
+            list[dict]: Os parâmetros de cada consulta, na ordem em que saem; ao menos uma.
         """
         return [kwargs]
+
+    @staticmethod
+    def _consultas_por_janela(
+        parametros: dict[str, Any], data_inicio: str, data_fim: str, meses: int
+    ) -> list[dict[str, Any]]:
+        """Repete a busca em janelas seguidas do período (ver :func:`raspe.utils.dividir_periodo`).
+
+        Args:
+            parametros: Parâmetros da busca.
+            data_inicio: Primeiro dia do período, em YYYY-MM-DD.
+            data_fim: Último dia do período, em YYYY-MM-DD, não anterior a ``data_inicio``.
+            meses: Maior período que a fonte aceita numa consulta.
+
+        Returns:
+            list[dict]: Os parâmetros com ``data_inicio`` e ``data_fim`` de cada janela.
+        """
+        return [
+            {**parametros, 'data_inicio': inicio, 'data_fim': fim}
+            for inicio, fim in dividir_periodo(data_inicio, data_fim, meses)
+        ]
 
     def _coletar(self, **kwargs) -> pd.DataFrame:
         """Baixa e lê cada consulta de :meth:`_dividir_busca` e junta as linhas sem repetir.
 
         A consulta que falha interrompe a busca: seguir sem ela devolveria um
-        período com um buraco.
+        período com um buraco. Linha repetida é a que tem o mesmo valor em
+        ``coluna_id`` ou, sem ela, a linha inteira igual.
 
         Args:
             **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
             pd.DataFrame: As linhas de todas as consultas.
-
-        Raises:
-            ValidationError: Se ``paginas`` vier numa busca dividida em mais de
-                uma consulta, em que cada consulta tem a sua própria paginação.
         """
         consultas = self._dividir_busca(**kwargs)
         if len(consultas) == 1:
             return super()._coletar(**consultas[0])
-        if kwargs.get("paginas") is not None:
-            raise ValidationError(
-                f"{type(self).__name__}.raspar() não aceita 'paginas' nesta busca: o período pedido passa do que a "
-                f"fonte aceita por consulta e sai em {len(consultas)} consultas, cada uma com a sua paginação. "
-                "Tire 'paginas' ou encurte o período."
-            )
         self.logger.info(f"Busca dividida em {len(consultas)} consultas")
         dfs: list[pd.DataFrame] = []
         for i, consulta in enumerate(consultas):
@@ -213,7 +228,7 @@ class BaseScraper(AbstractScraper):
             dfs.append(super()._coletar(**consulta))
         # Como na busca por lista: consulta vazia só entra se todas vierem vazias.
         juntas = pd.concat([df for df in dfs if not df.empty] or dfs[:1], ignore_index=True)
-        return juntas.drop_duplicates(ignore_index=True)
+        return juntas.drop_duplicates(subset=self.coluna_id, ignore_index=True)
 
     def _levantar_se_recusada(self, r0: requests.Response) -> None:
         """Levanta ``APIError`` se a API recusou a consulta (4xx), com a explicação que ela dá.

@@ -20,7 +20,6 @@ import requests
 from ..base_scraper import BaseScraper
 from ..exceptions import APIError, ValidationError
 from ..schemas.camara_proposicoes import InputCamaraProposicoes, OutputCamaraProposicoes
-from ..utils import dividir_periodo
 
 # Coluna do DataFrame -> campo de cada item de ``dados`` na resposta da API.
 _CAMPOS = {
@@ -51,11 +50,13 @@ class ScraperCamaraProposicoes(BaseScraper):
     - ``data_inicio`` e ``data_fim`` juntas não podem distar mais de 3 meses (a
       API responde 400). O raspador divide o período maior em janelas seguidas
       de até ``MESES_POR_CONSULTA`` meses, faz uma consulta por janela e junta
-      as proposições sem repetir. Uma data só (ou ``ano``) não tem esse limite.
+      as proposições sem repetir. Uma data só (ou ``ano``) não tem esse limite,
+      e a busca sai numa consulta.
     """
 
     schema_entrada = InputCamaraProposicoes
     schema_saida = OutputCamaraProposicoes
+    coluna_id = 'id'
 
     # Máximo de itens por página que a API aceita (visto ao vivo em 2026-11-16).
     ITENS_POR_PAGINA = 100
@@ -98,14 +99,22 @@ class ScraperCamaraProposicoes(BaseScraper):
             dict: Parâmetros validados, com as datas em YYYY-MM-DD.
 
         Raises:
-            ValidationError: Se algum parâmetro for inválido, ou se faltarem
-                ``pesquisa`` e os três filtros de tempo (ver a docstring da classe).
+            ValidationError: Se algum parâmetro for inválido, se faltarem
+                ``pesquisa`` e os três filtros de tempo (ver a docstring da classe),
+                ou se ``paginas`` vier numa busca que sai em mais de uma consulta.
         """
         kwargs = super()._validar_parametros(**kwargs)
         if not any(kwargs.get(nome) for nome in ('pesquisa', 'ano', 'data_inicio', 'data_fim')):
             raise ValidationError(
                 f"{type(self).__name__}.raspar() precisa de 'pesquisa' ou de um filtro de tempo "
                 "('ano', 'data_inicio' ou 'data_fim'): sem eles, a API da Câmara não responde a tempo."
+            )
+        consultas = len(self._dividir_busca(**kwargs))
+        if consultas > 1 and kwargs.get('paginas') is not None:
+            raise ValidationError(
+                f"{type(self).__name__}.raspar() não aceita 'paginas' nesta busca: o período pedido passa de "
+                f"{self.MESES_POR_CONSULTA} meses e sai em {consultas} consultas, cada uma com a sua paginação. "
+                "Tire 'paginas' ou encurte o período."
             )
         return kwargs
 
@@ -122,10 +131,7 @@ class ScraperCamaraProposicoes(BaseScraper):
         data_fim = kwargs.get('data_fim')
         if not (data_inicio and data_fim):
             return [kwargs]
-        return [
-            {**kwargs, 'data_inicio': inicio, 'data_fim': fim}
-            for inicio, fim in dividir_periodo(data_inicio, data_fim, self.MESES_POR_CONSULTA)
-        ]
+        return self._consultas_por_janela(kwargs, data_inicio, data_fim, self.MESES_POR_CONSULTA)
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta os parâmetros da consulta à API.

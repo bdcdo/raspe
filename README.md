@@ -276,7 +276,7 @@ Além de `pesquisa`, aceita `ano` (o da identificação da proposição, como o 
 
 - Sem filtro de tempo, a API só devolveria as proposições dos últimos 30 dias. O raspe pede a base inteira quando você não passa `ano`, `data_inicio` nem `data_fim`.
 - A base inteira só sai com `pesquisa`: sem termo, a API não responde a tempo. Por isso a busca sem `pesquisa` exige `ano`, `data_inicio` ou `data_fim`, e sem eles levanta `ValidationError`.
-- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses numa consulta. O raspe divide o período maior em janelas seguidas de até 3 meses, faz uma consulta por janela e junta as proposições sem repetir. Nessa busca dividida, `paginas` levanta `ValidationError`.
+- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses numa consulta. O raspe divide o período maior em janelas seguidas de até 3 meses, faz uma consulta por janela e junta as proposições sem repetir. Nessa busca dividida, `paginas` levanta `ValidationError`. Uma data só (ou `ano`) não tem o limite e sai numa consulta.
 
 As colunas estão em [`docs/colunas.md`](docs/colunas.md).
 
@@ -296,7 +296,7 @@ df = raspe.senado_processos().raspar(pesquisa="inteligência artificial", data_i
 
 - A busca precisa de `ano` ou de `data_inicio`, e sem eles levanta `ValidationError`: só com `pesquisa`, a API devolveria apenas os processos que ainda tramitam, e só com `data_fim`, apenas os do ano anterior a ela.
 - Sem `ano`, cada consulta cobre no máximo um ano. O raspe divide o período (de `data_inicio` até `data_fim` ou, sem ela, até hoje) em janelas seguidas de até um ano, faz uma consulta por janela e junta os processos sem repetir. Com `ano`, a busca sai numa consulta só.
-- A API não pagina: cada consulta volta inteira. `paginas` só é aceito por paridade com os outros raspadores e, na busca dividida em mais de uma janela, levanta `ValidationError`.
+- A API não pagina: cada consulta volta inteira. `paginas` só é aceito por paridade com os outros raspadores: `range(1, 2)` ou nenhum valor baixam tudo.
 
 As colunas estão em [`docs/colunas.md`](docs/colunas.md).
 

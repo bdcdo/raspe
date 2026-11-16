@@ -22,7 +22,6 @@ import requests
 from ..base_scraper import BaseScraper
 from ..exceptions import APIError, ValidationError
 from ..schemas.senado_processos import InputSenadoProcessos, OutputSenadoProcessos
-from ..utils import dividir_periodo
 
 # Coluna do DataFrame -> campo de cada processo na resposta da API. Estes vêm em todo processo.
 _CAMPOS_OBRIGATORIOS = {
@@ -79,6 +78,7 @@ class ScraperSenadoProcessos(BaseScraper):
 
     schema_entrada = InputSenadoProcessos
     schema_saida = OutputSenadoProcessos
+    coluna_id = 'id'
 
     # Maior período que a API aceita numa consulta sem ``ano``.
     MESES_POR_CONSULTA = 12
@@ -121,8 +121,9 @@ class ScraperSenadoProcessos(BaseScraper):
             dict: Parâmetros validados, com as datas em YYYY-MM-DD.
 
         Raises:
-            ValidationError: Se algum parâmetro for inválido, ou se faltarem
-                ``ano`` e ``data_inicio`` (ver a docstring da classe).
+            ValidationError: Se algum parâmetro for inválido, se faltarem
+                ``ano`` e ``data_inicio`` (ver a docstring da classe), ou se o
+                período até hoje começar no futuro.
         """
         kwargs = super()._validar_parametros(**kwargs)
         if not kwargs.get('ano') and not kwargs.get('data_inicio'):
@@ -130,6 +131,8 @@ class ScraperSenadoProcessos(BaseScraper):
                 f"{type(self).__name__}.raspar() precisa de 'ano' ou de 'data_inicio': sem eles, a API do Senado "
                 "só devolve os processos que ainda tramitam ou, com 'data_fim', os do ano anterior a ela."
             )
+        if not kwargs.get('ano') and not kwargs.get('data_fim') and kwargs['data_inicio'] > _hoje():
+            raise ValidationError(f"'data_inicio' ({kwargs['data_inicio']}) não pode ser posterior a hoje.")
         return kwargs
 
     def _dividir_busca(self, **kwargs) -> list[dict[str, Any]]:
@@ -144,8 +147,9 @@ class ScraperSenadoProcessos(BaseScraper):
         """
         if kwargs.get('ano'):
             return [kwargs]
-        janelas = dividir_periodo(kwargs['data_inicio'], kwargs.get('data_fim') or _hoje(), self.MESES_POR_CONSULTA)
-        return [{**kwargs, 'data_inicio': inicio, 'data_fim': fim} for inicio, fim in janelas]
+        return self._consultas_por_janela(
+            kwargs, kwargs['data_inicio'], kwargs.get('data_fim') or _hoje(), self.MESES_POR_CONSULTA
+        )
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta os parâmetros da consulta à API.
