@@ -21,6 +21,7 @@ from .base import (
     validar_entrada,
 )
 from .camara import InputCamara
+from .camara_proposicoes import InputCamaraProposicoes, OutputCamaraProposicoes
 from .capes import InputCapes, OutputCapes
 from .cfm import InputCFM, OutputCFM
 from .datalegis import InputDatalegis, OutputDatalegis
@@ -36,6 +37,7 @@ __all__ = [
     "InputBase",
     "InputCFM",
     "InputCamara",
+    "InputCamaraProposicoes",
     "InputCapes",
     "InputDatalegis",
     "InputFolha",
@@ -47,6 +49,7 @@ __all__ = [
     "IntervaloDatasMixin",
     "OutputBase",
     "OutputCFM",
+    "OutputCamaraProposicoes",
     "OutputCapes",
     "OutputDatalegis",
     "OutputFolha",

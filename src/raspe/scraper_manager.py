@@ -11,6 +11,7 @@ from .abstract_scraper import AbstractScraper
 from .scrapers.ans import ScraperANS
 from .scrapers.anvisa import ScraperANVISA
 from .scrapers.camara import ScraperCamaraDeputados
+from .scrapers.camara_proposicoes import ScraperCamaraProposicoes
 from .scrapers.capes import ScraperCapes
 from .scrapers.cfm import ScraperCFM
 from .scrapers.folha import ScraperFolha
@@ -28,6 +29,7 @@ _MAPPING: dict[str, Type[AbstractScraper]] = {
     "IPEA": ScraperIpea,
     "SENADO": ScraperSenadoFederal,
     "CAMARA": ScraperCamaraDeputados,
+    "CAMARA_PROPOSICOES": ScraperCamaraProposicoes,
     "CAPES": ScraperCapes,
     "CFM": ScraperCFM,
     "FOLHA": ScraperFolha,
