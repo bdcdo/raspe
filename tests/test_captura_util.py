@@ -49,6 +49,14 @@ def test_grava_a_pagina_da_contagem_quando_o_erro_e_esperado(tmp_path):
     assert (tmp_path / "acesso_negado.html").read_text(encoding="utf-8") == "<p>URL inválida</p>"
 
 
+@pytest.mark.parametrize(("espera", "erro"), [("vazia", None), ("erro", ScraperError("recusado"))])
+def test_cenario_sem_linhas_com_duas_leituras_grava_so_a_contagem(tmp_path, espera, erro):
+    raspador = _RaspadorFalso(["<p>contagem</p>", "<p>outra leitura</p>"], erro=erro)
+    _capturar(raspador, ("no_results.html",), tmp_path, espera)
+    assert (tmp_path / "no_results.html").read_text(encoding="utf-8") == "<p>contagem</p>"
+    assert len(list(tmp_path.iterdir())) == 1
+
+
 @pytest.mark.parametrize(
     ("paginas", "linhas", "erro", "espera", "mensagem"),
     [

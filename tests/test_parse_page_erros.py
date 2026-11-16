@@ -6,7 +6,9 @@ O erro de um item, que o ``_parse_page`` pula para não perder os demais, sobe p
 ``_conferir_itens``: ``ScraperError`` se nenhum item da página foi lido, aviso se parte foi.
 """
 
+import ast
 import inspect
+import textwrap
 from collections.abc import Callable
 
 import pytest
@@ -146,10 +148,88 @@ ITENS: dict[type[AbstractScraper], tuple[str, Quebrar]] = {
 }
 
 
+def _pula_item(classe: type) -> bool:
+    """Reconhece laços com ``except`` no parser ou em um método dele da mesma classe."""
+    metodo = classe._parse_page
+    nomes = {"_parse_page"}
+    arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))
+    nomes.update(
+        chamada.func.attr
+        for chamada in ast.walk(arvore)
+        if isinstance(chamada, ast.Call)
+        and isinstance(chamada.func, ast.Attribute)
+        and isinstance(chamada.func.value, ast.Name)
+        and chamada.func.value.id == "self"
+        and chamada.func.attr in classe.__dict__
+    )
+    for nome in nomes:
+        candidato = getattr(classe, nome)
+        codigo = ast.parse(textwrap.dedent(inspect.getsource(candidato)))
+        for no in ast.walk(codigo):
+            if isinstance(no, (ast.For, ast.AsyncFor)) and any(
+                isinstance(filho, ast.Try) and filho.handlers for filho in ast.walk(no)
+            ):
+                return True
+    return False
+
+
 def test_todo_raspador_que_pula_item_esta_em_itens():
-    """Quem tem ``except`` por item no ``_parse_page`` entra em ``ITENS``, cujos testes cobram o ``_conferir_itens``."""
-    com_except = {classe for classe in RASPADORES if "except Exception" in inspect.getsource(classe._parse_page)}
+    """Quem trata exceção por item entra em ``ITENS``, que cobra ``_conferir_itens``."""
+    com_except = {classe for classe in RASPADORES if _pula_item(classe)}
     assert com_except == set(ITENS)
+
+
+def test_guarda_reconhece_except_estreito_e_helper():
+    class ExcecaoEstreita:
+        def _parse_page(self):
+            for item in []:
+                try:
+                    print(item)
+                except ValueError:
+                    continue
+
+    class LacoNoHelper:
+        def _parse_page(self):
+            return self._ler_itens()
+
+        def _ler_itens(self):
+            for item in []:
+                try:
+                    print(item)
+                except ValueError:
+                    continue
+
+    class ZeroLegitimo:
+        def _parse_page(self):
+            for item in []:
+                print(item)
+
+    assert _pula_item(ExcecaoEstreita)
+    assert _pula_item(LacoNoHelper)
+    assert not _pula_item(ZeroLegitimo)
+
+
+def test_senado_diagnostico_quebrado_preserva_erro_e_linhas(mocker, tmp_path):
+    caminho = _pagina(tmp_path, "senado")
+    original = Tag.find
+    chamadas = 0
+
+    def encontrar(self, name=None, *args, **kwargs):
+        nonlocal chamadas
+        if (name == "h3" and "sf-busca-resultados-item" in self.get("class", [])
+                and "Norma 1" in self.get_text()):
+            chamadas += 1
+            if chamadas == 1:
+                raise ValueError("erro original")
+            if chamadas == 2:
+                raise RuntimeError("diagnóstico quebrado")
+        return original(self, name, *args, **kwargs)
+
+    mocker.patch.object(Tag, "find", encontrar)
+    with pytest.warns(UserWarning, match=r"1 de 2 itens.*ValueError: erro original"):
+        df = ScraperSenadoFederal()._parse_page(caminho)
+    assert not df.empty
+    assert chamadas == 1
 
 
 def _pagina(tmp_path, pasta: str) -> str:

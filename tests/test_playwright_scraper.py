@@ -179,16 +179,23 @@ class _LinksNumerados(_MuitasPaginas):
     _navegar_proxima_pagina = PlaywrightScraper._navegar_proxima_pagina
 
 
+class _DropdownSemImplementacao(_LinksNumerados):
+    def __init__(self, debug: bool = False):
+        super().__init__(debug=debug)
+        self._pagination_strategy = PaginationStrategy.SELECT_DROPDOWN
+
+
 class TestPaginacaoPorNumeroSemImplementacao:
-    def test_falha_alto_e_nao_deixa_a_pasta(self, mocker):
+    @pytest.mark.parametrize("classe", [_LinksNumerados, _DropdownSemImplementacao])
+    def test_falha_alto_e_nao_deixa_a_pasta(self, mocker, classe):
         """O padrão antigo clicava e dormia sem conferir se a página tinha mudado, e salvava a anterior."""
-        raspador = _raspador(mocker, classe=_LinksNumerados)
+        raspador = _raspador(mocker, classe=classe)
         raspador.pagina_falsa.content.return_value = "<html></html>"
         with pytest.raises(NotImplementedError, match="_paginar_por_numero"):
             raspador.raspar(assunto="x")
         raspador.pagina_falsa.click.assert_not_called()
-        assert not os.path.exists(raspador.download_path)
-
+        raspador.pagina_falsa.goto.assert_not_called()
+        assert raspador._download_path is None
 
 def _raspar_dentro_de_um_loop(raspador: _DummyPlaywright, **kwargs) -> pd.DataFrame:
     """Chama ``raspar()`` como numa célula do Jupyter ou do Colab, com um loop do asyncio já rodando."""
