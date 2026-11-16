@@ -10,9 +10,11 @@ from bs4 import Tag
 from ..base_scraper import BaseScraper
 from ..exceptions import ScraperError
 from ..html_scraper import HTMLScraper
+from ..schemas.senado import InputSenado
 
 
 class ScraperSenadoFederal(BaseScraper, HTMLScraper):
+    schema_entrada = InputSenado
     colunas = ['titulo', 'link_norma', 'link_detalhes', 'descricao', 'trecho_descricao']
 
     # Teto de tentativas da prova de trabalho anti-robô, o mesmo do script da página.

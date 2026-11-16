@@ -228,11 +228,11 @@ df = raspe.senado().raspar(pesquisa="reforma tributária")
 df = raspe.ipea().raspar(pesquisa="desigualdade")
 ```
 
-A Câmara e o Senado aceitam `ano`. A Câmara aceita também `tipo_materia`, com o tipo de norma escrito como no site da Câmara (ex.: `"Lei Ordinária"`):
+A Câmara e o Senado aceitam `ano`, com quatro dígitos, e `tipo_materia`, com o tipo de norma escrito como no filtro de cada site: `"Lei Ordinária"` na Câmara, `"LEI - Lei"` no Senado. Parâmetro desconhecido ou ano inválido levanta `ValidationError` antes da busca:
 
 ```python
 df = raspe.camara().raspar(pesquisa="saúde", ano=2023, tipo_materia="Lei Ordinária")
-df = raspe.senado().raspar(pesquisa="saúde", ano=2023)
+df = raspe.senado().raspar(pesquisa="saúde", ano=2023, tipo_materia="LEI - Lei")
 ```
 
 A Câmara e o Senado ainda não têm schema de saída, então as colunas deles ficam aqui, e não em `docs/colunas.md`. Os exemplos saem de uma busca real por "doenças raras" em 15/11/2026.
@@ -245,7 +245,7 @@ Colunas de `raspe.camara()`:
 | `titulo` | texto | Tipo, número e data da norma. | Decreto nº 8.332, de 3 de Novembro de 1910 |
 | `descricao` | texto | Ementa da norma, precedida de `Ementa: `, como o site a mostra, inclusive com espaços repetidos no meio do texto. | Ementa: Approva o Codigo do Processo Civil e Commercial do Distrito Federal |
 | `ementa` | texto | Apesar do nome, a situação da norma, precedida de `Situação:`, de uma quebra de linha e de espaços, como o site a mostra. A ementa está em `descricao`. | `'Situação:\n' + ' ' * 40 + 'Revogada'` |
-| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. Sem `pesquisa`, a coluna não aparece. | doenças raras |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. Sem `pesquisa`, vem vazia. | doenças raras |
 
 Colunas de `raspe.senado()`:
 
@@ -256,7 +256,7 @@ Colunas de `raspe.senado()`:
 | `link_detalhes` | texto | Endereço da ficha da norma, ou o texto `NA` quando o resultado traz um link só. | https://legis.senado.leg.br/norma/32956034 |
 | `descricao` | texto | Ementa da norma. | Institui o Comitê Interministerial de Doenças Raras. |
 | `trecho_descricao` | texto | Data da norma, ` - `, uma quebra de linha e o trecho do texto em que a busca achou o termo. | `'03/12/2020 - \nInstitui o Comitê Interministerial de Doenças Raras. ... DECRETA: Art. 1º Fica  instituído o Comitê Interministerial de Doenças Raras no âmbito do Ministério  da Mulher, da Família e dos Direitos Humanos. Art. ...'` |
-| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. Sem `pesquisa`, a coluna não aparece. | doenças raras |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. Sem `pesquisa`, vem vazia. | doenças raras |
 
 ### CAPES (Portal de Periódicos)
 

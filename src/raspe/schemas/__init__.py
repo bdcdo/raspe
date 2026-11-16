@@ -20,6 +20,7 @@ from .base import (
     descrever_tipo,
     validar_entrada,
 )
+from .camara import InputCamara
 from .capes import InputCapes, OutputCapes
 from .cfm import InputCFM, OutputCFM
 from .datalegis import InputDatalegis, OutputDatalegis
@@ -28,11 +29,13 @@ from .ipea import InputIpea, OutputIpea
 from .nyt import InputNYT, OutputNYT
 from .presidencia import InputPresidencia, OutputPresidencia
 from .saudelegis import InputSaudeLegis, OutputSaudeLegis
+from .senado import InputSenado
 
 __all__ = [
     "AnoMixin",
     "InputBase",
     "InputCFM",
+    "InputCamara",
     "InputCapes",
     "InputDatalegis",
     "InputFolha",
@@ -40,6 +43,7 @@ __all__ = [
     "InputNYT",
     "InputPresidencia",
     "InputSaudeLegis",
+    "InputSenado",
     "IntervaloDatasMixin",
     "OutputBase",
     "OutputCFM",

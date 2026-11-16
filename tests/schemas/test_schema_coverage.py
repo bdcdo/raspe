@@ -89,16 +89,16 @@ ESPERADOS: dict[type[AbstractScraper], Registro] = {
 }
 
 # Por nome de fábrica, e não por classe, porque a reescrita pode trocar as
-# classes de lugar e de nome; a fábrica pública é o que fica.
+# classes de lugar e de nome; a fábrica pública é o que fica. Os pendentes já
+# têm schema de entrada e falta o de saída.
 PENDENTES: dict[str, str] = {
-    "camara": (
-        "Reescrito sobre a API oficial da Câmara num PR paralelo. As colunas vão mudar, e o schema entra "
-        "depois do merge da reescrita, para não fixar a forma antiga."
-    ),
-    "senado": (
-        "Reescrito sobre a API oficial do Senado num PR paralelo. As colunas vão mudar, e o schema entra "
-        "depois do merge da reescrita, para não fixar a forma antiga."
-    ),
+    "camara": "Sem schema de saída: as colunas, com tipo, descrição e exemplo, estão no README.",
+    "senado": "Sem schema de saída: as colunas, com tipo, descrição e exemplo, estão no README.",
+}
+
+# Schema de entrada de cada raspador, com ou sem schema de saída.
+ENTRADAS: dict[type[AbstractScraper], type[InputBase]] = {
+    classe: classe.schema_entrada for classe in descobrir_raspadores() if classe.schema_entrada is not None
 }
 
 BASES_INTERMEDIARIAS: dict[type[AbstractScraper], str] = {
@@ -153,14 +153,15 @@ def test_esperado_declara_os_schemas_registrados(classe):
 
 
 @pytest.mark.parametrize("fabrica", list(PENDENTES))
-def test_pendente_continua_sem_schema(fabrica):
-    """Quando a reescrita ganhar schema, este teste lembra de mover o raspador para ESPERADOS."""
+def test_pendente_tem_so_o_schema_de_entrada(fabrica):
+    """Quando o pendente ganhar schema de saída, este teste lembra de movê-lo para ESPERADOS."""
     classes = [classe for classe in descobrir_raspadores() if fabrica in _fabricas(classe)]
     assert classes, f"nenhum raspador devolvido por raspe.{fabrica}()"
     for classe in classes:
-        assert classe.schema_entrada is None and classe.schema_saida is None, (
-            f"{classe.__name__} ganhou schema: tire '{fabrica}' de PENDENTES e registre em ESPERADOS."
+        assert classe.schema_saida is None, (
+            f"{classe.__name__} ganhou schema de saída: tire '{fabrica}' de PENDENTES e registre em ESPERADOS."
         )
+        assert classe.schema_entrada is not None, f"{classe.__name__} sem schema de entrada"
 
 
 def test_base_intermediaria_tem_os_schemas_das_filhas():
@@ -190,5 +191,5 @@ def _schemas_definidos(base: type) -> set[type]:
 
 def test_todo_schema_do_pacote_tem_raspador():
     """Schema concreto sem raspador é código morto que a documentação mostraria."""
-    assert _schemas_definidos(InputBase) == {registro.entrada for registro in ESPERADOS.values()}
+    assert _schemas_definidos(InputBase) == set(ENTRADAS.values())
     assert _schemas_definidos(OutputBase) == {registro.saida for registro in ESPERADOS.values()}
