@@ -218,6 +218,7 @@ class ScraperCFM(BaseScraper, HTMLScraper):
         rotulos = {strong.text.strip() for strong in results_div.select('div.card-header li strong')}
         rotulos_desconhecidos = rotulos - _COLUNA_POR_ROTULO.keys()
         parsed_articles = []
+        erros: list[Exception] = []
 
         for article in articles:
             try:
@@ -226,8 +227,9 @@ class ScraperCFM(BaseScraper, HTMLScraper):
                     parsed_articles.append(article_data)
             except Exception as e:
                 self.logger.warning(f"Erro ao processar artigo em {path}: {e}")
-                continue
+                erros.append(e)
 
+        self._conferir_itens(path, erros, len(parsed_articles))
         df = pd.DataFrame(parsed_articles, columns=self.colunas)
 
         # Fora do try de cada artigo, para o aviso (erro, com warnings virando erro) não descartar um card.

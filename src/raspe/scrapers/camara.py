@@ -125,6 +125,7 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
             return pd.DataFrame(columns=self.colunas)
 
         itens = ul_element.find_all('li')
+        erros: list[Exception] = []
 
         for item in itens:
             try:
@@ -150,8 +151,9 @@ class ScraperCamaraDeputados(BaseScraper, HTMLScraper):
                 lista_infos.append([link, titulo, descricao, ementa])
             except Exception as e:
                 self.logger.warning(f"Erro ao processar item em {path}: {e}")
-                continue
+                erros.append(e)
 
+        self._conferir_itens(path, erros, len(lista_infos))
         return pd.DataFrame(lista_infos, columns=self.colunas)
 
     def _acessar_pagina_inicial(self):

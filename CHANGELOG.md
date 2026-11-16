@@ -97,6 +97,9 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   `juscraper.scraper("comunica_cnj").listar_comunicacoes(...)`.
 
 ### Corrigido
+- Corrigidos `camara()`, `capes()`, `cfm()`, `folha()`, `ipea()`, `presidencia()` e `senado()`, que registravam só no
+  log o erro de um resultado que não conseguiam ler: com parte dos resultados da página quebrada, avisam com
+  `UserWarning`; com todos, a página entra no `ScraperError` com o erro do primeiro.
 - Corrigidos `ans()`, `anvisa()` e `saudelegis()`, que no Jupyter e no Colab falhavam com `RuntimeError`
   ("asyncio.run() cannot be called from a running event loop"): com um loop do asyncio já ativo, o navegador roda
   em outra thread.

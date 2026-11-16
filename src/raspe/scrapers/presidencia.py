@@ -112,6 +112,7 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
             return pd.DataFrame(columns=self.colunas)
 
         itens = container.find_all('div')
+        erros: list[Exception] = []
 
         for i, item in enumerate(itens):
             if i % 2 == 1:
@@ -137,8 +138,9 @@ class ScraperPresidencia(BaseScraper, HTMLScraper):
                     lista_infos.append([nome, link, ficha, revogacao, descricao, rotulo])
             except Exception as e:
                 self.logger.warning(f"Erro ao processar item em {path}: {e}")
-                continue
+                erros.append(e)
 
+        self._conferir_itens(path, erros, len(lista_infos))
         df = pd.DataFrame(lista_infos, columns=self.colunas)
 
         # Fora do try de cada ato, para o aviso (erro, com warnings virando erro) não descartar um ato.

@@ -467,6 +467,42 @@ class AbstractScraper(ABC):
 
         return pd.concat(result, ignore_index=True)
 
+    def _conferir_itens(self, path: str, erros: list[Exception], lidos: int) -> None:
+        """Leva a quem chamou o erro dos itens que :meth:`_parse_page` pulou.
+
+        Cada ``_parse_page`` lê os itens de uma página num ``try`` próprio, para um
+        item quebrado não derrubar os demais. Sem esta conferência, o erro ficaria
+        só no log, e uma página com todos os itens quebrados apareceria como página
+        sem linhas, sem a causa.
+
+        Args:
+            path: Página lida.
+            erros: Exceções dos itens pulados, na ordem da página.
+            lidos: Quantos itens da página viraram linha.
+
+        Raises:
+            ScraperError: Se havia erro e nenhum item virou linha. A primeira
+                exceção vira ``__cause__``, e :meth:`_parse_data` a leva à mensagem.
+
+        Warns:
+            UserWarning: Se parte dos itens ficou fora do resultado.
+        """
+        if not erros:
+            return
+        primeiro = erros[0]
+        resumo = (
+            f"{len(erros)} de {len(erros) + lidos} itens não puderam ser lidos "
+            f"(o primeiro: {type(primeiro).__name__}: {primeiro})"
+        )
+        if not lidos:
+            # _parse_data põe o nome da página e o da fonte na mensagem.
+            raise ScraperError(resumo) from primeiro
+        warnings.warn(
+            f"{self.nome_buscador}: em {os.path.basename(path)}, {resumo} e ficaram fora do resultado, que pode "
+            "estar incompleto.",
+            stacklevel=nivel_de_pilha_fora_do_pacote(),
+        )
+
     @abstractmethod
     def _parse_page(self, path: str) -> pd.DataFrame:
         """Analisa uma única página de dados baixados.
