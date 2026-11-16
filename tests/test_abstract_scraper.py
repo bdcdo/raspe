@@ -14,6 +14,7 @@ import pytest
 from pydantic import Field
 
 from raspe.abstract_scraper import AbstractScraper, _HandlerRaspe
+from raspe.base_scraper import BaseScraper
 from raspe.exceptions import ScraperError, ValidationError
 from raspe.schemas.base import OutputBase, PesquisaObrigatoriaMixin
 from raspe.schemas.documentacao import descobrir_raspadores
@@ -31,9 +32,12 @@ class _DummyScraper(AbstractScraper):
         with open(path, "r", encoding="utf-8") as f:
             return pd.DataFrame({"path": [path], "content": [f.read()]})
 
-    def _raspar(self, **kwargs) -> pd.DataFrame:
-        # Implementação trivial para satisfazer o ABC
-        return pd.DataFrame()
+    def _download_data(self, **kwargs) -> str:
+        # Uma página, com o conteúdo "pagina"
+        pasta = self._create_download_dir()
+        with open(os.path.join(pasta, "p_00001.html"), "w", encoding="utf-8") as f:
+            f.write("pagina")
+        return pasta
 
 
 class TestInit:
@@ -354,3 +358,37 @@ class TestRasparUnico:
     def test_nenhum_raspador_sobrescreve_raspar(self, classe):
         """Sobrescrever ``raspar`` pularia a validação ou a conferência; o ponto de extensão é ``_raspar``."""
         assert classe.raspar is AbstractScraper.raspar
+
+    @pytest.mark.parametrize("classe", descobrir_raspadores(), ids=lambda classe: classe.__name__)
+    def test_busca_unica_segue_o_raspar_da_base(self, classe):
+        """Ler, limpar a pasta e pôr ``termo_busca`` ficam num ``_raspar`` só; o que muda é ``_download_data``.
+
+        O ``BaseScraper`` sobrescreve só para a busca por lista, e a busca única volta à base.
+        """
+        assert classe._raspar in (AbstractScraper._raspar, BaseScraper._raspar)
+
+
+class TestRasparDaBase:
+    """``AbstractScraper._raspar``: baixa com ``_download_data``, lê, apaga a pasta e põe ``termo_busca``."""
+
+    def test_le_a_pasta_baixada_e_poe_o_termo(self):
+        s = _DummyScraper("base_termo", debug=False)
+        df = s.raspar(pesquisa="x")
+        assert list(df["content"]) == ["pagina"]
+        assert list(df["termo_busca"]) == ["x"]
+        assert not os.path.exists(s.download_path)
+
+    @pytest.mark.parametrize("parametro", ["pesquisa", "assunto", "termo", "q", "query"])
+    def test_termo_vem_de_qualquer_parametro_de_busca(self, parametro):
+        df = _DummyScraper(f"base_{parametro}").raspar(**{parametro: "x"})
+        assert list(df["termo_busca"]) == ["x"]
+
+    def test_sem_parametro_de_termo_nao_poe_a_coluna(self):
+        df = _DummyScraper("base_sem_termo").raspar(ano=2024)
+        assert "termo_busca" not in df.columns
+
+    def test_com_debug_mantem_a_pasta(self, tmp_path):
+        s = _DummyScraper("base_debug", debug=True)
+        s.download_path = str(tmp_path)
+        s.raspar(pesquisa="x")
+        assert os.listdir(tmp_path / "base_debug")

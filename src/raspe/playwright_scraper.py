@@ -28,6 +28,15 @@ Exemplo de uso:
             # Lógica para determinar número de páginas
             return 1
 
+        async def _paginar_por_numero(self, numero: int) -> bool:
+            try:
+                await self._clicar_elemento(f"a:text-is('{numero}')")
+                # Espera a página nova, e não um tempo fixo
+                await self._aguardar_elemento(f".pagina-atual:text-is('{numero}')")
+            except BrowserError:
+                return False
+            return True
+
         def _parse_page(self, path: str) -> pd.DataFrame:
             # Lógica para extrair dados do HTML
             ...
@@ -42,8 +51,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum
 from typing import Literal
-
-import pandas as pd
 
 from raspe.abstract_scraper import AbstractScraper
 from raspe.exceptions import BrowserError, DriverNotInstalledError, ScraperError
@@ -150,7 +157,7 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         # Estratégia de paginação padrão
         self._pagination_strategy: PaginationStrategy = PaginationStrategy.NONE
         self._max_pages: int = 100  # Limite de segurança
-        # Páginas da contagem da última busca; o aviso de teto sai em _raspar.
+        # Páginas da contagem da última busca; o aviso de teto sai em _download_data.
         self._total_paginas: int = 0
         # Resultados por página, lido da contagem por _paginas_pela_contagem.
         self._por_pagina: int = 1
@@ -505,28 +512,24 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
         return False
 
     async def _paginar_por_numero(self, numero: int) -> bool:
-        """Clica em link de página numerada.
+        """Abre a página ``numero`` (estratégias NUMBERED_LINKS e SELECT_DROPDOWN).
 
-        Subclasses podem sobrescrever para customizar o seletor.
+        Subclasses devem sobrescrever com o seletor do site e, depois do clique,
+        esperar a página nova aparecer (como ``ScraperSaudeLegis`` e
+        ``ScraperDatalegis`` fazem): sem isso, a página salva pode ainda ser a anterior.
 
         Args:
             numero: Número da página destino.
 
         Returns:
-            bool: True se encontrou e clicou no link.
-        """
-        pw = self._ensure_playwright()
+            bool: True se a página nova abriu.
 
-        try:
-            # Padrão: procura link com texto igual ao número
-            selector = f"a:text-is('{numero}')"
-            await self._page.wait_for_selector(selector, timeout=5000)
-            await self._page.click(selector)
-            await asyncio.sleep(self.between_pages_wait)
-            return True
-        except pw['PlaywrightTimeout']:
-            self.logger.debug(f"Link para página {numero} não encontrado")
-            return False
+        Raises:
+            NotImplementedError: Se não implementado pela subclasse.
+        """
+        raise NotImplementedError(
+            "Subclasse deve implementar _paginar_por_numero()"
+        )
 
     async def _paginar_por_botao_proximo(self) -> bool:
         """Clica no botão 'Próximo' ou 'Next'.
@@ -677,54 +680,39 @@ class PlaywrightScraper(AbstractScraper, HTMLScraper):
 
         return download_dir
 
-    def _rodar_async(self, **kwargs) -> str:
+    def _download_data(self, **kwargs) -> str:
         """Roda :meth:`_baixar_async` até o fim, com ou sem loop do asyncio já ativo.
 
         No Jupyter e no Colab a célula roda dentro de um loop, e ``asyncio.run``
         recusa outro loop na mesma thread. Nesse caso o download roda num loop
         próprio em outra thread, e esta espera o resultado.
 
+        O aviso de teto de páginas sai daqui, fora do loop, e a leitura das
+        páginas, em :meth:`AbstractScraper._raspar`, também: dentro do loop, os
+        avisos apontariam para o asyncio, e não para quem chamou ``raspar()``, e
+        sairiam uma vez só por sessão.
+
         Args:
             **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
 
         Returns:
             str: Pasta com as páginas salvas.
+
+        Warns:
+            UserWarning: Se a contagem passa de ``_max_pages`` páginas.
         """
         try:
             asyncio.get_running_loop()
         except RuntimeError:
-            return asyncio.run(self._baixar_async(**kwargs))
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            return executor.submit(lambda: asyncio.run(self._baixar_async(**kwargs))).result()
-
-    def _raspar(self, **kwargs) -> pd.DataFrame:
-        """Baixa as páginas num loop do asyncio e as lê depois que ele termina.
-
-        A leitura fica fora do loop para que os avisos de :meth:`_parse_data`
-        apontem para quem chamou ``raspar()``, e não para o asyncio, e o aviso de
-        teto de páginas sai daqui pelo mesmo motivo: atribuído ao asyncio, sairia
-        uma vez só por sessão.
-
-        Args:
-            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
-
-        Returns:
-            pd.DataFrame: Dados raspados consolidados.
-        """
-        download_dir = self._rodar_async(**kwargs)
-        result = self._ler_e_limpar(download_dir)
+            download_dir = asyncio.run(self._baixar_async(**kwargs))
+        else:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                download_dir = executor.submit(lambda: asyncio.run(self._baixar_async(**kwargs))).result()
         if self._total_paginas > self._max_pages:
-            self._avisar_teto(self._total_paginas, self._max_pages, "páginas de resultados")
-
-        # Adiciona termo de busca se disponível
-        termo_param = next(
-            (k for k in kwargs if k in ['assunto', 'pesquisa', 'termo', 'q', 'query']),
-            None
-        )
-        if termo_param:
-            termo_busca = str(kwargs[termo_param])
-            result = result.assign(termo_busca=termo_busca)
-            self.logger.debug(f"Adicionada coluna termo_busca={termo_busca}")
-
-        self.logger.info(f"Raspagem concluída: {len(result)} registros")
-        return result
+            try:
+                self._avisar_teto(self._total_paginas, self._max_pages, "páginas de resultados")
+            except BaseException:
+                # Com o aviso virando erro (filterwarnings), a pasta não chega a _raspar.
+                self._apagar_sem_debug(download_dir)
+                raise
+        return download_dir

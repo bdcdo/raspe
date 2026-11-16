@@ -27,6 +27,9 @@ from raspe.utils import nivel_de_pilha_fora_do_pacote, validar_intervalo_datas
 # Como dividir uma busca que passa do teto da fonte, no aviso de _avisar_teto.
 _DICA_PADRAO = "por período, por exemplo"
 
+# Parâmetros que trazem o termo buscado, para a coluna termo_busca (vale o primeiro dos kwargs).
+_PARAMETROS_DO_TERMO = ('pesquisa', 'assunto', 'termo', 'q', 'query')
+
 # Fora da classe porque, dentro dela, o nome 'type' é a propriedade abstrata
 # declarada mais abaixo, e o pylint lê 'type[...]' como uso antes da definição.
 _SchemaEntrada = type[InputBase] | None
@@ -530,15 +533,45 @@ class AbstractScraper(ABC):
             return resultado
         return conferir_saida(resultado, self.schema_saida, metodo=f"{type(self).__name__}.raspar()")
 
-    @abstractmethod
     def _raspar(self, **kwargs) -> pd.DataFrame:
         """Coleta os dados com os parâmetros já validados por :meth:`raspar`.
+
+        Baixa as páginas com :meth:`_download_data`, lê e apaga a pasta com
+        :meth:`_ler_e_limpar` e, se um parâmetro traz o termo buscado, põe a
+        coluna ``termo_busca``. Com ``schema_entrada``, :meth:`_validar_parametros`
+        devolve sempre ``pesquisa`` (canônico, com default), e a coluna sai em
+        todo raspador ligado a schema; os outros nomes valem para raspador sem schema.
 
         Args:
             **kwargs: Parâmetros de busca validados e normalizados.
 
         Returns:
             pd.DataFrame: Dados raspados, antes da conferência com ``schema_saida``.
+        """
+        result = self._ler_e_limpar(self._download_data(**kwargs))
+
+        termo_param = next((k for k in kwargs if k in _PARAMETROS_DO_TERMO), None)
+        if termo_param:
+            termo_busca = str(kwargs[termo_param])
+            result = result.assign(termo_busca=termo_busca)
+            self.logger.debug(f"Adicionada coluna termo_busca={termo_busca} aos resultados")
+
+        self.logger.info(f"Raspagem concluída: {len(result)} registros")
+        return result
+
+    @abstractmethod
+    def _download_data(self, **kwargs) -> str:
+        """Baixa as páginas de resultado de uma busca numa pasta nova.
+
+        A pasta vem de :meth:`_create_download_dir`. Em erro, a implementação a
+        apaga sem ``debug`` (:meth:`_apagar_sem_debug`) antes de relançar.
+
+        Args:
+            **kwargs: Parâmetros de busca validados e normalizados.
+
+        Returns:
+            str: Pasta com as páginas baixadas, que :meth:`_raspar` lê com
+            :meth:`_parse_data`.
         """
         ...
 
