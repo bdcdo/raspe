@@ -155,13 +155,15 @@ class ScraperCapes(BaseScraper, HTMLScraper):
         cards = soup.select(self._SELETOR_CARD)
 
         registros = []
+        erros: list[Exception] = []
         for card in cards:
             try:
                 registros.append(self._parse_card(card))
             except Exception as e:
                 self.logger.warning(f"Erro parseando card em {path}: {e}")
-                continue
+                erros.append(e)
 
+        self._conferir_itens(path, erros, len(registros))
         return pd.DataFrame(registros, columns=self.colunas)
 
     def _parse_card(self, card) -> dict[str, Any]:

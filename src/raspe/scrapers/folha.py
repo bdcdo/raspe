@@ -188,6 +188,7 @@ class ScraperFolha(BaseScraper, HTMLScraper):
         noticias = lista_noticias.find_all("li")
 
         infos = []
+        erros: list[Exception] = []
         for noticia in noticias:
             try:
                 # Link
@@ -209,7 +210,8 @@ class ScraperFolha(BaseScraper, HTMLScraper):
                 infos.append([link, titulo, resumo, data])
 
             except Exception as e:
-                self.logger.warning(f"Erro ao processar notícia: {e}")
-                continue
+                self.logger.warning(f"Erro ao processar notícia em {path}: {e}")
+                erros.append(e)
 
+        self._conferir_itens(path, erros, len(infos))
         return pd.DataFrame(infos, columns=self.colunas)

@@ -180,6 +180,7 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
 
         container = soup.find('div', class_='col-xs-12 col-md-12 sf-busca-resultados')
         itens = container.find_all('div', class_='sf-busca-resultados-item') if container else []
+        erros: list[Exception] = []
 
         for idx, item in enumerate(itens, 1):
             try:
@@ -242,6 +243,7 @@ class ScraperSenadoFederal(BaseScraper, HTMLScraper):
                     f"Erro ao processar item {idx} de {len(itens)} em {path}: {e}. "
                     f"Diagnóstico detalhado: {item_info}"
                 )
-                continue
+                erros.append(e)
 
+        self._conferir_itens(path, erros, len(lista_infos))
         return pd.DataFrame(lista_infos, columns=self.colunas)
