@@ -55,6 +55,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionada a coluna `rotulo` à `presidencia()`, depois de `descricao`, com o selo que o portal põe ao lado do
   nome do ato, como "Veto Parcial"; vazia quando não há.
 - Adicionado o notebook `notebooks/13_anvisa.ipynb`, com exemplos do raspador da ANVISA executados ao vivo.
+- Preparado o pacote para o PyPI: `pip install raspe` (ou `pip install "raspe[browser]"`), com licença MIT em SPDX,
+  palavras-chave, classificadores e links de repositório, issues e changelog. A instalação pelo GitHub segue valendo
+  para a versão de desenvolvimento.
+- Adicionados ao sdist a suíte de testes inteira, com os samples, o `docs/colunas.md` e o `CHANGELOG.md`.
 
 ### Modificado
 - O `_paginar_por_numero` padrão do `PlaywrightScraper` passou a levantar `NotImplementedError`, em vez de clicar e
@@ -80,6 +84,7 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Adicionado `CAPES` ao mapping de `raspe.scraper_manager.scraper()`,
   permitindo `scraper("CAPES")` além de `raspe.capes()`.
 - Requisito mínimo de Python elevado de 3.10 para 3.11. O 3.10 saiu de suporte em outubro de 2026.
+- Requisito de build elevado de `setuptools>=42` e `wheel` para `setuptools>=77.0.3`, que lê a licença em SPDX.
 - **Incompatível:** renomeado para `pesquisa` o termo de busca de `cfm()` e `nyt()` (antes `texto`), de
   `saudelegis()` (antes `assunto`) e de `ans()` e `anvisa()` (antes `termo`). Os nomes antigos seguem aceitos, com
   `DeprecationWarning`; passar o antigo e `pesquisa` juntos levanta `ValidationError`.
