@@ -34,7 +34,7 @@ import requests
 from tqdm import tqdm
 
 from raspe.abstract_scraper import AbstractScraper
-from raspe.exceptions import APIError, RateLimitError, ScraperError
+from raspe.exceptions import APIError, RateLimitError, ScraperError, ValidationError
 from raspe.utils import nivel_de_pilha_fora_do_pacote, start_session
 
 
@@ -132,8 +132,7 @@ class BaseScraper(AbstractScraper):
                 # Um termo que falha não descarta os já coletados: segue para os demais
                 # e avisa no fim. Erros de programação (fora destas classes) sobem direto.
                 try:
-                    path_result = self._download_data(**loop_kwargs)
-                    df = self._ler_e_limpar(path_result)
+                    df = self._coletar(**loop_kwargs)
                 except (ScraperError, requests.RequestException) as e:
                     self.logger.error(f"Raspagem de {key}={val} falhou: {e}")
                     erros.append((val, e))
@@ -166,6 +165,79 @@ class BaseScraper(AbstractScraper):
             # vazio (colunas object) com os demais alargaria os tipos das colunas.
             return pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
         return super()._raspar(**kwargs)
+
+    def _dividir_busca(self, **kwargs) -> list[dict[str, Any]]:
+        """Divide a busca nas consultas que a fonte aceita; por padrão, uma só.
+
+        A subclasse sobrescreve quando a fonte limita o período de uma consulta
+        (ver :func:`raspe.utils.dividir_periodo`).
+
+        Args:
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
+
+        Returns:
+            list[dict]: Os parâmetros de cada consulta, na ordem em que saem.
+        """
+        return [kwargs]
+
+    def _coletar(self, **kwargs) -> pd.DataFrame:
+        """Baixa e lê cada consulta de :meth:`_dividir_busca` e junta as linhas sem repetir.
+
+        A consulta que falha interrompe a busca: seguir sem ela devolveria um
+        período com um buraco.
+
+        Args:
+            **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
+
+        Returns:
+            pd.DataFrame: As linhas de todas as consultas.
+
+        Raises:
+            ValidationError: Se ``paginas`` vier numa busca dividida em mais de
+                uma consulta, em que cada consulta tem a sua própria paginação.
+        """
+        consultas = self._dividir_busca(**kwargs)
+        if len(consultas) == 1:
+            return super()._coletar(**consultas[0])
+        if kwargs.get("paginas") is not None:
+            raise ValidationError(
+                f"{type(self).__name__}.raspar() não aceita 'paginas' nesta busca: o período pedido passa do que a "
+                f"fonte aceita por consulta e sai em {len(consultas)} consultas, cada uma com a sua paginação. "
+                "Tire 'paginas' ou encurte o período."
+            )
+        self.logger.info(f"Busca dividida em {len(consultas)} consultas")
+        dfs: list[pd.DataFrame] = []
+        for i, consulta in enumerate(consultas):
+            if i:
+                time.sleep(self.sleep_time)
+            dfs.append(super()._coletar(**consulta))
+        # Como na busca por lista: consulta vazia só entra se todas vierem vazias.
+        juntas = pd.concat([df for df in dfs if not df.empty] or dfs[:1], ignore_index=True)
+        return juntas.drop_duplicates(ignore_index=True)
+
+    def _levantar_se_recusada(self, r0: requests.Response) -> None:
+        """Levanta ``APIError`` se a API recusou a consulta (4xx), com a explicação que ela dá.
+
+        Serve às APIs que respondem o erro em JSON com o campo ``detail``; sem
+        ele, a mensagem leva o corpo da resposta.
+
+        Args:
+            r0: Resposta da página 1.
+
+        Raises:
+            APIError: Se o status for 4xx ou 5xx.
+        """
+        if r0.status_code < 400:
+            return
+        try:
+            detalhe = r0.json()['detail']
+        except (ValueError, KeyError, TypeError):
+            detalhe = r0.text
+        raise APIError(
+            f"{self.nome_buscador}: a API recusou a consulta (HTTP {r0.status_code}): {detalhe}",
+            status_code=r0.status_code,
+            response_text=r0.text,
+        )
 
     def _download_data(self, **kwargs) -> str:
         """Pede a página 1, conta as páginas por ela e baixa as de ``paginas``.

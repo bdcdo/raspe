@@ -572,8 +572,7 @@ class AbstractScraper(ABC):
     def _raspar(self, **kwargs) -> pd.DataFrame:
         """Coleta os dados com os parâmetros já validados por :meth:`raspar`.
 
-        Baixa as páginas com :meth:`_download_data`, lê e apaga a pasta com
-        :meth:`_ler_e_limpar` e, se um parâmetro traz o termo buscado, põe a
+        Baixa e lê as páginas com :meth:`_coletar` e, se um parâmetro traz o termo buscado, põe a
         coluna ``termo_busca``. Com ``schema_entrada``, :meth:`_validar_parametros`
         devolve sempre ``pesquisa`` (canônico, com default), e a coluna sai em
         todo raspador ligado a schema; os outros nomes valem para raspador sem schema.
@@ -584,7 +583,7 @@ class AbstractScraper(ABC):
         Returns:
             pd.DataFrame: Dados raspados, antes da conferência com ``schema_saida``.
         """
-        result = self._ler_e_limpar(self._download_data(**kwargs))
+        result = self._coletar(**kwargs)
 
         termo_param = next((k for k in kwargs if k in _PARAMETROS_DO_TERMO), None)
         if termo_param:
@@ -594,6 +593,17 @@ class AbstractScraper(ABC):
 
         self.logger.info(f"Raspagem concluída: {len(result)} registros")
         return result
+
+    def _coletar(self, **kwargs) -> pd.DataFrame:
+        """Baixa uma busca com :meth:`_download_data` e a lê com :meth:`_ler_e_limpar`.
+
+        Args:
+            **kwargs: Parâmetros de busca validados e normalizados.
+
+        Returns:
+            pd.DataFrame: As linhas da busca, ainda sem a coluna ``termo_busca``.
+        """
+        return self._ler_e_limpar(self._download_data(**kwargs))
 
     @abstractmethod
     def _download_data(self, **kwargs) -> str:

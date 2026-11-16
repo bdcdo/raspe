@@ -39,6 +39,7 @@ from .scrapers.nyt import ScraperNYT
 from .scrapers.presidencia import ScraperPresidencia
 from .scrapers.saudelegis import ScraperSaudeLegis
 from .scrapers.senado import ScraperSenadoFederal
+from .scrapers.senado_processos import ScraperSenadoProcessos
 from .utils import check, expand, extract, remove_duplicates, validar_data, validar_intervalo_datas
 
 __version__ = version("raspe")
@@ -114,6 +115,27 @@ def camara_proposicoes(**kwargs: Any) -> ScraperCamaraProposicoes:
         >>> df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina", ano=2020)
     """
     return ScraperCamaraProposicoes(**kwargs)
+
+
+def senado_processos(**kwargs: Any) -> ScraperSenadoProcessos:
+    """
+    Cria um raspador para os processos legislativos do Senado Federal, pela API oficial de Dados Abertos.
+
+    Lista projetos de lei, PECs, requerimentos e demais processos do Senado e
+    do Congresso Nacional, tenham virado norma ou não. Para a legislação já
+    publicada, use ``raspe.senado()``.
+
+    Args:
+        debug: Se True, ativa logs de depuração e mantém arquivos baixados (default: True).
+
+    Returns:
+        ScraperSenadoProcessos: Instância configurada do raspador.
+
+    Exemplo:
+        >>> import raspe
+        >>> df = raspe.senado_processos().raspar(pesquisa="telemedicina", ano=2020)
+    """
+    return ScraperSenadoProcessos(**kwargs)
 
 
 def cfm(**kwargs):
@@ -264,6 +286,7 @@ __all__ = [
     "presidencia",
     "ipea",
     "senado",
+    "senado_processos",
     "camara",
     "camara_proposicoes",
     "cfm",

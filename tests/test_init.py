@@ -67,7 +67,8 @@ class TestFactoriesPlaywright:
 
 FABRICAS = [
     *[(nome, {}) for nome in (
-        "presidencia", "ipea", "senado", "camara", "camara_proposicoes", "cfm", "folha", "capes",
+        "presidencia", "ipea", "senado", "senado_processos", "camara", "camara_proposicoes", "cfm", "folha",
+        "capes",
         "saudelegis", "ans", "anvisa",
     )],
     ("nyt", {"api_key": "chave-de-teste"}),

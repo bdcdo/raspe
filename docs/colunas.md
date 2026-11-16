@@ -140,6 +140,35 @@ Schema: `OutputSaudeLegis`.
 | `link_url` | texto | Endereço do texto completo, ou vazio quando o portal não o traz. | /doc/portaria-123-2024.pdf |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
 
+## `raspe.senado_processos()`
+
+Schema: `OutputSenadoProcessos`.
+
+| Coluna | Tipo | Descrição | Exemplo |
+| --- | --- | --- | --- |
+| `id` | inteiro | Identificador do processo no Senado. | 7879650 |
+| `codigo_materia` | inteiro | Código da matéria no sistema anterior do Senado (MATE). | 141263 |
+| `identificacao` | texto | Sigla, número e ano do processo. | PL 696/2020 |
+| `apelido` | texto ou nulo | Nome pelo qual o processo ficou conhecido, ou nulo. | Marco Legal da Inteligência Artificial |
+| `ementa` | texto | Ementa do processo. | Dispõe sobre o uso da telemedicina durante a crise causada pelo coronavírus |
+| `tipo_documento` | texto | Tipo do documento que iniciou o processo. | Projeto de Lei Ordinária |
+| `tipo_conteudo` | texto | Tipo de conteúdo do documento inicial. | Norma Geral |
+| `autoria` | texto | Autor ou autores do processo. | Câmara dos Deputados |
+| `objetivo` | texto ou nulo | Papel do Senado no processo (como iniciadora ou revisora), ou nulo. | Revisora |
+| `casa_identificadora` | texto | Casa que identifica o processo: `SF` (Senado Federal) ou `CN` (Congresso Nacional). | SF |
+| `ente_identificador` | texto | Sigla do ente (casa, comissão ou colegiado) que identifica o processo. | SF |
+| `data_apresentacao` | texto | Data de apresentação, em AAAA-MM-DD. | 2020-03-26 |
+| `tramitando` | texto | Se o processo ainda tramita: `Sim` ou `Não`, como a API devolve. | Não |
+| `situacao_atual` | texto ou nulo | Situação atual do processo, ou nulo. | TRANSFORMADA EM NORMA JURÍDICA COM VETO PARCIAL |
+| `data_situacao_atual` | texto ou nulo | Data da situação atual, em AAAA-MM-DD, ou nulo. | 2020-04-16 |
+| `data_deliberacao` | texto ou nulo | Data da deliberação, em AAAA-MM-DD, ou nulo quando ainda não houve. | 2020-03-31 |
+| `sigla_tipo_deliberacao` | texto ou nulo | Sigla do tipo de deliberação, ou nulo quando ainda não houve. | APROVADA_NO_PLENARIO |
+| `norma_gerada` | texto ou nulo | Norma em que o processo se transformou, ou nulo. | Lei nº 13.989 de 15/04/2020 |
+| `ultima_informacao_atualizada` | texto ou nulo | Tipo da última informação atualizada no processo, ou nulo. | EVENTO_LEGISLATIVO |
+| `data_ultima_atualizacao` | texto ou nulo | Data e hora da última atualização, em ISO 8601 sem fuso, ou nulo. | 2026-07-01T09:07:06.075 |
+| `url_documento` | texto ou nulo | Endereço do documento inicial do processo, ou nulo. | https://legis.senado.gov.br/sdleg-getter/dadosabertos/documento/aeb2ac05-c25d-40bb-ba82-710cef32ae5c |
+| `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |
+
 ## Raspadores ainda sem schema de saída
 
 `raspe.camara()`, `raspe.senado()`. As colunas deles estão no README.

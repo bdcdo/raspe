@@ -9,6 +9,7 @@ com o valor que a API devolveu na captura.
 """
 
 import json
+import re
 
 import pytest
 import responses
@@ -154,23 +155,87 @@ _QUERY_TELEMEDICINA = matchers.query_param_matcher(
 )
 
 
+class TestPeriodoDividido:
+    """``data_inicio`` + ``data_fim`` com mais de 3 meses: a API responde 400, e o raspador divide o período."""
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_periodo_longo_sai_em_janelas_de_ate_3_meses(self, scraper, mocker):
+        dormir = mocker.patch("time.sleep")
+        janelas = [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-06-30"), ("2020-07-01", "2020-07-15")]
+        amostras = ["page_01", "page_02", "no_results"]
+        for (inicio, fim), amostra in zip(janelas, amostras):
+            _registrar(
+                {"keywords": "doença rara", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
+                0 if amostra == "no_results" else 78, amostra,
+            )
+
+        df = scraper.raspar(pesquisa="doença rara", data_inicio="2020-01-01", data_fim="2020-07-15")
+
+        assert list(df.columns) == COLUNAS
+        assert len(df) == 178
+        assert df["id"].is_unique
+        assert df["id"].dtype == "int64"
+        assert (df["termo_busca"] == "doença rara").all()
+        assert dormir.call_args_list == [mocker.call(scraper.sleep_time)] * 2
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_proposicao_repetida_entre_janelas_sai_uma_vez(self, scraper, mocker):
+        mocker.patch("time.sleep")
+        for inicio, fim in [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-04-30")]:
+            _registrar({"keywords": "telemedicina", "dataApresentacaoInicio": inicio, "dataApresentacaoFim": fim},
+                       9, "single_page")
+
+        df = scraper.raspar(pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-04-30")
+
+        assert len(df) == 9
+        assert df["id"].is_unique
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_janela_paginada_baixa_todas_as_paginas(self, scraper, mocker):
+        mocker.patch("time.sleep")
+        _registrar(
+            {"keywords": "doença rara", "dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-03-31"},
+            178, "page_01", "page_02",
+        )
+        _registrar(
+            {"keywords": "doença rara", "dataApresentacaoInicio": "2020-04-01", "dataApresentacaoFim": "2020-04-30"},
+            0, "no_results",
+        )
+
+        df = scraper.raspar(pesquisa="doença rara", data_inicio="2020-01-01", data_fim="2020-04-30")
+
+        assert len(df) == 178
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_periodo_de_ate_3_meses_segue_numa_consulta(self, scraper):
+        _registrar(
+            {"keywords": "telemedicina", "dataApresentacaoInicio": "2019-11-30", "dataApresentacaoFim": "2020-02-28"},
+            9, "single_page",
+        )
+
+        assert len(scraper.raspar(pesquisa="telemedicina", data_inicio="2019-11-30", data_fim="2020-02-28")) == 9
+
+    def test_paginas_em_periodo_dividido_levanta_antes_da_busca(self, scraper):
+        with pytest.raises(ValidationError, match="não aceita 'paginas' nesta busca.*4 consultas"):
+            scraper.raspar(
+                pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-12-31", paginas=range(1, 2)
+            )
+
+
 class TestErros:
     @responses.activate
-    def test_periodo_recusado_pela_api_leva_a_explicacao_dela(self, scraper):
-        """A API responde 400 a período de mais de 3 meses; a explicação dela chega a quem chamou."""
-        detalhe = "A diferença entre as datas não pode ser maior que 3 meses"
+    def test_consulta_recusada_pela_api_leva_a_explicacao_dela(self, scraper):
+        """A API responde 400 com a razão em ``detail``; a explicação dela chega a quem chamou."""
+        detalhe = "Parâmetro(s) inválido(s)."
         responses.add(
             responses.GET, API_URL, status=400, content_type="application/json",
             json={"title": "Bad Request", "status": 400, "detail": detalhe, "instance": "/api/v2/proposicoes"},
-            match=[matchers.query_param_matcher({
-                **QUERY_FIXA, "keywords": "telemedicina", "pagina": "1",
-                "dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-12-31",
-            })],
+            match=[_QUERY_TELEMEDICINA],
         )
 
-        padrao = rf"CAMARA_PROPOSICOES: a API recusou a consulta \(HTTP 400\): {detalhe}"
+        padrao = rf"CAMARA_PROPOSICOES: a API recusou a consulta \(HTTP 400\): {re.escape(detalhe)}"
         with pytest.raises(APIError, match=padrao) as erro:
-            scraper.raspar(pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-12-31")
+            scraper.raspar(pesquisa="telemedicina")
         assert erro.value.status_code == 400
 
     @responses.activate

@@ -31,6 +31,7 @@ from .nyt import InputNYT, OutputNYT
 from .presidencia import InputPresidencia, OutputPresidencia
 from .saudelegis import InputSaudeLegis, OutputSaudeLegis
 from .senado import InputSenado
+from .senado_processos import InputSenadoProcessos, OutputSenadoProcessos
 
 __all__ = [
     "AnoMixin",
@@ -46,6 +47,7 @@ __all__ = [
     "InputPresidencia",
     "InputSaudeLegis",
     "InputSenado",
+    "InputSenadoProcessos",
     "IntervaloDatasMixin",
     "OutputBase",
     "OutputCFM",
@@ -57,6 +59,7 @@ __all__ = [
     "OutputNYT",
     "OutputPresidencia",
     "OutputSaudeLegis",
+    "OutputSenadoProcessos",
     "PaginasMixin",
     "PesquisaNavegadorMixin",
     "PesquisaObrigatoriaMixin",

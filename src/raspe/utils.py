@@ -315,3 +315,37 @@ def validar_intervalo_datas(
             )
 
     return inicio_norm, fim_norm
+
+
+def dividir_periodo(data_inicio: str, data_fim: str, meses: int) -> list[tuple[str, str]]:
+    """Divide um período em janelas seguidas, cada uma com menos de ``meses`` meses.
+
+    Serve às fontes que limitam o período de uma consulta. As janelas não se
+    sobrepõem: cada uma começa no dia seguinte ao fim da anterior, e a última
+    termina em ``data_fim``.
+
+    Args:
+        data_inicio: Primeiro dia do período, em YYYY-MM-DD.
+        data_fim: Último dia do período, em YYYY-MM-DD.
+        meses: Tamanho da janela; cada uma vai até a véspera de completar ``meses`` meses.
+
+    Returns:
+        Lista de pares ``(início, fim)`` em YYYY-MM-DD. Vazia se ``data_inicio``
+        for posterior a ``data_fim``.
+
+    Examples:
+        >>> dividir_periodo("2020-01-01", "2020-07-15", meses=3)
+        [('2020-01-01', '2020-03-31'), ('2020-04-01', '2020-06-30'), ('2020-07-01', '2020-07-15')]
+    """
+    primeiro = pd.Timestamp(data_inicio)
+    ultimo = pd.Timestamp(data_fim)
+    janelas: list[tuple[str, str]] = []
+    inicio = primeiro
+    while inicio <= ultimo:
+        # A partir do primeiro dia, e não da janela anterior: somar mês a mês a um dia 31
+        # iria encolhendo o dia (31 -> 30 -> 28).
+        proximo = primeiro + pd.DateOffset(months=meses * (len(janelas) + 1))
+        fim = min(proximo - pd.Timedelta(days=1), ultimo)
+        janelas.append((inicio.date().isoformat(), fim.date().isoformat()))
+        inicio = proximo
+    return janelas
