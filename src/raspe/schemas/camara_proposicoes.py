@@ -12,7 +12,12 @@ class InputCamaraProposicoes(PaginasMixin, AnoMixin, IntervaloDatasMixin, Pesqui
     """
 
     ano: int | None = Field(
-        default=None, description="Ano de apresentação da proposição, com quatro dígitos.", examples=[2020]
+        default=None,
+        description=(
+            "Ano da identificação da proposição (o 2020 de PL 696/2020), com quatro dígitos. Pode não ser o ano "
+            "de apresentação, que se filtra com `data_inicio` e `data_fim`."
+        ),
+        examples=[2020],
     )
     sigla_tipo: str = Field(
         default="",
@@ -32,7 +37,10 @@ class OutputCamaraProposicoes(OutputBase):
     sigla_tipo: str = Field(description="Sigla do tipo de proposição.", examples=["PL"])
     cod_tipo: int = Field(description="Código numérico do tipo de proposição.", examples=[139])
     numero: int = Field(description="Número da proposição.", examples=[696])
-    ano: int = Field(description="Ano de apresentação da proposição.", examples=[2020])
+    ano: int = Field(
+        description="Ano da identificação da proposição, que pode diferir do ano de `data_apresentacao`.",
+        examples=[2020],
+    )
     ementa: str = Field(
         description="Ementa da proposição.",
         examples=["Dispõe sobre o uso da telemedicina durante a crise causada pelo coronavírus"],

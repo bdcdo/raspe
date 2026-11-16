@@ -15,6 +15,7 @@ Exemplo de uso:
 """
 
 from importlib.metadata import version
+from typing import Any
 
 from .exceptions import SeleniumError  # Alias para compatibilidade
 from .exceptions import (
@@ -95,7 +96,7 @@ def camara(**kwargs):
     return ScraperCamaraDeputados(**kwargs)
 
 
-def camara_proposicoes(**kwargs):
+def camara_proposicoes(**kwargs: Any) -> ScraperCamaraProposicoes:
     """
     Cria um raspador para as proposições da Câmara dos Deputados, pela API oficial de Dados Abertos.
 

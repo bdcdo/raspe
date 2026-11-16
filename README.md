@@ -271,9 +271,10 @@ df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina", ano=2020, sigla_
 df = raspe.camara_proposicoes().raspar(pesquisa="telemedicina", data_inicio="2020-03-01", data_fim="2020-03-31")
 ```
 
-Além de `pesquisa`, aceita `ano`, `sigla_tipo` (como `"PL"` ou `"PEC"`), `data_inicio` e `data_fim`, que filtram pela data de apresentação. Duas regras da API:
+Além de `pesquisa`, aceita `ano` (o da identificação da proposição, como o 2020 de PL 696/2020, que pode não ser o ano de apresentação), `sigla_tipo` (como `"PL"` ou `"PEC"`), `data_inicio` e `data_fim`, que filtram pela data de apresentação. Três regras da API:
 
 - Sem filtro de tempo, a API só devolveria as proposições dos últimos 30 dias. O raspe pede a base inteira quando você não passa `ano`, `data_inicio` nem `data_fim`.
+- A base inteira só sai com `pesquisa`: sem termo, a API não responde a tempo. Por isso a busca sem `pesquisa` exige `ano`, `data_inicio` ou `data_fim`, e sem eles levanta `ValidationError`.
 - `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses: a API recusa a consulta, e o raspe levanta `APIError` com a explicação. Para um período maior, use `ano`, uma data só, ou divida o período.
 
 As colunas estão em [`docs/colunas.md`](docs/colunas.md).

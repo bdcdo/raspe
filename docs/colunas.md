@@ -27,7 +27,7 @@ Schema: `OutputCamaraProposicoes`.
 | `sigla_tipo` | texto | Sigla do tipo de proposição. | PL |
 | `cod_tipo` | inteiro | Código numérico do tipo de proposição. | 139 |
 | `numero` | inteiro | Número da proposição. | 696 |
-| `ano` | inteiro | Ano de apresentação da proposição. | 2020 |
+| `ano` | inteiro | Ano da identificação da proposição, que pode diferir do ano de `data_apresentacao`. | 2020 |
 | `ementa` | texto | Ementa da proposição. | Dispõe sobre o uso da telemedicina durante a crise causada pelo coronavírus |
 | `data_apresentacao` | texto | Data e hora de apresentação, em ISO 8601 sem fuso, como a API devolve. | 2020-03-18T10:54 |
 | `termo_busca` | texto | Termo de busca que gerou a linha: o valor de `pesquisa` ou, numa busca com lista, o item da lista. | natjus |

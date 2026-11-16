@@ -18,7 +18,7 @@ import pandas as pd
 import requests
 
 from ..base_scraper import BaseScraper
-from ..exceptions import APIError
+from ..exceptions import APIError, ValidationError
 from ..schemas.camara_proposicoes import InputCamaraProposicoes, OutputCamaraProposicoes
 
 # Coluna do DataFrame -> campo de cada item de ``dados`` na resposta da API.
@@ -44,6 +44,9 @@ class ScraperCamaraProposicoes(BaseScraper):
       ``data_inicio`` nem ``data_fim`` cobrir a base inteira, como nas outras
       fontes do raspe, o raspador envia ``INICIO_DA_BASE`` como data inicial de
       apresentação quando nenhum dos três vem.
+    - A base inteira só sai com ``pesquisa``: sem termo, a API não responde a
+      tempo (504). Por isso ``raspar()`` sem ``pesquisa`` exige ``ano``,
+      ``data_inicio`` ou ``data_fim``.
     - ``data_inicio`` e ``data_fim`` juntas não podem distar mais de 3 meses: a
       API responde 400, e o raspador levanta ``APIError`` com a explicação dela.
       Uma data só (ou ``ano``) não tem esse limite.
@@ -80,6 +83,28 @@ class ScraperCamaraProposicoes(BaseScraper):
     @property
     def api_method(self) -> Literal['GET']:
         return self._api_method
+
+    def _validar_parametros(self, **kwargs) -> dict[str, Any]:
+        """Valida os parâmetros e recusa a busca sem termo e sem filtro de tempo.
+
+        Args:
+            **kwargs: Parâmetros de ``raspar()``.
+
+        Returns:
+            dict: Parâmetros validados, com as datas em YYYY-MM-DD.
+
+        Raises:
+            ValidationError: Se algum parâmetro for inválido, ou se faltarem
+                ``pesquisa`` e os três filtros de tempo (a API não responde a
+                essa consulta; ver a docstring da classe).
+        """
+        kwargs = super()._validar_parametros(**kwargs)
+        if not any(kwargs.get(nome) for nome in ('pesquisa', 'ano', 'data_inicio', 'data_fim')):
+            raise ValidationError(
+                f"{type(self).__name__}.raspar() precisa de 'pesquisa' ou de um filtro de tempo "
+                "('ano', 'data_inicio' ou 'data_fim'): sem eles, a API da Câmara não responde a tempo."
+            )
+        return kwargs
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta os parâmetros da consulta à API.
@@ -127,22 +152,20 @@ class ScraperCamaraProposicoes(BaseScraper):
             int: Número de páginas (0 sem resultados).
 
         Raises:
-            APIError: Se a API recusar a consulta (400), com a explicação que
+            APIError: Se a API recusar a consulta (4xx), com a explicação que
                 ela dá, ou se a resposta vier sem o header ``X-Total-Count`` ou
                 com valor que não é um número.
-            requests.HTTPError: Se a API responder outro erro 4xx.
         """
-        if r0.status_code == 400:
+        if r0.status_code >= 400:
             try:
                 detalhe = r0.json()['detail']
             except (ValueError, KeyError, TypeError):
                 detalhe = r0.text
             raise APIError(
-                f"{self.nome_buscador}: a API recusou a consulta: {detalhe}",
+                f"{self.nome_buscador}: a API recusou a consulta (HTTP {r0.status_code}): {detalhe}",
                 status_code=r0.status_code,
                 response_text=r0.text,
             )
-        r0.raise_for_status()
         total = r0.headers.get('X-Total-Count', '')
         if not total.isdigit():
             raise APIError(

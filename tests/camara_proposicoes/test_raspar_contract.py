@@ -112,7 +112,6 @@ class TestFiltros:
     @pytest.mark.parametrize(
         ("parametros", "filtros"),
         [
-            pytest.param({}, {"dataApresentacaoInicio": "1900-01-01"}, id="sem_filtro_cobre_a_base_inteira"),
             pytest.param({"sigla_tipo": "PL", "ano": 2020}, {"siglaTipo": "PL", "ano": "2020"}, id="sigla_tipo_e_ano"),
             pytest.param(
                 {"data_inicio": "01/03/2020", "data_fim": "31/03/2020"},
@@ -138,9 +137,21 @@ class TestFiltros:
         assert len(df) == 9
         assert (df["termo_busca"] == "").all()
 
+    @pytest.mark.parametrize("parametros", [{}, {"sigla_tipo": "PL"}, {"pesquisa": ""}], ids=str)
+    def test_sem_pesquisa_e_sem_filtro_de_tempo_levanta_antes_da_busca(self, scraper, parametros):
+        """A API responde 504 à base inteira sem termo (visto ao vivo em 2026-11-16); o erro vem antes, e explica."""
+        with pytest.raises(ValidationError, match="precisa de 'pesquisa' ou de um filtro de tempo"):
+            scraper.raspar(**parametros)
+
     def test_parametro_desconhecido_levanta_antes_da_busca(self, scraper):
         with pytest.raises(ValidationError, match="'tipo_materia': parâmetro desconhecido"):
             scraper.raspar(pesquisa="telemedicina", tipo_materia="PL")
+
+
+# A query de ``raspar(pesquisa="telemedicina")``, página 1.
+_QUERY_TELEMEDICINA = matchers.query_param_matcher(
+    {**QUERY_FIXA, "keywords": "telemedicina", "dataApresentacaoInicio": "1900-01-01", "pagina": "1"}
+)
 
 
 class TestErros:
@@ -151,17 +162,23 @@ class TestErros:
         responses.add(
             responses.GET, API_URL, status=400, content_type="application/json",
             json={"title": "Bad Request", "status": 400, "detail": detalhe, "instance": "/api/v2/proposicoes"},
+            match=[matchers.query_param_matcher({
+                **QUERY_FIXA, "keywords": "telemedicina", "pagina": "1",
+                "dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-12-31",
+            })],
         )
 
-        with pytest.raises(APIError, match=f"CAMARA_PROPOSICOES: a API recusou a consulta: {detalhe}") as erro:
+        padrao = rf"CAMARA_PROPOSICOES: a API recusou a consulta \(HTTP 400\): {detalhe}"
+        with pytest.raises(APIError, match=padrao) as erro:
             scraper.raspar(pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-12-31")
         assert erro.value.status_code == 400
 
     @responses.activate
-    def test_400_sem_json_leva_o_corpo_da_resposta(self, scraper):
-        responses.add(responses.GET, API_URL, status=400, body="pedido ruim")
+    def test_4xx_sem_json_leva_o_corpo_da_resposta(self, scraper):
+        """Outro 4xx (bloqueio do gateway, por exemplo) também sai como ``APIError``, com o corpo da resposta."""
+        responses.add(responses.GET, API_URL, status=403, body="acesso negado", match=[_QUERY_TELEMEDICINA])
 
-        with pytest.raises(APIError, match="a API recusou a consulta: pedido ruim"):
+        with pytest.raises(APIError, match=r"a API recusou a consulta \(HTTP 403\): acesso negado"):
             scraper.raspar(pesquisa="telemedicina")
 
     @responses.activate
@@ -171,6 +188,7 @@ class TestErros:
         responses.add(
             responses.GET, API_URL, status=200, content_type="application/json", headers=headers,
             body=load_sample_bytes("camara_proposicoes", "raspar/single_page.json"),
+            match=[_QUERY_TELEMEDICINA],
         )
 
         with pytest.raises(APIError, match="sem a contagem de resultados"):
