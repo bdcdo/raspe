@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 
 from raspe.exceptions import ScraperError
-from raspe.playwright_scraper import PlaywrightScraper
+from raspe.playwright_scraper import PaginationStrategy, PlaywrightScraper
 from tests._helpers import load_sample, navegador_falso
 
 
@@ -166,6 +166,27 @@ class TestAvisoDeTeto:
         raspador.pagina_falsa.content.return_value = "<html></html>"
         with pytest.raises(UserWarning):
             raspador.raspar(assunto="x")
+        assert not os.path.exists(raspador.download_path)
+
+
+class _LinksNumerados(_MuitasPaginas):
+    """Estratégia NUMBERED_LINKS sem ``_paginar_por_numero`` próprio."""
+
+    def __init__(self, debug: bool = False):
+        super().__init__(debug=debug)
+        self._pagination_strategy = PaginationStrategy.NUMBERED_LINKS
+
+    _navegar_proxima_pagina = PlaywrightScraper._navegar_proxima_pagina
+
+
+class TestPaginacaoPorNumeroSemImplementacao:
+    def test_falha_alto_e_nao_deixa_a_pasta(self, mocker):
+        """O padrão antigo clicava e dormia sem conferir se a página tinha mudado, e salvava a anterior."""
+        raspador = _raspador(mocker, classe=_LinksNumerados)
+        raspador.pagina_falsa.content.return_value = "<html></html>"
+        with pytest.raises(NotImplementedError, match="_paginar_por_numero"):
+            raspador.raspar(assunto="x")
+        raspador.pagina_falsa.click.assert_not_called()
         assert not os.path.exists(raspador.download_path)
 
 

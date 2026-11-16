@@ -106,7 +106,8 @@ class BaseScraper(AbstractScraper):
     def _raspar(self, **kwargs) -> pd.DataFrame:
         """Baixa e lê as páginas de resultado, uma busca por item quando um parâmetro é lista.
 
-        Exceções e avisos estão documentados em :meth:`AbstractScraper.raspar`.
+        A busca única segue o caminho de :meth:`AbstractScraper._raspar`. Exceções e
+        avisos estão documentados em :meth:`AbstractScraper.raspar`.
 
         Args:
             **kwargs: Parâmetros já validados por :meth:`AbstractScraper.raspar`.
@@ -164,22 +165,7 @@ class BaseScraper(AbstractScraper):
             # Termos sem resultados entram só se todos vierem vazios: concatenar um DataFrame
             # vazio (colunas object) com os demais alargaria os tipos das colunas.
             return pd.concat([df for df in dfs if not df.empty] or dfs, ignore_index=True)
-        # Fallback para busca única
-        else:
-            path_result = self._download_data(**kwargs)
-            result = self._ler_e_limpar(path_result)
-
-            # Determina qual parâmetro contém o termo de busca. Com schema_entrada,
-            # _validar_parametros devolve sempre 'pesquisa' (canônico, com default),
-            # e a coluna termo_busca sai em todo raspador ligado a schema. Os outros
-            # nomes só valem para raspador ainda sem schema.
-            termo_param = next((k for k in kwargs if k in ['pesquisa', 'termo', 'q', 'query']), None)
-            if termo_param:
-                termo_busca = str(kwargs[termo_param])
-                result = result.assign(termo_busca=termo_busca)
-                self.logger.debug(f"Adicionada coluna termo_busca={termo_busca} aos resultados")
-
-            return result
+        return super()._raspar(**kwargs)
 
     def _download_data(self, **kwargs) -> str:
         """Pede a página 1, conta as páginas por ela e baixa as de ``paginas``.
