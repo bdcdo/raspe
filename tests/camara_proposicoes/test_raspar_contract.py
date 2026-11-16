@@ -207,13 +207,18 @@ class TestPeriodoDividido:
         assert len(df) == 178
 
     @responses.activate(assert_all_requests_are_fired=True)
-    def test_periodo_de_ate_3_meses_segue_numa_consulta(self, scraper):
+    def test_tres_meses_exatos_seguem_numa_consulta_e_aceitam_paginas(self, scraper):
+        """A API aceita 3 meses exatos (visto ao vivo em 2026-11-16): a busca não se divide, e ``paginas`` vale."""
         _registrar(
-            {"keywords": "telemedicina", "dataApresentacaoInicio": "2019-11-30", "dataApresentacaoFim": "2020-02-28"},
+            {"keywords": "telemedicina", "dataApresentacaoInicio": "2020-01-01", "dataApresentacaoFim": "2020-04-01"},
             9, "single_page",
         )
 
-        assert len(scraper.raspar(pesquisa="telemedicina", data_inicio="2019-11-30", data_fim="2020-02-28")) == 9
+        df = scraper.raspar(
+            pesquisa="telemedicina", data_inicio="2020-01-01", data_fim="2020-04-01", paginas=range(1, 2)
+        )
+
+        assert len(df) == 9
 
     def test_paginas_em_periodo_dividido_levanta_antes_da_busca(self, scraper):
         with pytest.raises(ValidationError, match="não aceita 'paginas' nesta busca.*4 consultas"):

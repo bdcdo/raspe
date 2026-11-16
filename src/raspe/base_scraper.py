@@ -197,8 +197,11 @@ class BaseScraper(AbstractScraper):
             meses: Maior período que a fonte aceita numa consulta.
 
         Returns:
-            list[dict]: Os parâmetros com ``data_inicio`` e ``data_fim`` de cada janela.
+            list[dict]: Os parâmetros com ``data_inicio`` e ``data_fim`` de cada janela. O
+            período de até ``meses`` meses exatos, que a fonte aceita inteiro, sai numa consulta só.
         """
+        if pd.Timestamp(data_fim) <= pd.Timestamp(data_inicio) + pd.DateOffset(months=meses):
+            return [{**parametros, 'data_inicio': data_inicio, 'data_fim': data_fim}]
         return [
             {**parametros, 'data_inicio': inicio, 'data_fim': fim}
             for inicio, fim in dividir_periodo(data_inicio, data_fim, meses)
