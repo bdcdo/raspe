@@ -28,7 +28,7 @@ import argparse
 import time
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import requests
 
@@ -169,21 +169,37 @@ def enxugar_html(html: bytes, max_opcoes: int = 5) -> bytes:
     return str(soup).encode("utf-8")
 
 
-def capturar_paginas_lidas(scraper: PlaywrightScraper, pesquisa: str, arquivos: tuple[str, ...], saida: Path) -> None:
+# O que a busca de um cenário tem de dar: resultados, zero linhas sem erro, ou ScraperError.
+Espera = Literal["linhas", "vazia", "erro"]
+
+
+def capturar_paginas_lidas(
+    scraper: PlaywrightScraper,
+    pesquisa: str,
+    arquivos: tuple[str, ...],
+    saida: Path,
+    espera: Espera,
+) -> None:
     """Faz a busca com um raspador com navegador e grava as páginas que ele lê.
 
-    Grava as páginas de resultados que o raspador salva ou, sem resultados, a
-    página que a contagem lê. Um ``ScraperError`` (como acesso recusado) conta
-    como sem resultados. O HTML passa por ``enxugar_html``.
+    Grava as páginas de resultados que o raspador salva ou, sem resultados (ou
+    com ``ScraperError``), a página que a contagem lê. O HTML passa por
+    ``enxugar_html``. Antes de gravar, confere se a busca deu o que o cenário
+    espera, para um ``no_results`` que trouxe linhas, ou um acesso recusado no
+    lugar da busca vazia, não virar sample.
 
     Args:
         scraper: Raspador real, de uma subclasse de ``PlaywrightScraper``.
         pesquisa: Termo de busca.
         arquivos: Nomes dos arquivos, um por página.
         saida: Pasta onde gravar.
+        espera: O que a busca tem de dar: ``"linhas"`` (resultados), ``"vazia"``
+            (zero linhas, sem erro) ou ``"erro"`` (``ScraperError``, como o
+            acesso recusado).
 
     Raises:
-        RuntimeError: Se o número de páginas lidas não bate com ``arquivos``.
+        RuntimeError: Se a busca não deu o que ``espera`` pede ou se o número de
+            páginas lidas não bate com ``arquivos``. Nada é gravado.
     """
     obter_html = scraper._obter_html
     lidas: list[str] = []
@@ -193,15 +209,20 @@ def capturar_paginas_lidas(scraper: PlaywrightScraper, pesquisa: str, arquivos: 
         return lidas[-1]
 
     scraper._obter_html = _obter_e_guardar  # type: ignore[method-assign]
+    erro: ScraperError | None = None
+    linhas = 0
     try:
         linhas = len(scraper.raspar(pesquisa=pesquisa))
     except ScraperError as e:
-        print(f"'{pesquisa}': {e}")
-        linhas = 0
+        erro = e
+    deu = "erro" if erro else "linhas" if linhas else "vazia"
+    if deu != espera:
+        detalhe = f"ScraperError: {erro}" if erro else f"{linhas} linhas"
+        raise RuntimeError(f"'{pesquisa}': o cenário espera {espera!r}, e a busca deu {detalhe}")
     # A primeira leitura é a da contagem; as seguintes, as páginas salvas.
     paginas = lidas[1:] if linhas else lidas[:1]
     if len(paginas) != len(arquivos):
         raise RuntimeError(f"'{pesquisa}': {len(paginas)} páginas, esperadas {len(arquivos)}")
     for arquivo, html in zip(arquivos, paginas):
         (saida / arquivo).write_bytes(enxugar_html(html.encode()))
-    print(f"'{pesquisa}': {linhas} linhas, {len(paginas)} páginas gravadas")
+    print(f"'{pesquisa}': {erro or f'{linhas} linhas'}, {len(paginas)} páginas gravadas")

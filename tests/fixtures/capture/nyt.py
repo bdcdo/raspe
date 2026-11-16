@@ -5,7 +5,8 @@ a partir da raiz do repositório:
 
     export NYT_API_KEY="sua-chave"
     uv run python -m tests.fixtures.capture.nyt
-    uv run python -m tests.fixtures.capture.nyt --saida /tmp/captura-nyt
+    saida=$(mktemp -d)
+    uv run python -m tests.fixtures.capture.nyt --saida "$saida"
 
 A forma ``-m`` é necessária porque o script importa ``tests.fixtures``;
 rodado como arquivo, o Python não põe a raiz do repositório no
