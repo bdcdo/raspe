@@ -47,17 +47,22 @@ class ScraperCamaraProposicoes(BaseScraper):
     - A base inteira só sai com ``pesquisa``: sem termo, a API não responde a
       tempo (504). Por isso ``raspar()`` sem ``pesquisa`` exige ``ano``,
       ``data_inicio`` ou ``data_fim``.
-    - ``data_inicio`` e ``data_fim`` juntas não podem distar mais de 3 meses: a
-      API responde 400, e o raspador levanta ``APIError`` com a explicação dela.
-      Uma data só (ou ``ano``) não tem esse limite.
+    - ``data_inicio`` e ``data_fim`` juntas não podem distar mais de 3 meses (a
+      API responde 400). O raspador divide o período maior em janelas seguidas
+      de até ``MESES_POR_CONSULTA`` meses, faz uma consulta por janela e junta
+      as proposições sem repetir. Uma data só (ou ``ano``) não tem esse limite,
+      e a busca sai numa consulta.
     """
 
     schema_entrada = InputCamaraProposicoes
     schema_saida = OutputCamaraProposicoes
+    coluna_id = 'id'
 
     # Máximo de itens por página que a API aceita (visto ao vivo em 2026-11-16).
     ITENS_POR_PAGINA = 100
     INICIO_DA_BASE = "1900-01-01"
+    # Maior distância entre ``data_inicio`` e ``data_fim`` que a API aceita numa consulta.
+    MESES_POR_CONSULTA = 3
 
     def __init__(self, debug: bool = True):
         super().__init__("CAMARA_PROPOSICOES", debug)
@@ -94,8 +99,9 @@ class ScraperCamaraProposicoes(BaseScraper):
             dict: Parâmetros validados, com as datas em YYYY-MM-DD.
 
         Raises:
-            ValidationError: Se algum parâmetro for inválido, ou se faltarem
-                ``pesquisa`` e os três filtros de tempo (ver a docstring da classe).
+            ValidationError: Se algum parâmetro for inválido, se faltarem
+                ``pesquisa`` e os três filtros de tempo (ver a docstring da classe),
+                ou se ``paginas`` vier numa busca que sai em mais de uma consulta.
         """
         kwargs = super()._validar_parametros(**kwargs)
         if not any(kwargs.get(nome) for nome in ('pesquisa', 'ano', 'data_inicio', 'data_fim')):
@@ -103,7 +109,31 @@ class ScraperCamaraProposicoes(BaseScraper):
                 f"{type(self).__name__}.raspar() precisa de 'pesquisa' ou de um filtro de tempo "
                 "('ano', 'data_inicio' ou 'data_fim'): sem eles, a API da Câmara não responde a tempo."
             )
+        if kwargs.get('paginas') is None:
+            return kwargs
+        consultas = len(self._dividir_busca(**kwargs))
+        if consultas > 1:
+            raise ValidationError(
+                f"{type(self).__name__}.raspar() não aceita 'paginas' nesta busca: o período pedido passa de "
+                f"{self.MESES_POR_CONSULTA} meses e sai em {consultas} consultas, cada uma com a sua paginação. "
+                "Tire 'paginas' ou encurte o período."
+            )
         return kwargs
+
+    def _dividir_busca(self, **kwargs) -> list[dict[str, Any]]:
+        """Divide o período com as duas datas em janelas de até ``MESES_POR_CONSULTA`` meses.
+
+        Args:
+            **kwargs: Parâmetros já validados; as datas chegam em YYYY-MM-DD.
+
+        Returns:
+            list[dict]: Uma consulta por janela; sem as duas datas, a busca como veio.
+        """
+        data_inicio = kwargs.get('data_inicio')
+        data_fim = kwargs.get('data_fim')
+        if not (data_inicio and data_fim):
+            return [kwargs]
+        return self._consultas_por_janela(kwargs, data_inicio, data_fim, self.MESES_POR_CONSULTA)
 
     def _set_query_base(self, **kwargs) -> dict[str, Any]:
         """Monta os parâmetros da consulta à API.
@@ -155,16 +185,7 @@ class ScraperCamaraProposicoes(BaseScraper):
                 ela dá, ou se a resposta vier sem o header ``X-Total-Count`` ou
                 com valor que não é um número.
         """
-        if r0.status_code >= 400:
-            try:
-                detalhe = r0.json()['detail']
-            except (ValueError, KeyError, TypeError):
-                detalhe = r0.text
-            raise APIError(
-                f"{self.nome_buscador}: a API recusou a consulta (HTTP {r0.status_code}): {detalhe}",
-                status_code=r0.status_code,
-                response_text=r0.text,
-            )
+        self._levantar_se_recusada(r0)
         total = r0.headers.get('X-Total-Count', '')
         if not total.isdigit():
             raise APIError(

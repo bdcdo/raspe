@@ -107,7 +107,8 @@ def capturar_cenarios(
     ``api_method`` e usa a sessão do scraper, com os headers dele. Assim o
     sample reflete o que o scraper envia em produção.
 
-    A linha impressa por cenário traz o valor do parâmetro de página e o
+    A linha impressa por cenário traz o valor do parâmetro de página (``None``
+    no raspador de API sem paginação, que não envia o parâmetro) e o
     ``_find_n_pags`` da resposta, para conferir se o termo cabe no cenário
     (``single_page`` tem de dar 1, ``no_results`` tem de dar 0). Ela não
     imprime a URL, que em alguns scrapers leva chave de API, e as falhas
@@ -137,7 +138,7 @@ def capturar_cenarios(
         print(
             f"{arquivo}: HTTP {resp.status_code}, {len(resp.content)} bytes recebidos, "
             f"{len(conteudo)} gravados, "
-            f"{scraper.query_page_name}={query[scraper.query_page_name]}, "
+            f"{scraper.query_page_name or 'sem página'}={query.get(scraper.query_page_name)}, "
             f"_find_n_pags={n_pags}"
         )
 

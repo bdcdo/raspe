@@ -193,6 +193,7 @@ Todas as fontes seguem o mesmo padrão: crie o raspador e chame `.raspar(pesquis
 | Câmara | `raspe.camara()` | Legislação federal na busca da Câmara |
 | Câmara (proposições) | `raspe.camara_proposicoes()` | Projetos de lei, PECs e demais proposições, pela API oficial de Dados Abertos |
 | Senado | `raspe.senado()` | Legislação federal na busca do Senado |
+| Senado (processos) | `raspe.senado_processos()` | Projetos de lei, PECs e demais processos legislativos, pela API oficial de Dados Abertos |
 | IPEA | `raspe.ipea()` | Publicações e estudos do IPEA |
 | CFM | `raspe.cfm()` | Normas do Conselho Federal de Medicina e dos CRMs |
 | Folha | `raspe.folha()` | Notícias da Folha de São Paulo |
@@ -202,7 +203,7 @@ Todas as fontes seguem o mesmo padrão: crie o raspador e chame `.raspar(pesquis
 | **ANS** | `raspe.ans()` | Atos da Agência Nacional de Saúde (requer browser) |
 | **ANVISA** | `raspe.anvisa()` | Atos da Agência de Vigilância Sanitária (requer browser) |
 
-**Paginação e vários termos.** Os nove raspadores HTTP aceitam `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e uma **lista** em `pesquisa`: o raspador faz uma busca por termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha. SaudeLegis, ANS e ANVISA recusam os dois: coletam todas as páginas até um limite interno e recebem um termo por chamada.
+**Paginação e vários termos.** Os dez raspadores HTTP aceitam `paginas`, um `range` com as páginas a coletar (ex.: `paginas=range(1, 6)`), e uma **lista** em `pesquisa`: o raspador faz uma busca por termo e junta os resultados, e a coluna `termo_busca` diz de qual busca veio cada linha. SaudeLegis, ANS e ANVISA recusam os dois: coletam todas as páginas até um limite interno e recebem um termo por chamada.
 
 ### Escolhendo a fonte pelo nome
 
@@ -275,7 +276,27 @@ Além de `pesquisa`, aceita `ano` (o da identificação da proposição, como o 
 
 - Sem filtro de tempo, a API só devolveria as proposições dos últimos 30 dias. O raspe pede a base inteira quando você não passa `ano`, `data_inicio` nem `data_fim`.
 - A base inteira só sai com `pesquisa`: sem termo, a API não responde a tempo. Por isso a busca sem `pesquisa` exige `ano`, `data_inicio` ou `data_fim`, e sem eles levanta `ValidationError`.
-- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses: a API recusa a consulta, e o raspe levanta `APIError` com a explicação. Para um período maior, use `ano`, uma data só, ou divida o período.
+- `data_inicio` e `data_fim` juntas não podem distar mais de 3 meses numa consulta. O raspe divide o período maior em janelas seguidas de até 3 meses, faz uma consulta por janela e junta as proposições sem repetir. Nessa busca dividida, `paginas` levanta `ValidationError`. Uma data só (ou `ano`) não tem o limite e sai numa consulta.
+
+As colunas estão em [`docs/colunas.md`](docs/colunas.md).
+
+### Senado: processos pela API oficial
+
+`raspe.senado_processos()` consulta a [API de Dados Abertos do Senado](https://legis.senado.leg.br/dadosabertos/api-docs/swagger-ui/index.html) e lista os processos legislativos (projetos de lei, PECs, requerimentos) do Senado e do Congresso Nacional, tenham virado norma ou não. Para a legislação já publicada, use `raspe.senado()`.
+
+```python
+import raspe
+
+df = raspe.senado_processos().raspar(pesquisa="telemedicina", ano=2020)
+df = raspe.senado_processos().raspar(pesquisa="telemedicina", ano=2020, sigla_tipo="PL")
+df = raspe.senado_processos().raspar(pesquisa="inteligência artificial", data_inicio="2023-01-01", data_fim="2024-12-31")
+```
+
+`pesquisa` procura o termo nas palavras-chave do processo. Os outros filtros são `ano` (o da identificação do processo, como o 2020 de PL 696/2020, que pode não ser o ano de apresentação), `sigla_tipo` (como `"PL"` ou `"PEC"`), `data_inicio` e `data_fim`, que filtram pela data de apresentação. Três regras da API:
+
+- A busca precisa de `ano` ou de `data_inicio`, e sem eles levanta `ValidationError`: só com `pesquisa`, a API devolveria apenas os processos que ainda tramitam, e só com `data_fim`, apenas os do ano anterior a ela.
+- Sem `ano`, cada consulta cobre no máximo um ano. O raspe divide o período (de `data_inicio` até `data_fim` ou, sem ela, até hoje) em janelas seguidas de até um ano, faz uma consulta por janela e junta os processos sem repetir. Com `ano`, a busca sai numa consulta só.
+- A API não pagina: cada consulta volta inteira. `paginas` só é aceito por paridade com os outros raspadores: `range(1, 2)` ou nenhum valor baixam tudo.
 
 As colunas estão em [`docs/colunas.md`](docs/colunas.md).
 

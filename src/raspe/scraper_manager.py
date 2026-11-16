@@ -20,6 +20,7 @@ from .scrapers.nyt import ScraperNYT
 from .scrapers.presidencia import ScraperPresidencia
 from .scrapers.saudelegis import ScraperSaudeLegis
 from .scrapers.senado import ScraperSenadoFederal
+from .scrapers.senado_processos import ScraperSenadoProcessos
 
 # Mapeia o nome da fonte (em maiúsculas) para a classe do raspador.
 # Deve cobrir todas as factories expostas em `raspe.__all__`.
@@ -28,6 +29,7 @@ _MAPPING: dict[str, Type[AbstractScraper]] = {
     "PRESIDENCIA": ScraperPresidencia,
     "IPEA": ScraperIpea,
     "SENADO": ScraperSenadoFederal,
+    "SENADO_PROCESSOS": ScraperSenadoProcessos,
     "CAMARA": ScraperCamaraDeputados,
     "CAMARA_PROPOSICOES": ScraperCamaraProposicoes,
     "CAPES": ScraperCapes,

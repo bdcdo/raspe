@@ -22,6 +22,7 @@ from .nyt import ScraperNYT
 from .presidencia import ScraperPresidencia
 from .saudelegis import ScraperSaudeLegis
 from .senado import ScraperSenadoFederal
+from .senado_processos import ScraperSenadoProcessos
 
 __all__ = [
     # Raspadores HTTP
@@ -34,6 +35,7 @@ __all__ = [
     "ScraperNYT",
     "ScraperPresidencia",
     "ScraperSenadoFederal",
+    "ScraperSenadoProcessos",
     # Raspadores Playwright
     "ScraperANS",
     "ScraperANVISA",

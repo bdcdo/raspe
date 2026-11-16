@@ -8,10 +8,18 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 ### Adicionado
+- Adicionado o raspador `raspe.senado_processos()`, que lista os processos legislativos do Senado Federal e do
+  Congresso Nacional (projetos de lei, PECs, requerimentos) pela API oficial de Dados Abertos
+  (`legis.senado.leg.br/dadosabertos/processo`), com os filtros `pesquisa`, `ano`, `sigla_tipo`, `data_inicio` e
+  `data_fim` e 21 colunas por processo. A busca exige `ano` ou `data_inicio`, e sem `ano` o período sai em consultas
+  de até um ano, juntadas sem repetir processo. É a segunda parte da migração para as APIs oficiais (#29);
+  `raspe.senado()` segue como está.
 - Adicionado o raspador `raspe.camara_proposicoes()`, que lista proposições da Câmara dos Deputados (projetos de
   lei, PECs, requerimentos) pela API oficial de Dados Abertos (`dadosabertos.camara.leg.br/api/v2/proposicoes`), com
-  os filtros `pesquisa`, `ano`, `sigla_tipo`, `data_inicio` e `data_fim` e oito colunas por proposição. É a primeira
-  parte da migração da Câmara e do Senado para as APIs oficiais (#29); `raspe.camara()` segue como está.
+  os filtros `pesquisa`, `ano`, `sigla_tipo`, `data_inicio` e `data_fim` e oito colunas por proposição. O período
+  de mais de 3 meses entre `data_inicio` e `data_fim`, que a API recusa numa consulta só, sai em consultas de até 3
+  meses, juntadas sem repetir proposição. É a primeira parte da migração da Câmara e do Senado para as APIs oficiais
+  (#29); `raspe.camara()` segue como está.
 - Scraper para o Portal de Periódicos da CAPES (`raspe.capes()`).
   Coleta metadados de artigos, livros e capítulos a partir do
   buscador público (`www.periodicos.capes.gov.br/index.php/acervo/buscador.html`),

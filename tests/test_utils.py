@@ -19,7 +19,16 @@ import requests
 import responses
 
 from raspe.exceptions import ValidationError
-from raspe.utils import check, expand, extract, remove_duplicates, start_session, validar_data, validar_intervalo_datas
+from raspe.utils import (
+    check,
+    dividir_periodo,
+    expand,
+    extract,
+    remove_duplicates,
+    start_session,
+    validar_data,
+    validar_intervalo_datas,
+)
 
 
 class TestExpand:
@@ -342,3 +351,41 @@ class TestValidarIntervaloDatas:
     def test_propaga_validation_error_de_validar_data(self):
         with pytest.raises(ValidationError, match="formato inválido"):
             validar_intervalo_datas("invalida", "2024-12-31")
+
+
+class TestDividirPeriodo:
+    @pytest.mark.parametrize(
+        ("inicio", "fim", "meses", "esperado"),
+        [
+            pytest.param("2020-03-01", "2020-03-31", 3, [("2020-03-01", "2020-03-31")], id="cabe_numa_janela"),
+            pytest.param(
+                "2020-01-01", "2020-07-15", 3,
+                [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-06-30"), ("2020-07-01", "2020-07-15")],
+                id="tres_janelas",
+            ),
+            # Três meses exatos passam da janela por um dia.
+            pytest.param(
+                "2020-01-01", "2020-04-01", 3, [("2020-01-01", "2020-03-31"), ("2020-04-01", "2020-04-01")],
+                id="tres_meses_exatos",
+            ),
+            # A partir de um dia 31, o início encolhe em fevereiro e nenhuma janela passa de 3 meses.
+            pytest.param(
+                "2018-05-31", "2019-06-15", 3,
+                [("2018-05-31", "2018-08-30"), ("2018-08-31", "2018-11-29"), ("2018-11-30", "2019-02-27"),
+                 ("2019-02-28", "2019-05-27"), ("2019-05-28", "2019-06-15")],
+                id="fim_de_mes",
+            ),
+            pytest.param(
+                "2023-01-01", "2024-12-31", 12, [("2023-01-01", "2023-12-31"), ("2024-01-01", "2024-12-31")],
+                id="anos",
+            ),
+            pytest.param("2020-01-01", "2020-01-01", 3, [("2020-01-01", "2020-01-01")], id="um_dia"),
+            pytest.param("2020-02-01", "2020-01-01", 3, [], id="invertido"),
+        ],
+    )
+    def test_janelas(self, inicio, fim, meses, esperado):
+        assert dividir_periodo(inicio, fim, meses) == esperado
+
+    def test_janela_sem_tamanho_levanta_em_vez_de_nao_terminar(self):
+        with pytest.raises(ValueError, match="'meses' precisa ser pelo menos 1"):
+            dividir_periodo("2020-01-01", "2020-07-15", 0)

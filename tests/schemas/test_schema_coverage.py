@@ -29,6 +29,7 @@ from raspe.schemas import (
     InputNYT,
     InputPresidencia,
     InputSaudeLegis,
+    InputSenadoProcessos,
     OutputBase,
     OutputCamaraProposicoes,
     OutputCapes,
@@ -39,6 +40,7 @@ from raspe.schemas import (
     OutputNYT,
     OutputPresidencia,
     OutputSaudeLegis,
+    OutputSenadoProcessos,
 )
 from raspe.schemas.documentacao import descobrir_raspadores, fabricas_por_raspador
 from raspe.scrapers.ans import ScraperANS
@@ -52,6 +54,7 @@ from raspe.scrapers.ipea import ScraperIpea
 from raspe.scrapers.nyt import ScraperNYT
 from raspe.scrapers.presidencia import ScraperPresidencia
 from raspe.scrapers.saudelegis import ScraperSaudeLegis
+from raspe.scrapers.senado_processos import ScraperSenadoProcessos
 
 
 @dataclass(frozen=True)
@@ -78,6 +81,8 @@ class Registro:
 _PAGINAS_HTML = ("raspar/page_01.html", "raspar/page_02.html", "raspar/single_page.html")
 _PAGINAS_JSON = ("raspar/page_01.json", "raspar/page_02.json", "raspar/single_page.json")
 _PARSE_HTML = ("parse/typical.html",)
+# A API do Senado não pagina: as amostras são as consultas de uma busca dividida por período.
+_JANELAS_JSON = ("raspar/janela_01.json", "raspar/janela_02.json", "raspar/single_page.json")
 
 ESPERADOS: dict[type[AbstractScraper], Registro] = {
     ScraperPresidencia: Registro(InputPresidencia, OutputPresidencia, ScraperPresidencia, "presidencia", _PAGINAS_HTML),
@@ -88,6 +93,9 @@ ESPERADOS: dict[type[AbstractScraper], Registro] = {
     ScraperNYT: Registro(InputNYT, OutputNYT, lambda: ScraperNYT(api_key="chave-de-teste"), "nyt", _PAGINAS_JSON),
     ScraperCamaraProposicoes: Registro(
         InputCamaraProposicoes, OutputCamaraProposicoes, ScraperCamaraProposicoes, "camara_proposicoes", _PAGINAS_JSON
+    ),
+    ScraperSenadoProcessos: Registro(
+        InputSenadoProcessos, OutputSenadoProcessos, ScraperSenadoProcessos, "senado_processos", _JANELAS_JSON
     ),
     ScraperSaudeLegis: Registro(InputSaudeLegis, OutputSaudeLegis, ScraperSaudeLegis, "saudelegis", _PARSE_HTML),
     ScraperANS: Registro(InputDatalegis, OutputDatalegis, ScraperANS, "datalegis", _PARSE_HTML),
