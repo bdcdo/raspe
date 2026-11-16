@@ -37,7 +37,7 @@ _CAMPOS = {
 class ScraperCamaraProposicoes(BaseScraper):
     """Raspador das proposições da Câmara dos Deputados, pela API de Dados Abertos.
 
-    Duas regras da API, vistas ao vivo em 2026-11-16:
+    Três regras da API, vistas ao vivo em 2026-11-16:
 
     - Sem filtro de tempo, ela só lista as proposições apresentadas ou
       movimentadas nos últimos 30 dias. Para a busca sem ``ano``,
@@ -95,8 +95,7 @@ class ScraperCamaraProposicoes(BaseScraper):
 
         Raises:
             ValidationError: Se algum parâmetro for inválido, ou se faltarem
-                ``pesquisa`` e os três filtros de tempo (a API não responde a
-                essa consulta; ver a docstring da classe).
+                ``pesquisa`` e os três filtros de tempo (ver a docstring da classe).
         """
         kwargs = super()._validar_parametros(**kwargs)
         if not any(kwargs.get(nome) for nome in ('pesquisa', 'ano', 'data_inicio', 'data_fim')):
